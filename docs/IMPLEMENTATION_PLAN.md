@@ -1,6 +1,6 @@
 # Implementation Plan
 
-> **Progress:** repo setup ✅ · WP0 ✅ · WP1 ✅ · WP2 engine ✅ · WP5 web shell ✅ · next: WP3 (results provider) → WP4 (API routes) → WP6/WP7 (see §8).
+> **Progress:** WP0 ✅ · WP1 ✅ · WP2 ✅ · WP3 ✅ · WP5 ✅ · next: WP4 (wire API routes) → WP6/WP7 (see §8).
 
 ## 1. Goal & MVP scope
 A **local, mobile-first** web app that, for a World Cup 2026 sweepstake, shows **each player’s
@@ -71,13 +71,17 @@ Each is sized to be handed to one agent/session. “Done” = acceptance criteri
   (upcoming→alive/eliminated/champion), `buildLeaderboard` (sorted: alive ↓ → stage ↓ → pts ↓
   → GD ↓), `DEFAULT_SCORING` (confirmed), `computeTeamGoalDifferences`. 48 tests, 8 files.
 
-### WP3 — Results provider (seed + live)  ·  *needs WP0*
+### WP3 — Results provider (seed + live)  ·  ✅ DONE (commit `8060ebf`)
 - `ResultsProvider` interface; `seedProvider` (CSV + optional `datasets/results.seed.csv`);
   `footballApiProvider` (chosen vendor) with caching (TTL), retry/backoff, and seed fallback.
 - `fixtureMatch`: reconcile vendor fixtures → our match IDs (stage+date+team codes; maintained
   id-map fallback). Vendor schema mapped to our `MatchResultDTO`/`ResolvedSlotDTO`.
 - **Accept:** with `DATA_SOURCE=seed` the app needs no key and shows all-upcoming; provider
   swap is config-only; live path unit-tested against a recorded fixture sample.
+- **Done:** seedProvider + footballApiProvider; team-pair TLA reconciliation (more reliable
+  than UTC-time matching — several CSV kickoffs differ from API); TLA overrides CUW→CUR,
+  URY→URU; in-memory TTL cache + retry/backoff + stale-cache fallback. Live smoke test: all
+  72 group matches resolve correctly. `DATA_SOURCE=live` wired via `createProvider`.
 
 ### WP4 — Backend API server  ·  *needs WP1+WP2+WP3 contracts (can stub early)*
 - Express routes for every endpoint in the contract; a `services/` layer that composes
@@ -147,7 +151,7 @@ Contracts in `shared/` + MSW mocks are what let A/B/C run concurrently without c
   validates referential integrity; mapping report signed off.
 - ✅ **WP5** — mobile web shell, design system, React Query + MSW data layer (commit `eb6e7b9`).
 - ✅ **WP2** — full engine: standings, qualification, team status, scoring + GD metric (commit `4f9a1b5`).
-- ▶️ **Next: WP3** (results provider: seedProvider + footballApiProvider with your token) →
-  **WP4** (REST routes wiring engine → web) → **WP6/WP7** (player + bracket views on live data).
+- ✅ **WP3** — seedProvider + live footballApiProvider, verified against API (commit `8060ebf`).
+- ▶️ **Next: WP4** — wire all REST endpoints (services layer: load → provider → engine → JSON).
 - ⏳ **From the user:** football-data.org API key when ready (runs in `seed` until then);
   confirm the scoring rule if it differs from the default.
