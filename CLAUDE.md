@@ -29,7 +29,8 @@ player leaderboard, and a tournament bracket view.
 - `shared/` — domain types (`src/types.ts`) + REST contract (`src/contract.ts`). **Source of truth.**
 - `server/` — Express API (`src/index.ts`). **Data pipeline (`src/data/`, `loadDataset()`) is
   built and validated**; engine (`src/engine/`) and results providers (`src/providers/`) arrive in WP2–WP4.
-- `web/` — Vite + React + Tailwind app (`src/`). Shell + features arrive in WP5–WP7.
+- `web/` — Vite + React + Tailwind app. **Shell + data layer (React Query + MSW) built (WP5)**;
+  player/bracket features arrive in WP6–WP7.
 - `datasets/` — canonical CSVs (unchanged).
 
 ## Working in this repo (for agents)

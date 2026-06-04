@@ -1,6 +1,6 @@
 # Implementation Plan
 
-> **Progress:** repo setup ✅ · WP0 scaffold ✅ · WP1 data pipeline ✅ · next: WP2 / WP3 / WP5 (see §8).
+> **Progress:** repo setup ✅ · WP0 ✅ · WP1 ✅ · WP5 web shell ✅ · WP2 engine 🔄 (standings done) · next: finish WP2 → WP3 → WP4 (see §8).
 
 ## 1. Goal & MVP scope
 A **local, mobile-first** web app that, for a World Cup 2026 sweepstake, shows **each player’s
@@ -59,7 +59,7 @@ Each is sized to be handed to one agent/session. “Done” = acceptance criteri
 - **Done:** all 5 CSVs → shared types; picks **48/48** matched (playoffs resolved; Wales→Croatia
   swap); match-#100 fixed; ISO kickoffs; `loadDataset()` runs `validateDataset()`; 15 tests.
 
-### WP2 — Tournament engine (pure functions)  ·  *needs WP0; pairs with WP1 fixtures*
+### WP2 — Tournament engine (pure functions)  ·  🔄 IN PROGRESS
 - Group standings from results + configurable tie-break comparator; best-third ranking (top-8).
 - Knockout resolution by following label encodings (`W##`, `RU##`, positional R32 slots);
   consume API-resolved slots when available, else compute what’s possible.
@@ -67,6 +67,9 @@ Each is sized to be handed to one agent/session. “Done” = acceptance criteri
   per-player leaderboard via `scoring.ts` (config-driven; default in DATA_AND_RULES §5).
 - **Accept:** Vitest scenarios pass — completed group with ties, a group decided early, a full
   knockout path to champion, and an eliminated playoff pick. Pure (no I/O), 100% deterministic.
+- **Done so far:** group standings + FIFA tie-breakers (`server/src/engine/standings.ts`, commit
+  `da63b96`). **Remaining:** qualification (top-2 + 8 best thirds), knockout resolution, team
+  status, and scoring/leaderboard.
 
 ### WP3 — Results provider (seed + live)  ·  *needs WP0*
 - `ResultsProvider` interface; `seedProvider` (CSV + optional `datasets/results.seed.csv`);
@@ -83,13 +86,16 @@ Each is sized to be handed to one agent/session. “Done” = acceptance criteri
 - **Accept:** every endpoint returns contract-valid JSON in `seed` mode; `players`/`overview`
   reflect a seeded result set correctly; errors return structured messages, not stack traces.
 
-### WP5 — Web shell, design system & data layer  ·  *needs WP0; uses MSW mocks*
+### WP5 — Web shell, design system & data layer  ·  ✅ DONE (commit `eb6e7b9`)
 - Vite app shell: mobile-first layout, bottom-tab nav (Players · Bracket · Schedule), theme
   tokens (colours/spacing/typography), `StatusChip`, `TeamRow`, `Crest`, loading/empty/error/stale.
 - Typed API client + React Query hooks importing `shared/contract`; **MSW** handlers so the UI
   runs standalone before WP4.
 - **Accept:** app renders on a 390×844 viewport with no horizontal scroll; nav works; all data
   flows through the typed hooks; swapping MSW→real API is a base-URL change only.
+- **Done:** built in-house (the sub-agent was sandbox-blocked on `npm install`); react-router
+  tabs, Tailwind v4 `@theme`, StatusChip/TeamRow/Crest, React Query hooks, MSW mocks of every
+  endpoint; verified rendering at 375×812. `VITE_MOCKS=off` hits the real API.
 
 ### WP6 — Player views & leaderboard (CORE)  ·  *needs WP5 + contract*
 - Leaderboard (ranked players, alive-count, furthest stage); player card → team status table;
@@ -123,7 +129,7 @@ Contracts in `shared/` + MSW mocks are what let A/B/C run concurrently without c
    covers the World Cup; good for post-match results) — or **API-Football** for richer live data.
    We’ll confirm 2026 coverage when wiring WP3; `seed` mode covers all dev until then.
 2. **Scoring rule.** Confirm the proposed default (DATA_AND_RULES §5) or give your league’s rule.
-3. **Picks report sign-off.** Review `docs/PICKS_MAPPING_REPORT.md` once WP1 generates it.
+3. **Picks report sign-off** — ✅ done (playoffs resolved; Wales→Croatia swap; 48/48 matched).
 
 ## 7. How we’ll work (new to Claude Code)
 - I edit files directly; you see each change as a diff in the chat and can open the same folder
@@ -139,7 +145,10 @@ Contracts in `shared/` + MSW mocks are what let A/B/C run concurrently without c
 - ✅ **WP0** — workspaces, shared contract, runnable API + web skeleton, Tailwind v4 (commit `64b9d5f`).
 - ✅ **WP1** — 5 CSVs → typed model; picks normalized 48/48; match-#100 fixed; `loadDataset()`
   validates referential integrity; mapping report signed off.
-- ▶️ **Now unblocked (parallelisable):** WP2 engine · WP3 results provider · WP5 web shell —
-  all against the `shared` contract; WP2/WP3 build on `loadDataset()`.
+- ✅ **WP5** — mobile web shell, design system, React Query + MSW data layer (commit `eb6e7b9`).
+- 🔄 **WP2** — group standings done (`da63b96`); remaining: qualification, knockout resolution,
+  team status, scoring/leaderboard.
+- ▶️ **Next:** finish WP2, then **WP3** (results provider) and **WP4** (wire the real API), then
+  **WP6/WP7** (player + bracket views on live data).
 - ⏳ **From the user:** football-data.org API key when ready (runs in `seed` until then);
   confirm the scoring rule if it differs from the default.
