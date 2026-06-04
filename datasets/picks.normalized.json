@@ -1,0 +1,330 @@
+{
+  "generatedAt": "2026-06-04T15:32:57.346Z",
+  "players": [
+    {
+      "id": 1,
+      "name": "Rogan"
+    },
+    {
+      "id": 2,
+      "name": "Henri"
+    },
+    {
+      "id": 3,
+      "name": "Will"
+    },
+    {
+      "id": 4,
+      "name": "Dec"
+    },
+    {
+      "id": 5,
+      "name": "Jordan"
+    },
+    {
+      "id": 6,
+      "name": "James"
+    }
+  ],
+  "picks": [
+    {
+      "playerId": 1,
+      "teamId": 12,
+      "rawName": "Scotland",
+      "matched": true
+    },
+    {
+      "playerId": 1,
+      "teamId": 20,
+      "rawName": "Ecuador",
+      "matched": true
+    },
+    {
+      "playerId": 1,
+      "teamId": 15,
+      "rawName": "Australia",
+      "matched": true
+    },
+    {
+      "playerId": 1,
+      "teamId": 26,
+      "rawName": "Egypt",
+      "matched": true
+    },
+    {
+      "playerId": 1,
+      "teamId": 44,
+      "rawName": "Colombia",
+      "matched": true
+    },
+    {
+      "playerId": 1,
+      "teamId": 21,
+      "rawName": "Netherlands",
+      "matched": true
+    },
+    {
+      "playerId": 1,
+      "teamId": 2,
+      "rawName": "South Africa",
+      "matched": true
+    },
+    {
+      "playerId": 1,
+      "teamId": 3,
+      "rawName": "South Korea",
+      "matched": true
+    },
+    {
+      "playerId": 2,
+      "teamId": 24,
+      "rawName": "Tunisia",
+      "matched": true
+    },
+    {
+      "playerId": 2,
+      "teamId": 14,
+      "rawName": "Paraguay",
+      "matched": true
+    },
+    {
+      "playerId": 2,
+      "teamId": 22,
+      "rawName": "Japan",
+      "matched": true
+    },
+    {
+      "playerId": 2,
+      "teamId": 25,
+      "rawName": "Belgium",
+      "matched": true
+    },
+    {
+      "playerId": 2,
+      "teamId": 8,
+      "rawName": "Switzerland",
+      "matched": true
+    },
+    {
+      "playerId": 2,
+      "teamId": 17,
+      "rawName": "Germany",
+      "matched": true
+    },
+    {
+      "playerId": 2,
+      "teamId": 36,
+      "rawName": "Norway",
+      "matched": true
+    },
+    {
+      "playerId": 2,
+      "teamId": 37,
+      "rawName": "Argentina",
+      "matched": true
+    },
+    {
+      "playerId": 3,
+      "teamId": 19,
+      "rawName": "Ivory Coast",
+      "matched": true,
+      "note": "variant of Côte d'Ivoire"
+    },
+    {
+      "playerId": 3,
+      "teamId": 18,
+      "rawName": "Curacao",
+      "matched": true
+    },
+    {
+      "playerId": 3,
+      "teamId": 32,
+      "rawName": "Uruguay",
+      "matched": true
+    },
+    {
+      "playerId": 3,
+      "teamId": 11,
+      "rawName": "Haiti",
+      "matched": true
+    },
+    {
+      "playerId": 3,
+      "teamId": 45,
+      "rawName": "England",
+      "matched": true
+    },
+    {
+      "playerId": 3,
+      "teamId": null,
+      "rawName": "DR Congo",
+      "matched": false,
+      "note": "playoff-contingent: FIFA playoff"
+    },
+    {
+      "playerId": 3,
+      "teamId": 43,
+      "rawName": "Uzbekisan",
+      "matched": true,
+      "note": "variant of Uzbekistan"
+    },
+    {
+      "playerId": 3,
+      "teamId": 28,
+      "rawName": "New Zealand",
+      "matched": true
+    },
+    {
+      "playerId": 4,
+      "teamId": 34,
+      "rawName": "Sengal",
+      "matched": true,
+      "note": "variant of Senegal"
+    },
+    {
+      "playerId": 4,
+      "teamId": 40,
+      "rawName": "Jordan",
+      "matched": true
+    },
+    {
+      "playerId": 4,
+      "teamId": null,
+      "rawName": "Sweden",
+      "matched": false,
+      "note": "playoff-contingent: UEFA playoff"
+    },
+    {
+      "playerId": 4,
+      "teamId": null,
+      "rawName": "Wales",
+      "matched": false,
+      "note": "playoff-contingent: UEFA playoff"
+    },
+    {
+      "playerId": 4,
+      "teamId": 9,
+      "rawName": "Brazil",
+      "matched": true
+    },
+    {
+      "playerId": 4,
+      "teamId": null,
+      "rawName": "Turkiye",
+      "matched": false,
+      "note": "playoff-contingent: UEFA playoff"
+    },
+    {
+      "playerId": 4,
+      "teamId": 30,
+      "rawName": "Cabo Verde",
+      "matched": true
+    },
+    {
+      "playerId": 4,
+      "teamId": 38,
+      "rawName": "Algeria",
+      "matched": true
+    },
+    {
+      "playerId": 5,
+      "teamId": 41,
+      "rawName": "Portugal",
+      "matched": true
+    },
+    {
+      "playerId": 5,
+      "teamId": 29,
+      "rawName": "Spain",
+      "matched": true
+    },
+    {
+      "playerId": 5,
+      "teamId": 10,
+      "rawName": "Morocco",
+      "matched": true
+    },
+    {
+      "playerId": 5,
+      "teamId": 27,
+      "rawName": "Iran",
+      "matched": true,
+      "note": "variant of IR Iran"
+    },
+    {
+      "playerId": 5,
+      "teamId": 1,
+      "rawName": "Mexico",
+      "matched": true
+    },
+    {
+      "playerId": 5,
+      "teamId": 47,
+      "rawName": "Ghana",
+      "matched": true
+    },
+    {
+      "playerId": 5,
+      "teamId": 33,
+      "rawName": "France",
+      "matched": true
+    },
+    {
+      "playerId": 5,
+      "teamId": null,
+      "rawName": "Czechia",
+      "matched": false,
+      "note": "playoff-contingent: UEFA playoff"
+    },
+    {
+      "playerId": 6,
+      "teamId": 39,
+      "rawName": "Austria",
+      "matched": true
+    },
+    {
+      "playerId": 6,
+      "teamId": null,
+      "rawName": "Iraq",
+      "matched": false,
+      "note": "playoff-contingent: FIFA playoff"
+    },
+    {
+      "playerId": 6,
+      "teamId": 31,
+      "rawName": "Saudi Arabia",
+      "matched": true
+    },
+    {
+      "playerId": 6,
+      "teamId": 7,
+      "rawName": "Qatar",
+      "matched": true
+    },
+    {
+      "playerId": 6,
+      "teamId": 5,
+      "rawName": "Canada",
+      "matched": true
+    },
+    {
+      "playerId": 6,
+      "teamId": 48,
+      "rawName": "Panama",
+      "matched": true
+    },
+    {
+      "playerId": 6,
+      "teamId": null,
+      "rawName": "Bosnia",
+      "matched": false,
+      "note": "playoff-contingent: UEFA playoff"
+    },
+    {
+      "playerId": 6,
+      "teamId": 13,
+      "rawName": "USA",
+      "matched": true
+    }
+  ]
+}

@@ -7,10 +7,12 @@
     "dev": "tsx watch src/index.ts",
     "start": "tsx src/index.ts",
     "build": "tsc --noEmit",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "report:picks": "tsx src/data/generatePicksReport.ts"
   },
   "dependencies": {
     "cors": "^2.8.6",
+    "csv-parse": "^6.2.1",
     "dotenv": "^17.4.2",
     "express": "^4.22.2"
   },

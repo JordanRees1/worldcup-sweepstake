@@ -19,7 +19,8 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "test": "vitest run --passWithNoTests"
+    "test": "vitest run --passWithNoTests",
+    "report:picks": "npm run report:picks -w @sweepstake/server"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
