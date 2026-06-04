@@ -1,0 +1,36 @@
+# ── Dependencies ─────────────────────────────────
+node_modules/
+
+# ── Build output ─────────────────────────────────
+dist/
+build/
+out/
+*.tsbuildinfo
+.vite/
+
+# ── Secrets / env (never commit real env files) ──
+**/.env
+**/.env.local
+**/.env.*.local
+
+# ── Logs ─────────────────────────────────────────
+*.log
+npm-debug.log*
+
+# ── Test / coverage ──────────────────────────────
+coverage/
+.eslintcache
+
+# ── Editor / OS ──────────────────────────────────
+.DS_Store
+*.swp
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+
+# ── Claude Code (commit shared config; ignore local) ──
+.claude/settings.local.json
+
+# ── Misc cache ───────────────────────────────────
+.cache/

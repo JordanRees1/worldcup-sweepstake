@@ -1,0 +1,21 @@
+# Normalize line endings to LF on commit (consistent across macOS/Windows)
+* text=auto eol=lf
+
+# Explicit text types
+*.ts   text
+*.tsx  text
+*.js   text
+*.json text
+*.md   text
+*.css  text
+*.html text
+*.csv  text eol=lf
+
+# Binary assets
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.gif  binary
+*.ico  binary
+*.woff binary
+*.woff2 binary
