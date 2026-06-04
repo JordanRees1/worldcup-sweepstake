@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-06-04T15:32:57.346Z",
+  "generatedAt": "2026-06-04T15:42:07.203Z",
   "players": [
     {
       "id": 1,
@@ -156,10 +156,9 @@
     },
     {
       "playerId": 3,
-      "teamId": null,
+      "teamId": 42,
       "rawName": "DR Congo",
-      "matched": false,
-      "note": "playoff-contingent: FIFA playoff"
+      "matched": true
     },
     {
       "playerId": 3,
@@ -189,17 +188,16 @@
     },
     {
       "playerId": 4,
-      "teamId": null,
+      "teamId": 23,
       "rawName": "Sweden",
-      "matched": false,
-      "note": "playoff-contingent: UEFA playoff"
+      "matched": true
     },
     {
       "playerId": 4,
       "teamId": null,
       "rawName": "Wales",
       "matched": false,
-      "note": "playoff-contingent: UEFA playoff"
+      "note": "did not qualify: lost 2026 UEFA playoff"
     },
     {
       "playerId": 4,
@@ -209,10 +207,9 @@
     },
     {
       "playerId": 4,
-      "teamId": null,
+      "teamId": 16,
       "rawName": "Turkiye",
-      "matched": false,
-      "note": "playoff-contingent: UEFA playoff"
+      "matched": true
     },
     {
       "playerId": 4,
@@ -271,10 +268,9 @@
     },
     {
       "playerId": 5,
-      "teamId": null,
+      "teamId": 4,
       "rawName": "Czechia",
-      "matched": false,
-      "note": "playoff-contingent: UEFA playoff"
+      "matched": true
     },
     {
       "playerId": 6,
@@ -284,10 +280,9 @@
     },
     {
       "playerId": 6,
-      "teamId": null,
+      "teamId": 35,
       "rawName": "Iraq",
-      "matched": false,
-      "note": "playoff-contingent: FIFA playoff"
+      "matched": true
     },
     {
       "playerId": 6,
@@ -315,10 +310,10 @@
     },
     {
       "playerId": 6,
-      "teamId": null,
+      "teamId": 6,
       "rawName": "Bosnia",
-      "matched": false,
-      "note": "playoff-contingent: UEFA playoff"
+      "matched": true,
+      "note": "variant of Bosnia and Herzegovina"
     },
     {
       "playerId": 6,

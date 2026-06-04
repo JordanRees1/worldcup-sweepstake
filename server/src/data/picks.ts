@@ -1,6 +1,6 @@
 import { join } from 'node:path';
 import type { Pick, Player, Team } from '@sweepstake/shared';
-import { PICK_ALIASES, PLAYOFF_CONTINGENT } from './aliases';
+import { DID_NOT_QUALIFY, PICK_ALIASES } from './aliases';
 import { readCsv } from './csv';
 import { normalizeName } from './normalize';
 import { DATASETS_DIR } from './paths';
@@ -65,15 +65,15 @@ export function normalizePicks(teams: Team[]): NormalizedPicks {
       };
     }
 
-    // 3) Team still in the playoffs when the draw was made.
-    const route = PLAYOFF_CONTINGENT[norm];
-    if (route) {
+    // 3) Picked a team that did not qualify (lost its 2026 playoff).
+    const dnqReason = DID_NOT_QUALIFY[norm];
+    if (dnqReason) {
       return {
         playerId,
         teamId: null,
         rawName: row.team,
         matched: false,
-        note: `playoff-contingent: ${route}`,
+        note: `did not qualify: ${dnqReason}`,
       };
     }
 

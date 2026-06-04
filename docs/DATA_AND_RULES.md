@@ -12,7 +12,10 @@ This is the domain reference for the data pipeline (WP1) and the engine (WP2).
 | `host_cities.csv`       | 16   | `id, city_name, country, venue_name, region_cluster, airport_code`           | Venues across USA/Canada/Mexico; `region_cluster` ∈ East/Central/West. |
 | `player_picks.csv`      | 48   | `player, team`                                                               | 6 players × 8 teams. Raw, messy names — see §3. |
 
-### Placeholders in `teams.csv` (6)
+### Placeholders in `teams.csv` (6 — now resolved)
+
+> **Resolved (June 2026):** all six slots are filled with the March 2026 playoff winners, so
+> `teams.csv` no longer contains placeholders. Historical context below.
 `Winner UEFA Playoff A/B/C/D` (codes `UEPA/UEPB/UEPC/UEPD`) and `Winner FIFA Playoff 1/2`
 (`FP01/FP02`). These slots are filled by playoff winners; treat `is_placeholder=True` teams as
 “not yet a real team” until resolved (by the API, or by the user updating `teams.csv`).
@@ -37,6 +40,14 @@ The authoritative TypeScript types live in `shared/src/types.ts`. Core entities:
 engine’s job is to fill the dynamic fields (`result`, `status`, standings, leaderboard).
 
 ## 3. Picks normalization & reconciliation (WP1)
+
+> **Update (June 2026, signed off):** the March 2026 playoffs are resolved and applied to
+> `teams.csv`. Six contingent picks became real teams (DR Congo, Iraq, Bosnia and Herzegovina,
+> Sweden, Türkiye, Czechia); **Wales** is the only dead pick (did not qualify). Net result:
+> **47 matched, 1 did-not-qualify, 0 unmatched**, and **Croatia** is the one team nobody picked.
+> (UEFA winners were assigned to slots A–D in the order listed; adjust the `group` column in
+> `teams.csv` if the official playoff-path → group mapping differs.) The tables below are kept
+> as the original reconciliation context.
 Decision: **normalize automatically, then hand the user a report to confirm.** Produce
 `datasets/picks.normalized.json` plus `docs/PICKS_MAPPING_REPORT.md`.
 

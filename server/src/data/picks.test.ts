@@ -16,7 +16,7 @@ describe('normalizePicks', () => {
     }
   });
 
-  it('fixes typos to the right confirmed team', () => {
+  it('fixes typos to the right team', () => {
     expect(byRaw('Sengal')?.teamId).toBe(fifa('SEN')?.id);
     expect(byRaw('Uzbekisan')?.teamId).toBe(fifa('UZB')?.id);
   });
@@ -27,21 +27,29 @@ describe('normalizePicks', () => {
     expect(byRaw('Curacao')?.teamId).toBe(fifa('CUR')?.id);
   });
 
-  it('flags playoff-contingent picks as unmatched with a note', () => {
-    for (const raw of ['Wales', 'Sweden', 'Iraq', 'DR Congo']) {
-      const pick = byRaw(raw);
-      expect(pick?.matched, raw).toBe(false);
-      expect(pick?.note, raw).toContain('playoff-contingent');
-    }
+  it('resolves the six qualified playoff winners to real teams', () => {
+    expect(byRaw('Sweden')?.teamId).toBe(fifa('SWE')?.id);
+    expect(byRaw('Turkiye')?.teamId).toBe(fifa('TUR')?.id);
+    expect(byRaw('Czechia')?.teamId).toBe(fifa('CZE')?.id);
+    expect(byRaw('DR Congo')?.teamId).toBe(fifa('COD')?.id);
+    expect(byRaw('Iraq')?.teamId).toBe(fifa('IRQ')?.id);
+    expect(byRaw('Bosnia')?.teamId).toBe(fifa('BIH')?.id);
   });
 
-  it('leaves nothing truly unmatched (all confirmed or contingent)', () => {
+  it('marks Wales (the only non-qualifier) as did not qualify', () => {
+    const wales = byRaw('Wales');
+    expect(wales?.matched).toBe(false);
+    expect(wales?.teamId).toBeNull();
+    expect(wales?.note).toContain('did not qualify');
+  });
+
+  it('leaves nothing truly unmatched', () => {
     const trulyUnmatched = picks.filter((p) => p.note === 'UNMATCHED — needs review');
     expect(trulyUnmatched).toEqual([]);
   });
 
-  it('does not double-assign any confirmed team', () => {
-    const matchedIds = picks.filter((p) => p.teamId !== null).map((p) => p.teamId);
-    expect(new Set(matchedIds).size).toBe(matchedIds.length);
+  it('does not double-assign any team', () => {
+    const ids = picks.filter((p) => p.teamId !== null).map((p) => p.teamId);
+    expect(new Set(ids).size).toBe(ids.length);
   });
 });
