@@ -1,5 +1,12 @@
 @import 'tailwindcss';
 
+/* Design tokens (Tailwind v4 is CSS-first — no tailwind.config.js). */
+@theme {
+  --color-brand-300: #6ee7b7;
+  --color-brand-400: #34d399;
+  --color-brand-500: #10b981;
+}
+
 :root {
   color-scheme: dark;
 }
