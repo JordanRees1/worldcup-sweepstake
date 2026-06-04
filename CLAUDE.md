@@ -27,9 +27,9 @@ player leaderboard, and a tournament bracket view.
 
 ## Project structure (post-WP0)
 - `shared/` — domain types (`src/types.ts`) + REST contract (`src/contract.ts`). **Source of truth.**
-- `server/` — Express API (`src/index.ts`). **Data pipeline (`src/data/`), engine
-  (`src/engine/`), and results providers (`src/providers/`) are all complete.**
-  Routes (`src/routes/`) and the services composition layer arrive in WP4.
+- `server/` — Express API. **Complete: data pipeline (`src/data/`), engine (`src/engine/`),
+  providers (`src/providers/`), services (`src/services/`), and all REST routes (`src/routes/`).**
+  Run live with `DATA_SOURCE=live` in `server/.env`.
 - `web/` — Vite + React + Tailwind app. **Shell + data layer (React Query + MSW) built (WP5)**;
   player/bracket features arrive in WP6–WP7.
 - `datasets/` — canonical CSVs (unchanged).

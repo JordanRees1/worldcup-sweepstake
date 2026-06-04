@@ -1,6 +1,6 @@
 # Implementation Plan
 
-> **Progress:** WP0 ✅ · WP1 ✅ · WP2 ✅ · WP3 ✅ · WP5 ✅ · next: WP4 (wire API routes) → WP6/WP7 (see §8).
+> **Progress:** WP0 ✅ · WP1 ✅ · WP2 ✅ · WP3 ✅ · WP4 ✅ · WP5 ✅ · next: connect web → live API, then WP6/WP7 (see §8).
 
 ## 1. Goal & MVP scope
 A **local, mobile-first** web app that, for a World Cup 2026 sweepstake, shows **each player’s
@@ -83,12 +83,15 @@ Each is sized to be handed to one agent/session. “Done” = acceptance criteri
   URY→URU; in-memory TTL cache + retry/backoff + stale-cache fallback. Live smoke test: all
   72 group matches resolve correctly. `DATA_SOURCE=live` wired via `createProvider`.
 
-### WP4 — Backend API server  ·  *needs WP1+WP2+WP3 contracts (can stub early)*
+### WP4 — Backend API server  ·  ✅ DONE (commit `66fdf97`)
 - Express routes for every endpoint in the contract; a `services/` layer that composes
   load→results→engine into the app-shaped responses; response caching; CORS for local dev;
   consistent error envelope; `/api/health` reports `dataSource` + `lastUpdated`.
 - **Accept:** every endpoint returns contract-valid JSON in `seed` mode; `players`/`overview`
   reflect a seeded result set correctly; errors return structured messages, not stack traces.
+- **Done:** `services/` (applyResults → appState pipeline, TTL cache) + `routes/` (all 9
+  endpoints, CORS, async error envelope, 404) + `createApp` factory. 28 tests incl. in-process
+  HTTP integration; all endpoints verified against the running server in seed mode.
 
 ### WP5 — Web shell, design system & data layer  ·  ✅ DONE (commit `eb6e7b9`)
 - Vite app shell: mobile-first layout, bottom-tab nav (Players · Bracket · Schedule), theme
@@ -152,6 +155,13 @@ Contracts in `shared/` + MSW mocks are what let A/B/C run concurrently without c
 - ✅ **WP5** — mobile web shell, design system, React Query + MSW data layer (commit `eb6e7b9`).
 - ✅ **WP2** — full engine: standings, qualification, team status, scoring + GD metric (commit `4f9a1b5`).
 - ✅ **WP3** — seedProvider + live footballApiProvider, verified against API (commit `8060ebf`).
-- ▶️ **Next: WP4** — wire all REST endpoints (services layer: load → provider → engine → JSON).
+- ✅ **WP4** — services layer + all 9 REST endpoints, verified over HTTP (commit `66fdf97`).
+- ▶️ **Next:** point the web app at the real API (`VITE_MOCKS=off`) and build out **WP6**
+  (player detail view) + **WP7** (bracket).
+- ⚠️ **Tracked follow-up — knockout team resolution:** the group stage is fully wired, but
+  `/api/bracket` shows knockout `homeTeamId`/`awayTeamId` as `null` until those slots resolve.
+  R16→Final follow `W##`/`RU##` once R32 is populated; R32 positional `1X`/`2X` come from group
+  ranks; the 8 best-third `3XXXX` slots need either the FIFA combination table or the live API's
+  resolved fixtures. Tackle when the group stage nears completion (knockouts begin 28 Jun).
 - ⏳ **From the user:** football-data.org API key when ready (runs in `seed` until then);
   confirm the scoring rule if it differs from the default.
