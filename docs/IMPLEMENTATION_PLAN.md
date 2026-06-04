@@ -1,6 +1,6 @@
 # Implementation Plan
 
-> **Progress:** repo setup ✅ · WP0 ✅ · WP1 ✅ · WP5 web shell ✅ · WP2 engine 🔄 (standings done) · next: finish WP2 → WP3 → WP4 (see §8).
+> **Progress:** repo setup ✅ · WP0 ✅ · WP1 ✅ · WP2 engine ✅ · WP5 web shell ✅ · next: WP3 (results provider) → WP4 (API routes) → WP6/WP7 (see §8).
 
 ## 1. Goal & MVP scope
 A **local, mobile-first** web app that, for a World Cup 2026 sweepstake, shows **each player’s
@@ -59,7 +59,7 @@ Each is sized to be handed to one agent/session. “Done” = acceptance criteri
 - **Done:** all 5 CSVs → shared types; picks **48/48** matched (playoffs resolved; Wales→Croatia
   swap); match-#100 fixed; ISO kickoffs; `loadDataset()` runs `validateDataset()`; 15 tests.
 
-### WP2 — Tournament engine (pure functions)  ·  🔄 IN PROGRESS
+### WP2 — Tournament engine (pure functions)  ·  ✅ DONE (commit `4f9a1b5`)
 - Group standings from results + configurable tie-break comparator; best-third ranking (top-8).
 - Knockout resolution by following label encodings (`W##`, `RU##`, positional R32 slots);
   consume API-resolved slots when available, else compute what’s possible.
@@ -67,9 +67,9 @@ Each is sized to be handed to one agent/session. “Done” = acceptance criteri
   per-player leaderboard via `scoring.ts` (config-driven; default in DATA_AND_RULES §5).
 - **Accept:** Vitest scenarios pass — completed group with ties, a group decided early, a full
   knockout path to champion, and an eliminated playoff pick. Pure (no I/O), 100% deterministic.
-- **Done so far:** group standings + FIFA tie-breakers (`server/src/engine/standings.ts`, commit
-  `da63b96`). **Remaining:** qualification (top-2 + 8 best thirds), knockout resolution, team
-  status, and scoring/leaderboard.
+- **Done:** standings (FIFA tie-breakers), qualification (top-2 + 8 best thirds), team status
+  (upcoming→alive/eliminated/champion), `buildLeaderboard` (sorted: alive ↓ → stage ↓ → pts ↓
+  → GD ↓), `DEFAULT_SCORING` (confirmed), `computeTeamGoalDifferences`. 48 tests, 8 files.
 
 ### WP3 — Results provider (seed + live)  ·  *needs WP0*
 - `ResultsProvider` interface; `seedProvider` (CSV + optional `datasets/results.seed.csv`);
@@ -146,9 +146,8 @@ Contracts in `shared/` + MSW mocks are what let A/B/C run concurrently without c
 - ✅ **WP1** — 5 CSVs → typed model; picks normalized 48/48; match-#100 fixed; `loadDataset()`
   validates referential integrity; mapping report signed off.
 - ✅ **WP5** — mobile web shell, design system, React Query + MSW data layer (commit `eb6e7b9`).
-- 🔄 **WP2** — group standings done (`da63b96`); remaining: qualification, knockout resolution,
-  team status, scoring/leaderboard.
-- ▶️ **Next:** finish WP2, then **WP3** (results provider) and **WP4** (wire the real API), then
-  **WP6/WP7** (player + bracket views on live data).
+- ✅ **WP2** — full engine: standings, qualification, team status, scoring + GD metric (commit `4f9a1b5`).
+- ▶️ **Next: WP3** (results provider: seedProvider + footballApiProvider with your token) →
+  **WP4** (REST routes wiring engine → web) → **WP6/WP7** (player + bracket views on live data).
 - ⏳ **From the user:** football-data.org API key when ready (runs in `seed` until then);
   confirm the scoring rule if it differs from the default.
