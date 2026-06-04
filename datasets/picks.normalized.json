@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-06-04T15:42:07.203Z",
+  "generatedAt": "2026-06-04T15:50:06.436Z",
   "players": [
     {
       "id": 1,
@@ -194,10 +194,9 @@
     },
     {
       "playerId": 4,
-      "teamId": null,
-      "rawName": "Wales",
-      "matched": false,
-      "note": "did not qualify: lost 2026 UEFA playoff"
+      "teamId": 46,
+      "rawName": "Croatia",
+      "matched": true
     },
     {
       "playerId": 4,

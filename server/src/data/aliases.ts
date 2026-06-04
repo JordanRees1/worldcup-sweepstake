@@ -16,8 +16,9 @@ export const PICK_ALIASES: Record<string, string> = {
  * Normalized raw pick name -> reason the pick is dead.
  *
  * After the March 2026 playoffs, six of the seven playoff-contingent picks won their slots and
- * are now real teams in `teams.csv` (so they match normally). The only picked team that failed
- * to qualify was Wales.
+ * are now real teams in `teams.csv`. Wales failed to qualify — but Dec later swapped Wales for
+ * the (previously unowned) Croatia, so no current pick is a non-qualifier. This table is kept
+ * as a guard in case a non-qualifying pick reappears.
  */
 export const DID_NOT_QUALIFY: Record<string, string> = {
   wales: 'lost 2026 UEFA playoff',

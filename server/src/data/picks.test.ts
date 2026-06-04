@@ -36,11 +36,9 @@ describe('normalizePicks', () => {
     expect(byRaw('Bosnia')?.teamId).toBe(fifa('BIH')?.id);
   });
 
-  it('marks Wales (the only non-qualifier) as did not qualify', () => {
-    const wales = byRaw('Wales');
-    expect(wales?.matched).toBe(false);
-    expect(wales?.teamId).toBeNull();
-    expect(wales?.note).toContain('did not qualify');
+  it("matches Dec's swapped-in Croatia and leaves no dead picks", () => {
+    expect(byRaw('Croatia')?.teamId).toBe(fifa('CRO')?.id);
+    expect(picks.filter((p) => !p.matched)).toEqual([]);
   });
 
   it('leaves nothing truly unmatched', () => {
