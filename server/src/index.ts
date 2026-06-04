@@ -1,26 +1,25 @@
 import 'dotenv/config';
-import cors from 'cors';
-import express from 'express';
-import type { DataSource, HealthResponse } from '@sweepstake/shared';
+import { createApp } from './app';
+import { loadDataset } from './data/dataset';
+import { loadConfig } from './env';
+import { createProvider } from './providers';
+import { createAppStateService } from './services/appState';
 
-const PORT = Number(process.env.PORT ?? 8787);
-const DATA_SOURCE: DataSource = process.env.DATA_SOURCE === 'live' ? 'live' : 'seed';
-const VERSION = '0.0.0';
+const config = loadConfig();
+const dataset = loadDataset();
 
-const app = express();
-app.use(cors());
-app.use(express.json());
-
-app.get('/api/health', (_req, res) => {
-  const body: HealthResponse = {
-    ok: true,
-    dataSource: DATA_SOURCE,
-    lastUpdated: null,
-    version: VERSION,
-  };
-  res.json(body);
+const provider = createProvider(dataset.teams, dataset.matches, {
+  source: config.dataSource,
+  apiKey: config.apiKey,
+  cacheTtlMs: config.cacheTtlMs,
 });
 
-app.listen(PORT, () => {
-  console.log(`[sweepstake] API listening on http://localhost:${PORT} (source=${DATA_SOURCE})`);
+const service = createAppStateService(dataset, provider, config.cacheTtlMs);
+const app = createApp(service, config);
+
+app.listen(config.port, () => {
+  console.log(
+    `[sweepstake] API on http://localhost:${config.port} ` +
+      `(source=${config.dataSource}, teams=${dataset.teams.length}, matches=${dataset.matches.length})`,
+  );
 });
