@@ -1,5 +1,7 @@
 # Implementation Plan
 
+> **Progress:** repo setup ✅ · WP0 scaffold ✅ · next: WP1 / WP2 / WP3 / WP5 (see §8).
+
 ## 1. Goal & MVP scope
 A **local, mobile-first** web app that, for a World Cup 2026 sweepstake, shows **each player’s
 teams and whether they’re still in** as the tournament unfolds, plus a **leaderboard** and a
@@ -17,6 +19,8 @@ with `shared/` holding the domain types + REST contract used by both sides. Full
 [`ARCHITECTURE.md`](./ARCHITECTURE.md); data/rules in [`DATA_AND_RULES.md`](./DATA_AND_RULES.md).
 
 ## 3. Critical path & parallelism
+
+> **WP0 is complete** — the `shared` contract exists, so WP1 / WP2 / WP3 / WP5 can now proceed in parallel.
 ```
 WP0 scaffold + shared contract  ──┬─▶ WP1 data pipeline ─┐
    (unblocks everything)          ├─▶ WP2 engine ────────┼─▶ WP4 API server ─┐
@@ -34,13 +38,14 @@ WP0 scaffold + shared contract  ──┬─▶ WP1 data pipeline ─┐
 Each is sized to be handed to one agent/session. “Done” = acceptance criteria met + types from
 `shared/` only + tests where noted + `lint` clean.
 
-### WP0 — Scaffold & shared contract  ·  *do first, together*
+### WP0 — Scaffold & shared contract  ·  ✅ DONE (commit `64b9d5f`)
 - npm-workspaces monorepo: `shared/`, `server/`, `web/`; root `dev/build/lint/test` scripts;
   `tsconfig.base.json` (strict); ESLint + Prettier; `.gitignore`; `git init`.
 - `shared/src/types.ts` (domain model) + `shared/src/contract.ts` (endpoint paths + req/res shapes).
 - Vite app + Express app that both **boot and compile** against `shared/`; `/api/health` returns ok.
 - **Accept:** `npm install && npm run dev` serves an empty web app that successfully calls
   `/api/health`; `npm run lint && npm run build` pass; `shared` is importable from both.
+- **Done:** verified end-to-end; Tailwind v4 wired in; the `npm run dev` proxy confirmed.
 
 ### WP1 — Data pipeline (CSV → typed model + normalization)  ·  *needs WP0*
 - Loaders for all 5 CSVs → `shared` types (timezone-aware `kickoff_at`); fix match-#100 bug.
@@ -126,7 +131,11 @@ Contracts in `shared/` + MSW mocks are what let A/B/C run concurrently without c
   it, then parallelise A/B/C.
 - Nothing is deployed or sent anywhere; everything runs on your machine.
 
-## 8. Immediate next steps
-1. You: pick the API (or accept football-data.org) and, when ready, create a free account for a key.
-2. Me: on your go-ahead, build **WP0** (git init, workspaces, `shared/` contract, runnable
-   skeleton) and produce the picks mapping report (WP1 start) for your review.
+## 8. Status & next steps
+- ✅ **Repo setup** — git initialized, hygiene + dev environment (commit `c0b3a2e`).
+- ✅ **WP0** — workspaces, shared contract, runnable API + web skeleton, Tailwind v4 (commit `64b9d5f`).
+- ▶️ **Now unblocked (parallelisable):** WP1 data pipeline · WP2 engine · WP3 results provider ·
+  WP5 web shell — all code against the `shared` contract. Suggested first slice: **WP1**
+  (load CSVs + emit the picks mapping report for sign-off) with **WP2** (standings/status engine).
+- ⏳ **From the user:** football-data.org API key when ready (runs in `seed` until then);
+  confirm the scoring rule if it differs from the default.
