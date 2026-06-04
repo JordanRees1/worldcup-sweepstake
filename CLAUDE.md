@@ -27,8 +27,8 @@ player leaderboard, and a tournament bracket view.
 
 ## Project structure (post-WP0)
 - `shared/` — domain types (`src/types.ts`) + REST contract (`src/contract.ts`). **Source of truth.**
-- `server/` — Express API (`src/index.ts`). Data pipeline (`src/data/`), engine (`src/engine/`),
-  and results providers (`src/providers/`) arrive in WP1–WP4.
+- `server/` — Express API (`src/index.ts`). **Data pipeline (`src/data/`, `loadDataset()`) is
+  built and validated**; engine (`src/engine/`) and results providers (`src/providers/`) arrive in WP2–WP4.
 - `web/` — Vite + React + Tailwind app (`src/`). Shell + features arrive in WP5–WP7.
 - `datasets/` — canonical CSVs (unchanged).
 

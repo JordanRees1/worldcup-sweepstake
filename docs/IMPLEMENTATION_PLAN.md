@@ -1,6 +1,6 @@
 # Implementation Plan
 
-> **Progress:** repo setup ✅ · WP0 scaffold ✅ · next: WP1 / WP2 / WP3 / WP5 (see §8).
+> **Progress:** repo setup ✅ · WP0 scaffold ✅ · WP1 data pipeline ✅ · next: WP2 / WP3 / WP5 (see §8).
 
 ## 1. Goal & MVP scope
 A **local, mobile-first** web app that, for a World Cup 2026 sweepstake, shows **each player’s
@@ -20,7 +20,8 @@ with `shared/` holding the domain types + REST contract used by both sides. Full
 
 ## 3. Critical path & parallelism
 
-> **WP0 is complete** — the `shared` contract exists, so WP1 / WP2 / WP3 / WP5 can now proceed in parallel.
+> **WP0 + WP1 are complete** — the `shared` contract and the validated data layer
+> (`loadDataset()`) exist, so WP2 / WP3 / WP5 can now proceed in parallel.
 ```
 WP0 scaffold + shared contract  ──┬─▶ WP1 data pipeline ─┐
    (unblocks everything)          ├─▶ WP2 engine ────────┼─▶ WP4 API server ─┐
@@ -47,7 +48,7 @@ Each is sized to be handed to one agent/session. “Done” = acceptance criteri
   `/api/health`; `npm run lint && npm run build` pass; `shared` is importable from both.
 - **Done:** verified end-to-end; Tailwind v4 wired in; the `npm run dev` proxy confirmed.
 
-### WP1 — Data pipeline (CSV → typed model + normalization)  ·  *needs WP0*
+### WP1 — Data pipeline (CSV → typed model + normalization)  ·  ✅ DONE (commits `e8de619`…`9966689`)
 - Loaders for all 5 CSVs → `shared` types (timezone-aware `kickoff_at`); fix match-#100 bug.
 - Picks normalization (alias map + accent/case-insensitive match + placeholder mapping) →
   `datasets/picks.normalized.json`; generate `docs/PICKS_MAPPING_REPORT.md`.
@@ -55,6 +56,8 @@ Each is sized to be handed to one agent/session. “Done” = acceptance criteri
   per player; no team double-picked; report unmatched + unpicked confirmed teams).
 - **Accept:** loaders unit-tested; report lists every unmatched/contingent pick (the 7 playoff
   picks surfaced, the 6 placeholders identified); invalid data fails loudly with a clear message.
+- **Done:** all 5 CSVs → shared types; picks **48/48** matched (playoffs resolved; Wales→Croatia
+  swap); match-#100 fixed; ISO kickoffs; `loadDataset()` runs `validateDataset()`; 15 tests.
 
 ### WP2 — Tournament engine (pure functions)  ·  *needs WP0; pairs with WP1 fixtures*
 - Group standings from results + configurable tie-break comparator; best-third ranking (top-8).
@@ -134,8 +137,9 @@ Contracts in `shared/` + MSW mocks are what let A/B/C run concurrently without c
 ## 8. Status & next steps
 - ✅ **Repo setup** — git initialized, hygiene + dev environment (commit `c0b3a2e`).
 - ✅ **WP0** — workspaces, shared contract, runnable API + web skeleton, Tailwind v4 (commit `64b9d5f`).
-- ▶️ **Now unblocked (parallelisable):** WP1 data pipeline · WP2 engine · WP3 results provider ·
-  WP5 web shell — all code against the `shared` contract. Suggested first slice: **WP1**
-  (load CSVs + emit the picks mapping report for sign-off) with **WP2** (standings/status engine).
+- ✅ **WP1** — 5 CSVs → typed model; picks normalized 48/48; match-#100 fixed; `loadDataset()`
+  validates referential integrity; mapping report signed off.
+- ▶️ **Now unblocked (parallelisable):** WP2 engine · WP3 results provider · WP5 web shell —
+  all against the `shared` contract; WP2/WP3 build on `loadDataset()`.
 - ⏳ **From the user:** football-data.org API key when ready (runs in `seed` until then);
   confirm the scoring rule if it differs from the default.
