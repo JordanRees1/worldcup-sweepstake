@@ -8,7 +8,8 @@
     "start": "tsx src/index.ts",
     "build": "tsc --noEmit",
     "lint": "eslint .",
-    "report:picks": "tsx src/data/generatePicksReport.ts"
+    "report:picks": "tsx src/data/generatePicksReport.ts",
+    "smoke:provider": "tsx src/scripts/smokeProvider.ts"
   },
   "dependencies": {
     "cors": "^2.8.6",
