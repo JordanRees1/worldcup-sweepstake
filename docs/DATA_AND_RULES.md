@@ -117,8 +117,11 @@ mathematically eliminated. Simplest correct rule for MVP: a team is `alive` unti
 match eliminates it (group: fails to reach top-2/best-third once its group is decided;
 knockout: loses its tie).
 
-### Scoring / leaderboard (PROPOSED — needs user confirmation)
+### Scoring / leaderboard (✅ confirmed)
 Default sort: **(1) teams still alive (desc) → (2) furthest stage reached → (3) points.**
+**Plus a separate tracked metric — total goal difference:** the sum of each of a player's teams'
+goal differences (across the matches they've played), surfaced as `PlayerSummary.goalDifference`
+and displayed alongside points. Not currently a tie-breaker.
 Proposed points per team by furthest stage reached:
 `Group 0 · R32 1 · R16 2 · QF 4 · SF 6 · Final 8 · Champion 12` (summed across a player’s teams).
 Open question for the user: is the sweepstake “**owner of the winning team wins**”, a

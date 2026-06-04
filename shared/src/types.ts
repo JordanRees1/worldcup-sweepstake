@@ -158,6 +158,8 @@ export interface PlayerSummary {
   aliveCount: number;
   furthestStage: StageName | 'Did Not Qualify';
   points: number;
+  /** Separate tracked metric: sum of this player's teams' goal differences. */
+  goalDifference: number;
   teams: PlayerTeam[];
 }
 

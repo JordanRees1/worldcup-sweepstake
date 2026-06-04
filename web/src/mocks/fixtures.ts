@@ -39,6 +39,7 @@ function makePlayer(
   name: string,
   rank: number,
   points: number,
+  goalDifference: number,
   furthestStage: StageName | 'Did Not Qualify',
   teams: PlayerTeam[],
 ): PlayerSummary {
@@ -48,42 +49,43 @@ function makePlayer(
     aliveCount: teams.filter((t) => t.status.alive).length,
     furthestStage,
     points,
+    goalDifference,
     teams,
   };
 }
 
 const leaderboard: PlayerSummary[] = [
-  makePlayer(5, 'Jordan', 1, 14, 'Quarterfinals', [
+  makePlayer(5, 'Jordan', 1, 14, 7, 'Quarterfinals', [
     pt(mkTeam('Spain', 'ESP', 'H'), 'alive', 'Quarterfinals'),
     pt(mkTeam('Brazil', 'BRA', 'C'), 'alive', 'Quarterfinals'),
     pt(mkTeam('Portugal', 'POR', 'K'), 'eliminated', 'Round of 16'),
     pt(mkTeam('Mexico', 'MEX', 'A'), 'upcoming', 'Group Stage'),
   ]),
-  makePlayer(2, 'Henri', 2, 10, 'Round of 16', [
+  makePlayer(2, 'Henri', 2, 10, 4, 'Round of 16', [
     pt(mkTeam('Argentina', 'ARG', 'J'), 'alive', 'Round of 16'),
     pt(mkTeam('Germany', 'GER', 'E'), 'alive', 'Round of 16'),
     pt(mkTeam('Japan', 'JPN', 'F'), 'eliminated', 'Group Stage'),
     pt(mkTeam('Belgium', 'BEL', 'G'), 'upcoming', 'Group Stage'),
   ]),
-  makePlayer(3, 'Will', 3, 7, 'Round of 16', [
+  makePlayer(3, 'Will', 3, 7, 2, 'Round of 16', [
     pt(mkTeam('England', 'ENG', 'L'), 'alive', 'Round of 16'),
     pt(mkTeam('Netherlands', 'NED', 'F'), 'eliminated', 'Round of 16'),
     pt(mkTeam('Uruguay', 'URU', 'H'), 'eliminated', 'Group Stage'),
     pt(mkTeam('Croatia', 'CRO', 'L'), 'upcoming', 'Group Stage'),
   ]),
-  makePlayer(1, 'Rogan', 4, 6, 'Round of 16', [
+  makePlayer(1, 'Rogan', 4, 6, 1, 'Round of 16', [
     pt(mkTeam('Colombia', 'COL', 'K'), 'alive', 'Round of 16'),
     pt(mkTeam('Ecuador', 'ECU', 'E'), 'eliminated', 'Group Stage'),
     pt(mkTeam('Egypt', 'EGY', 'G'), 'eliminated', 'Group Stage'),
     pt(mkTeam('South Korea', 'KOR', 'A'), 'upcoming', 'Group Stage'),
   ]),
-  makePlayer(4, 'Dec', 5, 3, 'Round of 16', [
+  makePlayer(4, 'Dec', 5, 3, -3, 'Round of 16', [
     pt(mkTeam('Senegal', 'SEN', 'I'), 'eliminated', 'Round of 16'),
     pt(mkTeam('Sweden', 'SWE', 'F'), 'eliminated', 'Group Stage'),
     pt(mkTeam('Algeria', 'ALG', 'J'), 'upcoming', 'Group Stage'),
     pt(mkTeam('Cabo Verde', 'CPV', 'H'), 'eliminated', 'Group Stage'),
   ]),
-  makePlayer(6, 'James', 6, 1, 'Group Stage', [
+  makePlayer(6, 'James', 6, 1, -6, 'Group Stage', [
     pt(mkTeam('USA', 'USA', 'D'), 'eliminated', 'Group Stage'),
     pt(mkTeam('Canada', 'CAN', 'B'), 'eliminated', 'Group Stage'),
     pt(mkTeam('Wales', 'WAL', null), 'did_not_qualify', 'Did Not Qualify'),

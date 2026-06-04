@@ -30,7 +30,10 @@ export function PlayersScreen() {
                 <span className="font-semibold text-brand-400">{entry.aliveCount}</span> alive ·{' '}
                 {entry.points} pts
               </p>
-              <p>{entry.furthestStage}</p>
+              <p>
+                {entry.furthestStage} · GD {entry.goalDifference >= 0 ? '+' : ''}
+                {entry.goalDifference}
+              </p>
             </div>
           </header>
 
