@@ -73,7 +73,11 @@ export function BracketScreen() {
   // but at the Semifinals you might see four players still in.
   const stageOrd = currentStage ? stageRank(currentStage) : -1;
   const teamsAtStage = (p: PlayerSummary): number =>
-    p.teams.filter((t) => stageRank(t.status.furthestStage) >= stageOrd || t.status.alive).length;
+    p.teams.filter(
+      (t) =>
+        (t.status.outcome !== 'eliminated' && t.status.outcome !== 'did_not_qualify') ||
+        stageRank(t.status.furthestStage) >= stageOrd,
+    ).length;
 
   // Sort: players still in at the selected stage first, then by overall rank.
   const sortedPlayers = [...(playersData?.players ?? [])].sort((a, b) => {
