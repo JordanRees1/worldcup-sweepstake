@@ -5,6 +5,7 @@ import type {
   BracketResponse,
   HealthResponse,
   Match,
+  MatchesResponse,
   OverviewResponse,
   PlayerSummary,
   PlayersResponse,
@@ -145,6 +146,24 @@ const mkMatch = (id: number, label: string, kickoffAt: string, stage: StageName)
   awayTeamId: null,
   status: 'scheduled',
 });
+
+// A handful of R32 knockout matches for offline dev
+const knockoutMatches: Match[] = [
+  mkMatch(73, '2A vs 2B', '2026-06-28T22:00:00-07:00', 'Round of 32'),
+  mkMatch(74, '1C vs 2F', '2026-06-29T18:00:00-05:00', 'Round of 32'),
+  mkMatch(75, '1E vs 3ABCDF', '2026-06-29T20:30:00-04:00', 'Round of 32'),
+  mkMatch(76, '1F vs 2C', '2026-06-30T03:00:00-06:00', 'Round of 32'),
+  mkMatch(89, 'W73 vs W75', '2026-07-04T18:00:00-05:00', 'Round of 16'),
+  mkMatch(90, 'W74 vs W77', '2026-07-04T22:00:00-04:00', 'Round of 16'),
+  mkMatch(97, 'W89 vs W90', '2026-07-09T21:00:00-04:00', 'Quarterfinals'),
+  mkMatch(101, 'W97 vs W98', '2026-07-14T20:00:00-05:00', 'Semifinals'),
+  mkMatch(103, 'RU101 vs RU102', '2026-07-18T22:00:00-04:00', 'Third Place Playoff'),
+  mkMatch(104, 'W101 vs W102', '2026-07-19T20:00:00-04:00', 'Final'),
+];
+
+export const matchesFixture: MatchesResponse = {
+  matches: knockoutMatches,
+};
 
 export const scheduleFixture: ScheduleResponse = {
   days: [

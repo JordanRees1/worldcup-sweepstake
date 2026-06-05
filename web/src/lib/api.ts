@@ -5,6 +5,8 @@ import {
   type BracketResponse,
   type GroupsResponse,
   type HealthResponse,
+  type Match,
+  type MatchesResponse,
   type OverviewResponse,
   type PlayerDetailResponse,
   type PlayersResponse,
@@ -52,6 +54,9 @@ export const useTeams = () =>
 export const useGroups = () =>
   useQuery({ queryKey: ['groups'], queryFn: () => fetchJson<GroupsResponse>(API_ROUTES.groups) });
 
+export const useAllMatches = () =>
+  useQuery({ queryKey: ['matches'], queryFn: () => fetchJson<MatchesResponse>(API_ROUTES.matches) });
+
 export const usePlayerDetail = (id: number) =>
   useQuery({
     queryKey: ['player', id],
@@ -59,12 +64,22 @@ export const usePlayerDetail = (id: number) =>
     enabled: Number.isInteger(id) && id > 0,
   });
 
-/** Memoized teamId → Team lookup, derived from /api/teams (used by Groups + fixtures). */
+/** Memoized teamId → Team lookup, derived from /api/teams. */
 export function useTeamMap(): Map<number, Team> {
   const { data } = useTeams();
   return useMemo(() => {
     const map = new Map<number, Team>();
     for (const { team } of data?.teams ?? []) map.set(team.id, team);
+    return map;
+  }, [data]);
+}
+
+/** Memoized matchId → Match lookup for score/time cross-referencing in the bracket. */
+export function useMatchMap(): Map<number, Match> {
+  const { data } = useAllMatches();
+  return useMemo(() => {
+    const map = new Map<number, Match>();
+    for (const m of data?.matches ?? []) map.set(m.id, m);
     return map;
   }, [data]);
 }
