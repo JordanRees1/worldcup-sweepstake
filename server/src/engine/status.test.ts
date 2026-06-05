@@ -116,6 +116,28 @@ describe('computeTeamStatuses', () => {
     expect(statuses.get(3)?.outcome).toBe('alive');
   });
 
+  it('marks teams alive mid-group-stage once they have played (group not yet decided)', () => {
+    // 3 of 6 group matches played — group NOT decided, but all 4 teams have played
+    const partial: Match[] = [gm(1, 1, 2, 2, 0), gm(2, 3, 4, 1, 1), gm(3, 1, 3, 1, 0)];
+    const statuses = buildStatuses(groupTeams, partial);
+    expect([1, 2, 3, 4].map((id) => statuses.get(id)?.outcome)).toEqual([
+      'alive',
+      'alive',
+      'alive',
+      'alive',
+    ]);
+    expect(statuses.get(1)?.alive).toBe(true);
+  });
+
+  it('keeps a team upcoming until it has played, mid-group-stage', () => {
+    // Only one match played — teams 3 and 4 have not kicked off yet
+    const statuses = buildStatuses(groupTeams, [gm(1, 1, 2, 2, 0)]);
+    expect(statuses.get(1)?.outcome).toBe('alive');
+    expect(statuses.get(2)?.outcome).toBe('alive');
+    expect(statuses.get(3)?.outcome).toBe('upcoming');
+    expect(statuses.get(4)?.outcome).toBe('upcoming');
+  });
+
   it('knockout win advances a team; knockout loss eliminates', () => {
     // T1 and T2 qualify from group, then play each other in R32
     const allMatches: Match[] = [

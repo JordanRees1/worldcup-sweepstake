@@ -25,9 +25,10 @@ function makeStatus(teamId: number): TeamStatus {
 /**
  * Compute TeamStatus for every team from the current match state.
  *
- * - Group stage: teams become alive/eliminated once their group is decided.
- *   Rank-3 teams remain alive until all 12 groups are decided, at which point
- *   the best-8 rule is applied.
+ * - Group stage: a team that has played at least one match is alive (still in contention).
+ *   Once a group is fully decided, the 4th-placed team (and non-qualifying 3rd) is eliminated.
+ *   Rank-3 teams remain alive until all 12 groups are decided, at which point the best-8
+ *   rule is applied.
  * - Knockout: finished matches set the winner (alive/champion) and loser (eliminated).
  *   Scheduled/live matches with resolved team IDs set `nextMatchId`.
  */
@@ -50,8 +51,17 @@ export function computeTeamStatuses(
   const qualifyingThirdIds = new Set(qualifyingThirds.map((t) => t.row.teamId));
 
   for (const table of groupTables) {
-    if (!decidedGroups.has(table.group)) continue;
-    for (const { teamId, rank } of table.rows) {
+    const isDecided = decidedGroups.has(table.group);
+    for (const row of table.rows) {
+      const { teamId, rank, played } = row;
+
+      if (!isDecided) {
+        // In-progress group: a team that has kicked off at least one match is alive.
+        // Teams yet to play stay 'upcoming' (the default).
+        if (played > 0) set(teamId, { outcome: 'alive', alive: true });
+        continue;
+      }
+
       if (rank === 1 || rank === 2) {
         set(teamId, { outcome: 'alive', alive: true });
       } else if (rank === 4) {
@@ -59,12 +69,12 @@ export function computeTeamStatuses(
       } else {
         // rank === 3: alive (pending) until all 12 groups are decided
         if (allGroupsComplete) {
-          const qualifies = qualifyingThirdIds.has(teamId);
-          if (qualifies) {
-            set(teamId, { outcome: 'alive', alive: true });
-          } else {
-            set(teamId, { outcome: 'eliminated', eliminatedAtStage: 'Group Stage' });
-          }
+          set(
+            teamId,
+            qualifyingThirdIds.has(teamId)
+              ? { outcome: 'alive', alive: true }
+              : { outcome: 'eliminated', eliminatedAtStage: 'Group Stage' },
+          );
         } else {
           set(teamId, { outcome: 'alive', alive: true });
         }

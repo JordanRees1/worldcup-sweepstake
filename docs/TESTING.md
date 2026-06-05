@@ -9,3 +9,7 @@ UF2: In the bracket tab now, we have implemented the crossing out of players tha
 UF3: like what happens with the bracket, it would be good on the schedule tab to open up to the point that we are in. Let's say the date is the 21st of June. I would expect to see that at the top of the screen, and it'd be filtered down automatically to that point. Also, it may be helpful to have the games and days that are in the past be slightly duller in color, just to make it obvious to the user where we are against the schedule.
 
 UF4: Issues in npm to group-stage, see results in the group groups standing tables. However, in the player leaderboards, everything is showing as upcoming and no points have been awarded. I can see the GD. In the brackets page, it looks like all players are crossed out, even though at the group stage everyone is still in.
+
+UP5: When launching the nom server we get a error: Emitted 'error' event on Server instance at:
+[api] at emitErrorNT (node:net:1973:8)
+[api] at process.processTicksAndRejections (node:internal/process/task_queues:90:21)
