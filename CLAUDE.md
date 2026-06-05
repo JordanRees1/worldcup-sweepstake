@@ -4,10 +4,10 @@ A mobile-first **local** web app to track a FIFA World Cup 2026 sweepstake: who 
 which national teams, which teams are still alive as the tournament progresses, a
 player leaderboard, and a tournament bracket view.
 
-> **Status: WP0 complete — scaffolded & runnable.** `npm install && npm run dev` starts the
-> API (`:8787`) and web (`:5173`) together. Next up: WP1 data pipeline, WP2 engine, WP3
-> results provider, WP5 web shell. Plan in `docs/IMPLEMENTATION_PLAN.md`; day-to-day dev in
-> `docs/DEVELOPMENT.md`.
+> **Status: WP0–WP7 complete + user-testing fixes (UF1–UF4, UP5).** `npm install && npm run dev` starts the
+> API (`:8787`) and web (`:5173`) together. Use `npm run dev:group-stage / dev:quarters / dev:final`
+> for demo scenarios. Remaining: WP8 polish (README ✅, edge cases, a11y). Plan in
+> `docs/IMPLEMENTATION_PLAN.md`; day-to-day dev in `docs/DEVELOPMENT.md`.
 
 ## Stack (decided)
 - **Frontend:** React + Vite + TypeScript + **Tailwind v4**. Mobile-first, iPhone 12–17 ratios.

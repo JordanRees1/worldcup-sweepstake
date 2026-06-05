@@ -1,47 +1,89 @@
-# Sweepstake — World Cup 2026 Sweepstake Monitor
+# World Cup 2026 Sweepstake
 
-A mobile-first **local** web app to track a FIFA World Cup 2026 sweepstake: each player's
-teams, which of them are still alive as the tournament unfolds, a leaderboard, and a
-tournament bracket.
+A mobile-first local web app for tracking a 6-player FIFA World Cup 2026 sweepstake. Each player owns 8 national teams; the app shows who's still alive as the tournament unfolds, a live leaderboard, group standings, fixture schedule, and a knockout bracket.
 
-> **Status: WP0 complete.** The workspaces are scaffolded and the app runs. The player
-> table, leaderboard and bracket are built in later work packages — see
-> [`docs/IMPLEMENTATION_PLAN.md`](./docs/IMPLEMENTATION_PLAN.md).
+Runs entirely on your laptop — no deployment, no accounts. Results come from **football-data.org** (live) or pre-built scenario files (demo/offline).
 
 ## Prerequisites
-- **Node 22** — pinned via [`.nvmrc`](./.nvmrc); with nvm installed, run `nvm use`
-- **npm 10+** (ships with Node 22)
+
+- **Node ≥22** (Node 22, 24, or 26 all work — pinned to 22 in `.nvmrc` but not enforced)
+- **npm 10+** (ships with Node 22+)
 
 ## Getting started
-```bash
-npm install        # install all workspaces
-npm run dev        # web on http://localhost:5173, API on http://localhost:8787
-```
-Open http://localhost:5173 on a phone-sized viewport. The app runs in offline **seed** mode
-(`DATA_SOURCE=seed`) by default — no football-API key is needed before kickoff. To use live
-results later, copy `server/.env.example` → `server/.env` and add a key.
 
-## Useful commands
+```bash
+npm install
+npm run dev
+```
+
+Open **http://localhost:5173** — the app is designed for mobile (390×844); resize your browser or use DevTools device emulation.
+
+The app starts in offline **seed mode** (`DATA_SOURCE=seed`) — no API key needed, all matches show as upcoming.
+
+## Demo scenarios
+
+To see the app at different tournament stages without a live API key:
+
+```bash
+npm run dev:group-stage   # Matchday 1+2 done — partial standings, everyone alive
+npm run dev:quarters      # Groups + R32 + R16 done — 8 teams left in QFs
+npm run dev:final         # SFs + 3rd-place done — Mexico vs Tunisia in the Final
+```
+
+## Live results
+
+1. Create a free account at [football-data.org](https://www.football-data.org) and copy your API key
+2. Copy the example env file and add your key:
+   ```bash
+   cp server/.env.example server/.env
+   # then edit server/.env and set FOOTBALL_API_KEY=your_key_here
+   ```
+3. Set `DATA_SOURCE=live` in `server/.env`
+4. `npm run dev`
+
+The API is rate-limited to 10 calls/minute on the free tier; the server caches responses (default TTL 60s) and falls back to stale data if the API is temporarily unavailable.
+
+## Commands
+
 | Command | What it does |
-|---------|--------------|
-| `npm run dev` | API + web together (Vite proxies `/api` → server) |
+|---|---|
+| `npm run dev` | API (`:8787`) + web (`:5173`) together |
+| `npm run dev:group-stage` | Demo: matchday 1+2 complete |
+| `npm run dev:quarters` | Demo: through Round of 16 |
+| `npm run dev:final` | Demo: Mexico vs Tunisia final |
 | `npm run build` | Typecheck all workspaces + production web build |
-| `npm run lint` | ESLint across the repo |
-| `npm run test` | Vitest |
-| `npm run format` | Prettier write |
+| `npm run test` | Vitest (86 tests) |
+| `npm run lint` | ESLint |
+| `npm run generate:scenarios` | Regenerate the demo scenario files |
+
+## The sweepstake
+
+6 players, 8 teams each:
+
+| Player | Teams |
+|---|---|
+| Rogan | Scotland, Ecuador, Australia, Egypt, Colombia, Netherlands, South Africa, South Korea |
+| Henri | Tunisia, Paraguay, Japan, Belgium, Switzerland, Germany, Norway, Argentina |
+| Will | Côte d'Ivoire, Curaçao, Uruguay, Haiti, England, Croatia, Uzbekistan, New Zealand |
+| Dec | Senegal, Jordan, Sweden, Croatia†, Brazil, Türkiye, Cabo Verde, Algeria |
+| Jordan | Portugal, Spain, Morocco, IR Iran, Mexico, Ghana, France, Czechia |
+| James | Austria, Iraq, Saudi Arabia, Qatar, Canada, Panama, Bosnia and Herzegovina, USA |
+
+† Dec originally picked Wales (did not qualify); Croatia swapped in as the unowned team.
 
 ## Project layout
-| Path         | What it is                                                        |
-|--------------|-------------------------------------------------------------------|
-| `datasets/`  | Canonical CSVs — the tournament **structure** (teams, fixtures…)   |
-| `shared/`    | `@sweepstake/shared`: domain types + REST contract                |
-| `server/`    | Thin Express API: hides the API key, computes status/leaderboard  |
-| `web/`       | React + Vite + Tailwind mobile app                                |
-| `docs/`      | Plan, architecture, data & rules, development guide               |
-| `CLAUDE.md`  | Conventions for contributors and AI agents                        |
+
+| Path | What it is |
+|---|---|
+| `datasets/` | Canonical CSVs — tournament structure (teams, fixtures, venues) |
+| `shared/` | `@sweepstake/shared`: domain types + REST contract (source of truth) |
+| `server/` | Express API: data pipeline, engine, results provider, all routes |
+| `web/` | React + Vite + Tailwind v4 mobile app |
+| `docs/` | Architecture, data rules, development guide, agent handoff |
 
 ## Docs
-- [`docs/IMPLEMENTATION_PLAN.md`](./docs/IMPLEMENTATION_PLAN.md) — work packages & sequencing
-- [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md) — structure, data flow, REST contract
-- [`docs/DATA_AND_RULES.md`](./docs/DATA_AND_RULES.md) — datasets, normalization, 2026 rules
-- [`docs/DEVELOPMENT.md`](./docs/DEVELOPMENT.md) — everyday dev workflow and feature recipes
+
+- [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md) — data flow, REST contract, env config
+- [`docs/DATA_AND_RULES.md`](./docs/DATA_AND_RULES.md) — datasets, normalization, 2026 tournament rules
+- [`docs/DEVELOPMENT.md`](./docs/DEVELOPMENT.md) — everyday commands and feature recipes
+- [`CLAUDE.md`](./CLAUDE.md) — conventions for contributors and AI agents
