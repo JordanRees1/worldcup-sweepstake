@@ -93,7 +93,7 @@ describe('response builders (seed)', () => {
 describe('currentStage — next round still to be played', () => {
   const mk = (stage: StageName, stageOrder: number, status: Match['status'], kickoffAt: string): Match =>
     ({ stage, stageOrder, status, kickoffAt }) as unknown as Match;
-  const stageFor = (matches: Match[]): StageName =>
+  const stageFor = (matches: Match[]) =>
     buildOverview({ matches, leaderboard: [], dataSource: 'seed' } as unknown as AppState).currentStage;
 
   it('pre-kickoff: everything scheduled → Group Stage', () => {
