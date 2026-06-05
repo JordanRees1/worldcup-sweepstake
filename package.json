@@ -22,14 +22,15 @@
     "test": "vitest run --passWithNoTests",
     "report:picks": "npm run report:picks -w @sweepstake/server",
     "generate:scenarios": "tsx server/src/data/generateScenarios.ts",
-    "dev:group-stage": "SEED_SCENARIO=group-stage concurrently -k -n api,web -c blue,magenta \"npm:dev:server\" \"npm:dev:web\"",
-    "dev:quarters": "SEED_SCENARIO=quarterfinals concurrently -k -n api,web -c blue,magenta \"npm:dev:server\" \"npm:dev:web\"",
-    "dev:final": "SEED_SCENARIO=final concurrently -k -n api,web -c blue,magenta \"npm:dev:server\" \"npm:dev:web\""
+    "dev:group-stage": "cross-env SEED_SCENARIO=group-stage concurrently -k -n api,web -c blue,magenta \"npm:dev:server\" \"npm:dev:web\"",
+    "dev:quarters": "cross-env SEED_SCENARIO=quarterfinals concurrently -k -n api,web -c blue,magenta \"npm:dev:server\" \"npm:dev:web\"",
+    "dev:final": "cross-env SEED_SCENARIO=final concurrently -k -n api,web -c blue,magenta \"npm:dev:server\" \"npm:dev:web\""
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@types/node": "^25.9.1",
     "concurrently": "^10.0.3",
+    "cross-env": "^10.1.0",
     "eslint": "^10.4.1",
     "globals": "^17.6.0",
     "prettier": "^3.8.3",
