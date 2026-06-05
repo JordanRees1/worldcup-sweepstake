@@ -3,6 +3,7 @@
 > **Progress:** WP0–WP7 all ✅ · remaining: WP8 polish/QA/README (see §8).
 
 ## 1. Goal & MVP scope
+
 A **local, mobile-first** web app that, for a World Cup 2026 sweepstake, shows **each player’s
 teams and whether they’re still in** as the tournament unfolds, plus a **leaderboard** and a
 **bracket** view. Data structure comes from the existing CSVs; live results come from a football
@@ -14,6 +15,7 @@ draw, editing data in-app, push notifications, multi-tournament support, deploym
 **Later:** radial “final-in-the-centre” bracket; richer live (minute-by-minute) updates.
 
 ## 2. Architecture at a glance
+
 React+Vite (web) ⟶ thin Express API (server) ⟶ pure engine + `ResultsProvider` (seed|live),
 with `shared/` holding the domain types + REST contract used by both sides. Full detail in
 [`ARCHITECTURE.md`](./ARCHITECTURE.md); data/rules in [`DATA_AND_RULES.md`](./DATA_AND_RULES.md).
@@ -22,6 +24,7 @@ with `shared/` holding the domain types + REST contract used by both sides. Full
 
 > **WP0 + WP1 are complete** — the `shared` contract and the validated data layer
 > (`loadDataset()`) exist, so WP2 / WP3 / WP5 can now proceed in parallel.
+
 ```
 WP0 scaffold + shared contract  ──┬─▶ WP1 data pipeline ─┐
    (unblocks everything)          ├─▶ WP2 engine ────────┼─▶ WP4 API server ─┐
@@ -29,6 +32,7 @@ WP0 scaffold + shared contract  ──┬─▶ WP1 data pipeline ─┐
                                   └─▶ WP5 web shell + mocks ─────────────────┴─▶ WP7 bracket view
                                                                                   WP8 polish/QA (cross-cutting)
 ```
+
 - **WP0 must land first** — it defines `shared/` types + the REST contract everyone codes against.
 - Then **WP1, WP2, WP3, WP5 run in parallel** (WP5 uses MSW mocks of the contract, so the web
   team never waits for the server).
@@ -36,10 +40,12 @@ WP0 scaffold + shared contract  ──┬─▶ WP1 data pipeline ─┐
 - **WP8** runs alongside from the moment there’s something to test.
 
 ## 4. Work packages
+
 Each is sized to be handed to one agent/session. “Done” = acceptance criteria met + types from
 `shared/` only + tests where noted + `lint` clean.
 
-### WP0 — Scaffold & shared contract  ·  ✅ DONE (commit `64b9d5f`)
+### WP0 — Scaffold & shared contract · ✅ DONE (commit `64b9d5f`)
+
 - npm-workspaces monorepo: `shared/`, `server/`, `web/`; root `dev/build/lint/test` scripts;
   `tsconfig.base.json` (strict); ESLint + Prettier; `.gitignore`; `git init`.
 - `shared/src/types.ts` (domain model) + `shared/src/contract.ts` (endpoint paths + req/res shapes).
@@ -48,7 +54,8 @@ Each is sized to be handed to one agent/session. “Done” = acceptance criteri
   `/api/health`; `npm run lint && npm run build` pass; `shared` is importable from both.
 - **Done:** verified end-to-end; Tailwind v4 wired in; the `npm run dev` proxy confirmed.
 
-### WP1 — Data pipeline (CSV → typed model + normalization)  ·  ✅ DONE (commits `e8de619`…`9966689`)
+### WP1 — Data pipeline (CSV → typed model + normalization) · ✅ DONE (commits `e8de619`…`9966689`)
+
 - Loaders for all 5 CSVs → `shared` types (timezone-aware `kickoff_at`); fix match-#100 bug.
 - Picks normalization (alias map + accent/case-insensitive match + placeholder mapping) →
   `datasets/picks.normalized.json`; generate `docs/PICKS_MAPPING_REPORT.md`.
@@ -59,7 +66,8 @@ Each is sized to be handed to one agent/session. “Done” = acceptance criteri
 - **Done:** all 5 CSVs → shared types; picks **48/48** matched (playoffs resolved; Wales→Croatia
   swap); match-#100 fixed; ISO kickoffs; `loadDataset()` runs `validateDataset()`; 15 tests.
 
-### WP2 — Tournament engine (pure functions)  ·  ✅ DONE (commit `4f9a1b5`)
+### WP2 — Tournament engine (pure functions) · ✅ DONE (commit `4f9a1b5`)
+
 - Group standings from results + configurable tie-break comparator; best-third ranking (top-8).
 - Knockout resolution by following label encodings (`W##`, `RU##`, positional R32 slots);
   consume API-resolved slots when available, else compute what’s possible.
@@ -71,7 +79,8 @@ Each is sized to be handed to one agent/session. “Done” = acceptance criteri
   (upcoming→alive/eliminated/champion), `buildLeaderboard` (sorted: alive ↓ → stage ↓ → pts ↓
   → GD ↓), `DEFAULT_SCORING` (confirmed), `computeTeamGoalDifferences`. 48 tests, 8 files.
 
-### WP3 — Results provider (seed + live)  ·  ✅ DONE (commit `8060ebf`)
+### WP3 — Results provider (seed + live) · ✅ DONE (commit `8060ebf`)
+
 - `ResultsProvider` interface; `seedProvider` (CSV + optional `datasets/results.seed.csv`);
   `footballApiProvider` (chosen vendor) with caching (TTL), retry/backoff, and seed fallback.
 - `fixtureMatch`: reconcile vendor fixtures → our match IDs (stage+date+team codes; maintained
@@ -83,7 +92,8 @@ Each is sized to be handed to one agent/session. “Done” = acceptance criteri
   URY→URU; in-memory TTL cache + retry/backoff + stale-cache fallback. Live smoke test: all
   72 group matches resolve correctly. `DATA_SOURCE=live` wired via `createProvider`.
 
-### WP4 — Backend API server  ·  ✅ DONE (commit `66fdf97`)
+### WP4 — Backend API server · ✅ DONE (commit `66fdf97`)
+
 - Express routes for every endpoint in the contract; a `services/` layer that composes
   load→results→engine into the app-shaped responses; response caching; CORS for local dev;
   consistent error envelope; `/api/health` reports `dataSource` + `lastUpdated`.
@@ -93,7 +103,8 @@ Each is sized to be handed to one agent/session. “Done” = acceptance criteri
   endpoints, CORS, async error envelope, 404) + `createApp` factory. 28 tests incl. in-process
   HTTP integration; all endpoints verified against the running server in seed mode.
 
-### WP5 — Web shell, design system & data layer  ·  ✅ DONE (commit `eb6e7b9`)
+### WP5 — Web shell, design system & data layer · ✅ DONE (commit `eb6e7b9`)
+
 - Vite app shell: mobile-first layout, bottom-tab nav (Players · Bracket · Schedule), theme
   tokens (colours/spacing/typography), `StatusChip`, `TeamRow`, `Crest`, loading/empty/error/stale.
 - Typed API client + React Query hooks importing `shared/contract`; **MSW** handlers so the UI
@@ -104,7 +115,8 @@ Each is sized to be handed to one agent/session. “Done” = acceptance criteri
   tabs, Tailwind v4 `@theme`, StatusChip/TeamRow/Crest, React Query hooks, MSW mocks of every
   endpoint; verified rendering at 375×812. `VITE_MOCKS=off` hits the real API.
 
-### WP6 — Player views & leaderboard (CORE)  ·  ✅ DONE (commit `3dab5c3`)
+### WP6 — Player views & leaderboard (CORE) · ✅ DONE (commit `3dab5c3`)
+
 - Leaderboard (ranked players, alive-count, furthest stage); player card → team status table;
   team detail (its fixtures/result). Clear at-a-glance alive vs out (colour **and** label/icon).
 - **Accept:** from `/api/overview` + `/api/players/:id`, a non-technical user can tell in seconds
@@ -113,7 +125,8 @@ Each is sized to be handed to one agent/session. “Done” = acceptance criteri
   group standings screen (12 tables, top-2 highlighted), FixtureRow component with team
   highlighting, real API by default (`VITE_MOCKS=on` to use mocks). Verified via screenshots.
 
-### WP7 — Bracket view  ·  ✅ DONE (commit `0429591`)
+### WP7 — Bracket view · ✅ DONE (commit `0429591`)
+
 - **Phase A (MVP):** readable vertical bracket, swipe/segment by round; tap a tie for detail;
   highlight the teams owned by a selected player.
 - **Phase B (enhancement):** radial “group stages outside → final in the centre” layout.
@@ -123,28 +136,31 @@ Each is sized to be handed to one agent/session. “Done” = acceptance criteri
   `BracketMatchCard` (team name+crest or label fragment, score or kickoff time, winner/loser
   styling). `useMatchMap` hook cross-references kickoff times. Verified via preview screenshots.
 
-### WP8 — QA, accessibility, performance & docs  ·  *cross-cutting*
+### WP8 — QA, accessibility, performance & docs · _cross-cutting_
+
 - Test coverage for engine + data; a11y pass (contrast, focus, non-colour status, tap targets);
   perf (no layout shift, cached data); `README.md` with newcomer run steps + screenshots.
 - **Accept:** `lint`+`test`+`build` green; README lets a fresh clone run the app in seed mode in
   one command; documented how to switch to live with a key.
 
 ## 5. Suggested agent assignments
+
 A measured split that minimises integration churn (you can also do these sequentially with me):
+
 - **Agent A — Data & Engine:** WP1 + WP2 (shared domain mindset, pure/testable).
 - **Agent B — Server & Integration:** WP3 + WP4 (provider, API, vendor reconciliation).
 - **Agent C — Web:** WP5 + WP6, then WP7 Phase A (mobile UI).
 - **WP0** and **WP8** stay with the orchestrator (me) for shared contracts and final integration.
-Contracts in `shared/` + MSW mocks are what let A/B/C run concurrently without colliding.
+  Contracts in `shared/` + MSW mocks are what let A/B/C run concurrently without colliding.
 
 ## 6. Open decisions (need the user)
-1. **Football API + key.** Recommend **football-data.org** (free tier, simple `X-Auth-Token`,
-   covers the World Cup; good for post-match results) — or **API-Football** for richer live data.
-   We’ll confirm 2026 coverage when wiring WP3; `seed` mode covers all dev until then.
-2. **Scoring rule.** Confirm the proposed default (DATA_AND_RULES §5) or give your league’s rule.
+
+1. **Football API + key.** - ✅ done (football-data.org X-Auth-Token provided `seed` mode covers all dev until then.)
+2. **Scoring rule.** ✅ done (defaults accepted and added goal difference.)
 3. **Picks report sign-off** — ✅ done (playoffs resolved; Wales→Croatia swap; 48/48 matched).
 
 ## 7. How we’ll work (new to Claude Code)
+
 - I edit files directly; you see each change as a diff in the chat and can open the same folder
   in **VS Code** side-by-side (Claude Code and VS Code share the working tree — no conflict).
 - To run things I use the terminal for you (e.g. `npm run dev`); I’ll report output and errors.
@@ -154,6 +170,7 @@ Contracts in `shared/` + MSW mocks are what let A/B/C run concurrently without c
 - Nothing is deployed or sent anywhere; everything runs on your machine.
 
 ## 8. Status & next steps
+
 - ✅ **Repo setup** — git initialized, hygiene + dev environment (commit `c0b3a2e`).
 - ✅ **WP0** — workspaces, shared contract, runnable API + web skeleton, Tailwind v4 (commit `64b9d5f`).
 - ✅ **WP1** — 5 CSVs → typed model; picks normalized 48/48; match-#100 fixed; `loadDataset()`

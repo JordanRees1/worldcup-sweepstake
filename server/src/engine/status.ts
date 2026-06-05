@@ -84,11 +84,28 @@ export function computeTeamStatuses(
     if (ms === 'finished' && result?.winnerTeamId != null) {
       const winner = result.winnerTeamId;
       const loser = home === winner ? away : home;
-      const winnerOutcome: TeamOutcome = id === FINAL_MATCH_ID ? 'champion' : 'alive';
+
+      // Determine winner outcome. Third Place Playoff winner is done (can't win the
+      // sweepstake); the winner earns 6 pts via furthestStage but alive = false.
+      const isFinal = id === FINAL_MATCH_ID;
+      const isThirdPlace = stage === 'Third Place Playoff';
+
+      let winnerOutcome: TeamOutcome;
+      let winnerAlive: boolean;
+      if (isFinal) {
+        winnerOutcome = 'champion';
+        winnerAlive = true;
+      } else if (isThirdPlace) {
+        winnerOutcome = 'eliminated';
+        winnerAlive = false;
+      } else {
+        winnerOutcome = 'alive';
+        winnerAlive = true;
+      }
 
       set(winner, {
         outcome: winnerOutcome,
-        alive: true,
+        alive: winnerAlive,
         furthestStage: stage as StageName,
         nextMatchId: undefined,
       });
@@ -99,10 +116,13 @@ export function computeTeamStatuses(
         eliminatedAtStage: stage as StageName,
       });
     } else {
-      // Scheduled / live — both teams are alive and waiting for this fixture
+      // Scheduled / live with resolved team IDs — teams are alive and at this stage.
+      // Update furthestStage so a finalist shows "Final" not "Semifinals".
       for (const teamId of [home, away]) {
         const s = statuses.get(teamId);
-        if (s && !s.nextMatchId) set(teamId, { nextMatchId: id });
+        if (s && !s.nextMatchId) {
+          set(teamId, { nextMatchId: id, furthestStage: stage as StageName });
+        }
       }
     }
   }

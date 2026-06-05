@@ -136,7 +136,44 @@ describe('computeTeamStatuses', () => {
     ];
     const statuses = buildStatuses(groupTeams, allMatches);
     expect(statuses.get(1)?.outcome).toBe('champion');
+    expect(statuses.get(1)?.alive).toBe(true);
     expect(statuses.get(1)?.furthestStage).toBe('Final');
+  });
+
+  it('Third Place Playoff winner is not alive (done, cannot win the cup)', () => {
+    const allMatches: Match[] = [
+      ...groupMatches,
+      km(103, 1, 2, 1, 'Third Place Playoff', 6),
+    ];
+    const statuses = buildStatuses(groupTeams, allMatches);
+    // Winner gets points via furthestStage but is NOT alive in sweepstake terms
+    expect(statuses.get(1)?.outcome).toBe('eliminated');
+    expect(statuses.get(1)?.alive).toBe(false);
+    expect(statuses.get(1)?.furthestStage).toBe('Third Place Playoff');
+    // Loser is also eliminated
+    expect(statuses.get(2)?.outcome).toBe('eliminated');
+    expect(statuses.get(2)?.alive).toBe(false);
+  });
+
+  it('upcoming match updates furthestStage so finalists show "Final" not last finished stage', () => {
+    const upcoming: Match = {
+      id: 104,
+      matchNumber: 104,
+      stage: 'Final',
+      stageOrder: 7,
+      label: 'W101 vs W102',
+      kickoffAt: '2026-07-19T15:00:00-04:00',
+      venueId: 8,
+      homeTeamId: 1,
+      awayTeamId: 2,
+      status: 'scheduled',
+    };
+    const allMatches = [...groupMatches, upcoming];
+    const statuses = buildStatuses(groupTeams, allMatches);
+    // Both teams should now show Final as their furthestStage
+    expect(statuses.get(1)?.furthestStage).toBe('Final');
+    expect(statuses.get(2)?.furthestStage).toBe('Final');
+    expect(statuses.get(1)?.nextMatchId).toBe(104);
   });
 
   it('sets nextMatchId for teams in upcoming knockout slots', () => {
