@@ -1,6 +1,6 @@
 # Implementation Plan
 
-> **Progress:** WP0 ✅ · WP1 ✅ · WP2 ✅ · WP3 ✅ · WP4 ✅ · WP5 ✅ · next: connect web → live API, then WP6/WP7 (see §8).
+> **Progress:** WP0–WP6 all ✅ · next: WP7 bracket view, then WP8 polish (see §8).
 
 ## 1. Goal & MVP scope
 A **local, mobile-first** web app that, for a World Cup 2026 sweepstake, shows **each player’s
@@ -104,11 +104,14 @@ Each is sized to be handed to one agent/session. “Done” = acceptance criteri
   tabs, Tailwind v4 `@theme`, StatusChip/TeamRow/Crest, React Query hooks, MSW mocks of every
   endpoint; verified rendering at 375×812. `VITE_MOCKS=off` hits the real API.
 
-### WP6 — Player views & leaderboard (CORE)  ·  *needs WP5 + contract*
+### WP6 — Player views & leaderboard (CORE)  ·  ✅ DONE (commit `3dab5c3`)
 - Leaderboard (ranked players, alive-count, furthest stage); player card → team status table;
   team detail (its fixtures/result). Clear at-a-glance alive vs out (colour **and** label/icon).
 - **Accept:** from `/api/overview` + `/api/players/:id`, a non-technical user can tell in seconds
   who’s winning and which of their teams are still in; legible one-handed on a phone.
+- **Done:** leaderboard (tappable cards → detail), player detail (summary + teams + fixtures),
+  group standings screen (12 tables, top-2 highlighted), FixtureRow component with team
+  highlighting, real API by default (`VITE_MOCKS=on` to use mocks). Verified via screenshots.
 
 ### WP7 — Bracket view  ·  *needs WP5 + `/api/bracket`*
 - **Phase A (MVP):** readable vertical bracket, swipe/segment by round; tap a tie for detail;
@@ -156,8 +159,8 @@ Contracts in `shared/` + MSW mocks are what let A/B/C run concurrently without c
 - ✅ **WP2** — full engine: standings, qualification, team status, scoring + GD metric (commit `4f9a1b5`).
 - ✅ **WP3** — seedProvider + live footballApiProvider, verified against API (commit `8060ebf`).
 - ✅ **WP4** — services layer + all 9 REST endpoints, verified over HTTP (commit `66fdf97`).
-- ▶️ **Next:** point the web app at the real API (`VITE_MOCKS=off`) and build out **WP6**
-  (player detail view) + **WP7** (bracket).
+- ✅ **WP6** — player detail, group standings, real-API default (commit `3dab5c3`).
+- ▶️ **Next: WP7** (bracket view) then **WP8** (polish/QA/README).
 - ⚠️ **Tracked follow-up — knockout team resolution:** the group stage is fully wired, but
   `/api/bracket` shows knockout `homeTeamId`/`awayTeamId` as `null` until those slots resolve.
   R16→Final follow `W##`/`RU##` once R32 is populated; R32 positional `1X`/`2X` come from group
