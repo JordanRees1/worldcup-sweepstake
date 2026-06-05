@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { EmptyState, ErrorState, LoadingState } from '../../components/states';
 import { TeamRow } from '../../components/TeamRow';
 import { useOverview } from '../../lib/api';
@@ -17,13 +18,20 @@ export function PlayersScreen() {
       </div>
 
       {data.leaderboard.map((entry) => (
-        <article key={entry.player.id} className="rounded-2xl border border-white/10 bg-white/5 p-4">
+        <Link
+          key={entry.player.id}
+          to={`/players/${entry.player.id}`}
+          className="block rounded-2xl border border-white/10 bg-white/5 p-4 transition-colors active:bg-white/10"
+        >
           <header className="flex items-center justify-between">
             <div className="flex items-center gap-2.5">
               <span className="flex h-7 w-7 items-center justify-center rounded-full bg-white/10 text-sm font-semibold">
                 {entry.rank}
               </span>
               <h3 className="font-semibold">{entry.player.name}</h3>
+              <span className="text-slate-500" aria-hidden>
+                ›
+              </span>
             </div>
             <div className="text-right text-[11px] text-slate-400">
               <p>
@@ -42,7 +50,7 @@ export function PlayersScreen() {
               <TeamRow key={team.team.id} team={team.team} status={team.status} />
             ))}
           </div>
-        </article>
+        </Link>
       ))}
     </div>
   );

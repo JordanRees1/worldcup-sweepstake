@@ -6,10 +6,10 @@ import App from './App';
 import { queryClient } from './lib/api';
 import './index.css';
 
-// In dev, serve the app against MSW mocks so the UI runs without the backend.
-// Set VITE_MOCKS=off to hit the real API instead (e.g. `VITE_MOCKS=off npm run dev`).
+// Default: hit the real API (the backend is complete). Opt into MSW mocks for offline / UI-state
+// demos with `VITE_MOCKS=on npm run dev`.
 async function enableMocking(): Promise<void> {
-  if (!import.meta.env.DEV || import.meta.env.VITE_MOCKS === 'off') return;
+  if (!import.meta.env.DEV || import.meta.env.VITE_MOCKS !== 'on') return;
   const { worker } = await import('./mocks/browser');
   await worker.start({ onUnhandledRequest: 'bypass' });
 }

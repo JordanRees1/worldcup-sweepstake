@@ -1,11 +1,16 @@
+import { useMemo } from 'react';
 import { QueryClient, useQuery } from '@tanstack/react-query';
 import {
   API_ROUTES,
   type BracketResponse,
+  type GroupsResponse,
   type HealthResponse,
   type OverviewResponse,
+  type PlayerDetailResponse,
   type PlayersResponse,
   type ScheduleResponse,
+  type Team,
+  type TeamsResponse,
 } from '@sweepstake/shared';
 
 export const queryClient = new QueryClient({
@@ -40,3 +45,26 @@ export const useBracket = () =>
 
 export const useSchedule = () =>
   useQuery({ queryKey: ['schedule'], queryFn: () => fetchJson<ScheduleResponse>(API_ROUTES.schedule) });
+
+export const useTeams = () =>
+  useQuery({ queryKey: ['teams'], queryFn: () => fetchJson<TeamsResponse>(API_ROUTES.teams) });
+
+export const useGroups = () =>
+  useQuery({ queryKey: ['groups'], queryFn: () => fetchJson<GroupsResponse>(API_ROUTES.groups) });
+
+export const usePlayerDetail = (id: number) =>
+  useQuery({
+    queryKey: ['player', id],
+    queryFn: () => fetchJson<PlayerDetailResponse>(API_ROUTES.player(id)),
+    enabled: Number.isInteger(id) && id > 0,
+  });
+
+/** Memoized teamId → Team lookup, derived from /api/teams (used by Groups + fixtures). */
+export function useTeamMap(): Map<number, Team> {
+  const { data } = useTeams();
+  return useMemo(() => {
+    const map = new Map<number, Team>();
+    for (const { team } of data?.teams ?? []) map.set(team.id, team);
+    return map;
+  }, [data]);
+}

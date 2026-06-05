@@ -28,6 +28,7 @@ export function Header() {
 
 const TABS = [
   { to: '/players', label: 'Players', icon: '👥' },
+  { to: '/groups', label: 'Groups', icon: '📊' },
   { to: '/bracket', label: 'Bracket', icon: '🏆' },
   { to: '/schedule', label: 'Schedule', icon: '📅' },
 ];
