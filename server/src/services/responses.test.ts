@@ -1,3 +1,4 @@
+import type { Match, StageName } from '@sweepstake/shared';
 import { describe, expect, it } from 'vitest';
 import { loadDataset } from '../data/dataset';
 import { createSeedProvider } from '../providers/seedProvider';
@@ -86,5 +87,49 @@ describe('response builders (seed)', () => {
     const dates = sched.days.map((d) => d.date);
     expect(dates).toEqual([...dates].sort());
     expect(dates[0]).toBe('2026-06-11');
+  });
+});
+
+describe('currentStage — next round still to be played', () => {
+  const mk = (stage: StageName, stageOrder: number, status: Match['status'], kickoffAt: string): Match =>
+    ({ stage, stageOrder, status, kickoffAt }) as unknown as Match;
+  const stageFor = (matches: Match[]): StageName =>
+    buildOverview({ matches, leaderboard: [], dataSource: 'seed' } as unknown as AppState).currentStage;
+
+  it('pre-kickoff: everything scheduled → Group Stage', () => {
+    expect(
+      stageFor([
+        mk('Group Stage', 1, 'scheduled', '2026-06-11T18:00:00Z'),
+        mk('Round of 32', 2, 'scheduled', '2026-06-28T18:00:00Z'),
+      ]),
+    ).toBe('Group Stage');
+  });
+
+  it('group stage done, knockouts to come → Round of 32', () => {
+    expect(
+      stageFor([
+        mk('Group Stage', 1, 'finished', '2026-06-11T18:00:00Z'),
+        mk('Round of 32', 2, 'scheduled', '2026-06-28T18:00:00Z'),
+      ]),
+    ).toBe('Round of 32');
+  });
+
+  it('regression: 3rd-place finished but Final not played → Final (not Third Place Playoff)', () => {
+    expect(
+      stageFor([
+        mk('Semifinals', 5, 'finished', '2026-07-14T18:00:00Z'),
+        mk('Third Place Playoff', 6, 'finished', '2026-07-18T18:00:00Z'),
+        mk('Final', 7, 'scheduled', '2026-07-19T18:00:00Z'),
+      ]),
+    ).toBe('Final');
+  });
+
+  it('everything finished → Final', () => {
+    expect(
+      stageFor([
+        mk('Third Place Playoff', 6, 'finished', '2026-07-18T18:00:00Z'),
+        mk('Final', 7, 'finished', '2026-07-19T18:00:00Z'),
+      ]),
+    ).toBe('Final');
   });
 });

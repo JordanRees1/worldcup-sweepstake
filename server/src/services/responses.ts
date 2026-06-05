@@ -19,17 +19,26 @@ export function buildHealth(state: AppState, version: string): HealthResponse {
   return { ok: true, dataSource: state.dataSource, lastUpdated: state.lastUpdated, version };
 }
 
-/** Most-advanced stage with a live/finished match, else Group Stage (pre-tournament). */
+/**
+ * The round the tournament is currently at: the stage of the next match still to be played
+ * (earliest unfinished by stage order, then kickoff). A live match counts as the current
+ * round. Once every match is finished, the last stage (the Final).
+ */
 function currentStage(state: AppState): StageName {
-  let best: StageName = 'Group Stage';
-  let bestOrder = 0;
+  let next: Match | undefined;
+  let last: Match | undefined;
   for (const m of state.matches) {
-    if ((m.status === 'live' || m.status === 'finished') && m.stageOrder > bestOrder) {
-      bestOrder = m.stageOrder;
-      best = m.stage;
+    if (!last || m.stageOrder > last.stageOrder) last = m;
+    if (m.status === 'finished') continue;
+    if (
+      !next ||
+      m.stageOrder < next.stageOrder ||
+      (m.stageOrder === next.stageOrder && m.kickoffAt < next.kickoffAt)
+    ) {
+      next = m;
     }
   }
-  return best;
+  return (next ?? last)?.stage ?? 'Group Stage';
 }
 
 export function buildOverview(state: AppState): OverviewResponse {
