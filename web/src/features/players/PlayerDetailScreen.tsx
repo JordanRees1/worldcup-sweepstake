@@ -3,6 +3,7 @@ import { FixtureRow } from '../../components/FixtureRow';
 import { EmptyState, ErrorState, LoadingState } from '../../components/states';
 import { TeamRow } from '../../components/TeamRow';
 import { usePlayerDetail, useTeamMap } from '../../lib/api';
+import { sortPlayerTeams } from '../../lib/stages';
 
 export function PlayerDetailScreen() {
   const { id } = useParams();
@@ -38,7 +39,7 @@ export function PlayerDetailScreen() {
       <section>
         <h3 className="mb-1 text-xs font-medium uppercase tracking-wide text-slate-400">Teams</h3>
         <div className="divide-y divide-white/5 rounded-2xl border border-white/10 bg-white/5 px-3">
-          {player.teams.map((t) => (
+          {sortPlayerTeams(player.teams).map((t) => (
             <TeamRow key={t.team.id} team={t.team} status={t.status} />
           ))}
         </div>

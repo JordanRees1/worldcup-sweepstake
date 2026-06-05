@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { EmptyState, ErrorState, LoadingState } from '../../components/states';
 import { TeamRow } from '../../components/TeamRow';
 import { useOverview } from '../../lib/api';
+import { sortPlayerTeams } from '../../lib/stages';
 
 export function PlayersScreen() {
   const { data, isLoading, isError, error, refetch } = useOverview();
@@ -46,7 +47,7 @@ export function PlayersScreen() {
           </header>
 
           <div className="mt-2 divide-y divide-white/5">
-            {entry.teams.map((team) => (
+            {sortPlayerTeams(entry.teams).map((team) => (
               <TeamRow key={team.team.id} team={team.team} status={team.status} />
             ))}
           </div>

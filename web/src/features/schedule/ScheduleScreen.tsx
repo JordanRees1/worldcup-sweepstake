@@ -1,34 +1,67 @@
+import { useEffect, useRef } from 'react';
+import { FixtureRow } from '../../components/FixtureRow';
 import { EmptyState, ErrorState, LoadingState } from '../../components/states';
-import { useSchedule } from '../../lib/api';
-import { formatDay, formatTime } from '../../lib/format';
+import { useSchedule, useTeamMap } from '../../lib/api';
+import { formatDay } from '../../lib/format';
 
 export function ScheduleScreen() {
   const { data, isLoading, isError, error, refetch } = useSchedule();
+  const teamMap = useTeamMap();
+  const currentRef = useRef<HTMLElement | null>(null);
+  const didScroll = useRef(false);
+
+  const days = data?.days ?? [];
+
+  // "Where we are now" = the first day that still has an unplayed match.
+  // (If everything's finished, anchor on the last day.)
+  const currentIndex = (() => {
+    const i = days.findIndex((d) => d.matches.some((m) => m.status !== 'finished'));
+    return i === -1 ? Math.max(0, days.length - 1) : i;
+  })();
+
+  // Auto-scroll to the current day once, after data loads.
+  useEffect(() => {
+    if (!didScroll.current && currentRef.current && days.length > 0) {
+      currentRef.current.scrollIntoView({ block: 'start' });
+      didScroll.current = true;
+    }
+  }, [days.length]);
 
   if (isLoading) return <LoadingState label="Loading schedule…" />;
   if (isError) return <ErrorState error={error} onRetry={() => void refetch()} />;
-  if (!data || data.days.length === 0) return <EmptyState>No fixtures scheduled.</EmptyState>;
+  if (days.length === 0) return <EmptyState>No fixtures scheduled.</EmptyState>;
 
   return (
     <div className="space-y-5">
       <h2 className="text-xs font-medium uppercase tracking-wide text-slate-400">Schedule</h2>
 
-      {data.days.map((day) => (
-        <section key={day.date}>
-          <h3 className="mb-1 text-sm font-semibold text-slate-200">{formatDay(day.date)}</h3>
-          <ul className="divide-y divide-white/5 rounded-2xl border border-white/10 bg-white/5 px-3">
-            {day.matches.map((match) => (
-              <li key={match.id} className="flex items-center justify-between py-2.5 text-sm">
-                <div>
-                  <p className="text-slate-200">{match.label}</p>
-                  <p className="text-[11px] text-slate-500">{match.stage}</p>
+      {days.map((day, index) => {
+        const isPast = index < currentIndex;
+        const isCurrent = index === currentIndex;
+        return (
+          <section
+            key={day.date}
+            ref={isCurrent ? currentRef : undefined}
+            className={`scroll-mt-20 ${isPast ? 'opacity-45' : ''}`}
+          >
+            <h3 className="mb-1 flex items-center gap-2 text-sm font-semibold text-slate-200">
+              {formatDay(day.date)}
+              {isCurrent && (
+                <span className="rounded-full bg-brand-500/20 px-2 py-0.5 text-[10px] font-medium text-brand-300">
+                  now
+                </span>
+              )}
+            </h3>
+            <div className="divide-y divide-white/5 rounded-2xl border border-white/10 bg-white/5">
+              {day.matches.map((match) => (
+                <div key={match.id} className={match.status === 'finished' ? 'opacity-60' : ''}>
+                  <FixtureRow match={match} teamMap={teamMap} hideDate />
                 </div>
-                <span className="text-[11px] text-slate-400">{formatTime(match.kickoffAt)}</span>
-              </li>
-            ))}
-          </ul>
-        </section>
-      ))}
+              ))}
+            </div>
+          </section>
+        );
+      })}
     </div>
   );
 }

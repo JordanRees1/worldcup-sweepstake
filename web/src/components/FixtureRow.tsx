@@ -13,10 +13,12 @@ export function FixtureRow({
   match,
   teamMap,
   highlightIds,
+  hideDate = false,
 }: {
   match: Match;
   teamMap: Map<number, Team>;
   highlightIds?: Set<number>;
+  hideDate?: boolean;
 }) {
   const home = sideLabel(match, 'home', teamMap);
   const away = sideLabel(match, 'away', teamMap);
@@ -25,7 +27,8 @@ export function FixtureRow({
   const center = match.result
     ? `${match.result.homeScore}–${match.result.awayScore}`
     : formatTime(match.kickoffAt);
-  const meta = `${match.group ? `Group ${match.group}` : match.stage} · ${formatDay(match.kickoffAt)}`;
+  const context = match.group ? `Group ${match.group}` : match.stage;
+  const meta = hideDate ? context : `${context} · ${formatDay(match.kickoffAt)}`;
 
   return (
     <div className="px-3 py-2.5">

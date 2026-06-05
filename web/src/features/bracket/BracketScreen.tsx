@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
-import type { BracketResponse } from '@sweepstake/shared';
+import type { BracketResponse, PlayerSummary } from '@sweepstake/shared';
 import { BracketMatchCard } from '../../components/BracketMatchCard';
 import { EmptyState, ErrorState, LoadingState } from '../../components/states';
 import { useBracket, useMatchMap, usePlayers, useTeamMap } from '../../lib/api';
+import { stageRank } from '../../lib/stages';
 
 const ROUND_SHORT: Record<string, string> = {
   'Round of 32': 'R32',
@@ -67,10 +68,17 @@ export function BracketScreen() {
   const currentStage = selectedStage ?? activeStage;
   const currentRound = bracket.rounds.find((r) => r.stage === currentStage) ?? bracket.rounds[0];
 
-  // Players sorted: those with teams still alive first, then by rank, eliminated last.
+  // How many of a player's teams reached the SELECTED stage (furthestStage >= that stage).
+  // This drives per-stage crossing-out: at the Final only finalists' owners count as "in",
+  // but at the Semifinals you might see four players still in.
+  const stageOrd = currentStage ? stageRank(currentStage) : -1;
+  const teamsAtStage = (p: PlayerSummary): number =>
+    p.teams.filter((t) => stageRank(t.status.furthestStage) >= stageOrd).length;
+
+  // Sort: players still in at the selected stage first, then by overall rank.
   const sortedPlayers = [...(playersData?.players ?? [])].sort((a, b) => {
-    if (a.aliveCount !== b.aliveCount) return b.aliveCount - a.aliveCount;
-    return a.rank - b.rank;
+    const diff = teamsAtStage(b) - teamsAtStage(a);
+    return diff !== 0 ? diff : a.rank - b.rank;
   });
 
   return (
@@ -123,7 +131,8 @@ export function BracketScreen() {
             All
           </button>
           {sortedPlayers.map((p) => {
-            const isOut = p.aliveCount === 0;
+            const count = teamsAtStage(p);
+            const isOut = count === 0;
             const isSelected = selectedPlayerId === p.player.id;
             return (
               <button
@@ -138,14 +147,14 @@ export function BracketScreen() {
                       ? 'bg-white/5 text-slate-600 line-through decoration-slate-700'
                       : 'bg-white/5 text-slate-400 active:bg-white/10'
                 }`}
-                title={isOut ? `${p.player.name} — eliminated` : undefined}
+                title={isOut ? `${p.player.name} — out by ${currentStage ?? 'this stage'}` : undefined}
               >
                 {p.player.name}
-                {isSelected && p.aliveCount > 0 && (
-                  <span className="ml-1 text-emerald-400">{p.aliveCount}</span>
-                )}
+                {isSelected && count > 0 && <span className="ml-1 text-emerald-400">{count}</span>}
                 {isOut && !isSelected && (
-                  <span className="ml-1 text-slate-600" aria-label="out">✗</span>
+                  <span className="ml-1 text-slate-600" aria-label="out">
+                    ✗
+                  </span>
                 )}
               </button>
             );
