@@ -30,8 +30,8 @@ player leaderboard, and a tournament bracket view.
 - `server/` — Express API. **Complete: data pipeline (`src/data/`), engine (`src/engine/`),
   providers (`src/providers/`), services (`src/services/`), and all REST routes (`src/routes/`).**
   Run live with `DATA_SOURCE=live` in `server/.env`.
-- `web/` — Vite + React + Tailwind app. **Shell + data layer (React Query + MSW) built (WP5)**;
-  player/bracket features arrive in WP6–WP7.
+- `web/` — Vite + React + Tailwind app. **Complete: WP5 shell, WP6 player/groups views,
+  WP7 bracket.** Run live against real API; `VITE_MOCKS=on` for offline dev.
 - `datasets/` — canonical CSVs (unchanged).
 
 ## Working in this repo (for agents)

@@ -1,6 +1,6 @@
 # Implementation Plan
 
-> **Progress:** WP0–WP6 all ✅ · next: WP7 bracket view, then WP8 polish (see §8).
+> **Progress:** WP0–WP7 all ✅ · remaining: WP8 polish/QA/README (see §8).
 
 ## 1. Goal & MVP scope
 A **local, mobile-first** web app that, for a World Cup 2026 sweepstake, shows **each player’s
@@ -113,12 +113,15 @@ Each is sized to be handed to one agent/session. “Done” = acceptance criteri
   group standings screen (12 tables, top-2 highlighted), FixtureRow component with team
   highlighting, real API by default (`VITE_MOCKS=on` to use mocks). Verified via screenshots.
 
-### WP7 — Bracket view  ·  *needs WP5 + `/api/bracket`*
+### WP7 — Bracket view  ·  ✅ DONE (commit `0429591`)
 - **Phase A (MVP):** readable vertical bracket, swipe/segment by round; tap a tie for detail;
   highlight the teams owned by a selected player.
 - **Phase B (enhancement):** radial “group stages outside → final in the centre” layout.
 - **Accept (A):** every round legible on a phone with no pinch-zoom; placeholders shown
   sensibly before teams resolve; reflects seeded results.
+- **Done:** round selector pills (R32/R16/QF/SF/3rd/Final), per-player highlight filter,
+  `BracketMatchCard` (team name+crest or label fragment, score or kickoff time, winner/loser
+  styling). `useMatchMap` hook cross-references kickoff times. Verified via preview screenshots.
 
 ### WP8 — QA, accessibility, performance & docs  ·  *cross-cutting*
 - Test coverage for engine + data; a11y pass (contrast, focus, non-colour status, tap targets);
@@ -160,7 +163,8 @@ Contracts in `shared/` + MSW mocks are what let A/B/C run concurrently without c
 - ✅ **WP3** — seedProvider + live footballApiProvider, verified against API (commit `8060ebf`).
 - ✅ **WP4** — services layer + all 9 REST endpoints, verified over HTTP (commit `66fdf97`).
 - ✅ **WP6** — player detail, group standings, real-API default (commit `3dab5c3`).
-- ▶️ **Next: WP7** (bracket view) then **WP8** (polish/QA/README).
+- ✅ **WP7** — bracket view: round selector, player filter, match cards (commit `0429591`).
+- ▶️ **Next: WP8** — README run guide, `DATA_SOURCE=live` smoke test, and any final polish.
 - ⚠️ **Tracked follow-up — knockout team resolution:** the group stage is fully wired, but
   `/api/bracket` shows knockout `homeTeamId`/`awayTeamId` as `null` until those slots resolve.
   R16→Final follow `W##`/`RU##` once R32 is populated; R32 positional `1X`/`2X` come from group
