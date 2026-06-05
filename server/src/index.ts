@@ -20,7 +20,8 @@ const app = createApp(service, config);
 const server = app.listen(config.port, () => {
   console.log(
     `[sweepstake] API on http://localhost:${config.port} ` +
-      `(source=${config.dataSource}, teams=${dataset.teams.length}, matches=${dataset.matches.length})`,
+      `(sweepstake=${dataset.sweepstake.name}, source=${config.dataSource}, ` +
+      `teams=${dataset.teams.length}, matches=${dataset.matches.length})`,
   );
 });
 

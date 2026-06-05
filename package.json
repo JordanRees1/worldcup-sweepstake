@@ -21,6 +21,8 @@
     "format:check": "prettier --check .",
     "test": "vitest run --passWithNoTests",
     "report:picks": "npm run report:picks -w @sweepstake/server",
+    "report:picks:work": "cross-env SWEEPSTAKE=work npm run report:picks -w @sweepstake/server",
+    "dev:work": "cross-env SWEEPSTAKE=work concurrently -k -n api,web -c blue,magenta \"npm:dev:server\" \"npm:dev:web\"",
     "generate:scenarios": "tsx server/src/data/generateScenarios.ts",
     "dev:group-stage": "cross-env SEED_SCENARIO=group-stage concurrently -k -n api,web -c blue,magenta \"npm:dev:server\" \"npm:dev:web\"",
     "dev:quarters": "cross-env SEED_SCENARIO=quarterfinals concurrently -k -n api,web -c blue,magenta \"npm:dev:server\" \"npm:dev:web\"",

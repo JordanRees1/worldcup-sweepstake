@@ -30,6 +30,26 @@ npm run dev:quarters      # Groups + R32 + R16 done — 8 teams left in QFs
 npm run dev:final         # SFs + 3rd-place done — Mexico vs Tunisia in the Final
 ```
 
+## Multiple sweepstakes
+
+You can run more than one sweepstake over the same tournament — e.g. a 6-player friends
+game and a 24-player work game. Each lives in `datasets/sweepstakes/<name>/` with its own
+`player_picks.csv` and a `sweepstake.json` (`{ "name": "...", "teamsPerPlayer": N }`). The
+tournament structure (teams, fixtures, results) is shared across all of them.
+
+```bash
+npm run dev          # default: the "friends" sweepstake
+npm run dev:work     # the "work" sweepstake
+# any sweepstake by folder name:
+#   PowerShell:  $env:SWEEPSTAKE="work"; npm run dev
+#   macOS/Linux: SWEEPSTAKE=work npm run dev
+```
+
+To set up a new game: create `datasets/sweepstakes/<name>/`, add a `sweepstake.json` and a
+`player_picks.csv`, then run `npm run report:picks:work` (or `SWEEPSTAKE=<name> npm run
+report:picks -w @sweepstake/server`) to check every pick resolves. The draft model is
+"every team owned exactly once", so `teamsPerPlayer × players = 48`.
+
 ## Live results
 
 1. Create a free account at [football-data.org](https://www.football-data.org) and copy your API key
@@ -47,7 +67,8 @@ The API is rate-limited to 10 calls/minute on the free tier; the server caches r
 
 | Command | What it does |
 |---|---|
-| `npm run dev` | API (`:8787`) + web (`:5173`) together |
+| `npm run dev` | API (`:8787`) + web (`:5173`) together (the `friends` sweepstake) |
+| `npm run dev:work` | Same, for the `work` sweepstake |
 | `npm run dev:group-stage` | Demo: matchday 1+2 complete |
 | `npm run dev:quarters` | Demo: through Round of 16 |
 | `npm run dev:final` | Demo: Mexico vs Tunisia final |
@@ -64,7 +85,7 @@ The API is rate-limited to 10 calls/minute on the free tier; the server caches r
 |---|---|
 | Rogan | Scotland, Ecuador, Australia, Egypt, Colombia, Netherlands, South Africa, South Korea |
 | Henri | Tunisia, Paraguay, Japan, Belgium, Switzerland, Germany, Norway, Argentina |
-| Will | Côte d'Ivoire, Curaçao, Uruguay, Haiti, England, Croatia, Uzbekistan, New Zealand |
+| Will | Côte d'Ivoire, Curaçao, Uruguay, Haiti, England, DR Congo, Uzbekistan, New Zealand |
 | Dec | Senegal, Jordan, Sweden, Croatia†, Brazil, Türkiye, Cabo Verde, Algeria |
 | Jordan | Portugal, Spain, Morocco, IR Iran, Mexico, Ghana, France, Czechia |
 | James | Austria, Iraq, Saudi Arabia, Qatar, Canada, Panama, Bosnia and Herzegovina, USA |
@@ -75,7 +96,7 @@ The API is rate-limited to 10 calls/minute on the free tier; the server caches r
 
 | Path | What it is |
 |---|---|
-| `datasets/` | Canonical CSVs — tournament structure (teams, fixtures, venues) |
+| `datasets/` | Shared tournament CSVs (teams, fixtures, venues) + `sweepstakes/<name>/` picks |
 | `shared/` | `@sweepstake/shared`: domain types + REST contract (source of truth) |
 | `server/` | Express API: data pipeline, engine, results provider, all routes |
 | `web/` | React + Vite + Tailwind v4 mobile app |

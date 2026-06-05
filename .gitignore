@@ -33,5 +33,9 @@ coverage/
 .claude/settings.local.json
 .claude/*.cmd
 
+# ── Generated picks artifacts (reproducible via npm run report:picks) ──
+datasets/sweepstakes/**/picks.normalized.json
+datasets/sweepstakes/**/PICKS_MAPPING_REPORT.md
+
 # ── Misc cache ───────────────────────────────────
 .cache/

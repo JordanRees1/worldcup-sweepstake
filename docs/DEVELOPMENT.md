@@ -84,6 +84,24 @@ The simulation rule is deterministic: home team always wins 2-1. Best-third R32 
 assignment uses "most constrained first" so groups K and L (which appear in only one slot)
 are placed correctly.
 
+## Multiple sweepstakes
+One codebase + one shared tournament can run several sweepstakes. Each lives in
+`datasets/sweepstakes/<slug>/` with a `player_picks.csv` and a `sweepstake.json`
+(`{ "name", "teamsPerPlayer" }`). The active one is chosen by the `SWEEPSTAKE` env var
+(default `friends`); `resolveSweepstake()` ([server/src/data/sweepstake.ts](../server/src/data/sweepstake.ts))
+is the single resolver, consumed by `normalizePicks` and `validateDataset`.
+
+```bash
+npm run dev          # friends (default)
+npm run dev:work     # work; or SWEEPSTAKE=<slug> npm run dev
+npm run report:picks:work   # regenerate <slug>'s mapping report + normalized.json (for sign-off)
+```
+
+Validation derives its pick rules from `teamsPerPlayer` (players = 48 / teamsPerPlayer,
+every team owned exactly once); only the tournament cardinalities (48/16/104/…) are fixed.
+The generated `picks.normalized.json` / `PICKS_MAPPING_REPORT.md` are **review artifacts** —
+the server normalises `player_picks.csv` directly at runtime and never reads the JSON.
+
 ## Data & environment
 - `DATA_SOURCE=seed` (default): no key; structure comes from `datasets/`, results are empty
   /seeded. `live`: copy `server/.env.example` → `server/.env`, set `FOOTBALL_API_KEY`

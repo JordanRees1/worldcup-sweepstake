@@ -1,9 +1,8 @@
-import { join } from 'node:path';
 import type { Pick, Player, Team } from '@sweepstake/shared';
 import { DID_NOT_QUALIFY, PICK_ALIASES } from './aliases';
 import { readCsv } from './csv';
 import { normalizeName } from './normalize';
-import { DATASETS_DIR } from './paths';
+import { resolveSweepstake, type SweepstakeConfig } from './sweepstake';
 
 type PickRow = {
   player: string;
@@ -16,13 +15,17 @@ export interface NormalizedPicks {
 }
 
 /**
- * Reconcile `player_picks.csv` against the canonical team list. Each pick resolves to one of:
+ * Reconcile a sweepstake's `player_picks.csv` against the canonical team list. Each pick
+ * resolves to one of:
  *  - a confirmed team (exact, diacritic-insensitive, or via the alias table);
  *  - playoff-contingent (a team still in the playoffs → not yet a real entrant);
  *  - unmatched (needs human review — should be empty once aliases are complete).
  */
-export function normalizePicks(teams: Team[]): NormalizedPicks {
-  const rows = readCsv<PickRow>(join(DATASETS_DIR, 'player_picks.csv'));
+export function normalizePicks(
+  teams: Team[],
+  sweepstake: SweepstakeConfig = resolveSweepstake(),
+): NormalizedPicks {
+  const rows = readCsv<PickRow>(sweepstake.picksPath);
 
   // Players, in first-appearance order, get ids 1..n.
   const players: Player[] = [];

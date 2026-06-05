@@ -2,6 +2,7 @@ import type { Match, Pick, Player, Stage, Team, Venue } from '@sweepstake/shared
 import { loadMatches } from './matches';
 import { normalizePicks } from './picks';
 import { loadStages } from './stages';
+import { resolveSweepstake, type SweepstakeConfig } from './sweepstake';
 import { loadTeams } from './teams';
 import { loadVenues } from './venues';
 import { validateDataset } from './validate';
@@ -14,17 +15,20 @@ export interface Dataset {
   matches: Match[];
   players: Player[];
   picks: Pick[];
+  /** The active sweepstake (which picks were loaded + its pick rules). */
+  sweepstake: SweepstakeConfig;
 }
 
 /** Load (and, by default, validate) the entire tournament from the CSV datasets. */
 export function loadDataset(options: { validate?: boolean } = {}): Dataset {
+  const sweepstake = resolveSweepstake();
   const teams = loadTeams();
   const venues = loadVenues();
   const stages = loadStages();
   const matches = loadMatches(stages);
-  const { players, picks } = normalizePicks(teams);
+  const { players, picks } = normalizePicks(teams, sweepstake);
 
-  const dataset: Dataset = { teams, venues, stages, matches, players, picks };
+  const dataset: Dataset = { teams, venues, stages, matches, players, picks, sweepstake };
   if (options.validate ?? true) validateDataset(dataset);
   return dataset;
 }

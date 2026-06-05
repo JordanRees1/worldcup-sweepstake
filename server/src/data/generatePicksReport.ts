@@ -1,14 +1,17 @@
-// Generates two artifacts from the picks data, for sign-off and app consumption:
-//   - docs/PICKS_MAPPING_REPORT.md   (human-readable)
-//   - datasets/picks.normalized.json (structured, for the server to load)
+// Generates two review artifacts for a sweepstake's picks, written into its folder:
+//   - <sweepstake>/PICKS_MAPPING_REPORT.md  (human-readable, for sign-off)
+//   - <sweepstake>/picks.normalized.json    (structured snapshot, for diffing)
+// Note: the server normalises player_picks.csv directly at runtime — these are review
+// artifacts, NOT a build input.
 //
-// Run with:  npm run report:picks
+// Run with:  npm run report:picks         (friends, the default)
+//            npm run report:picks:work     (the work sweepstake)
 
 import { writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { Pick, Player, Team } from '@sweepstake/shared';
 import { normalizePicks } from './picks';
-import { DATASETS_DIR, DOCS_DIR } from './paths';
+import { resolveSweepstake } from './sweepstake';
 import { loadTeams } from './teams';
 
 const DNQ_PREFIX = 'did not qualify';
@@ -30,7 +33,12 @@ function resolvedLabel(teams: Team[], pick: Pick): string {
   return '❓ unmatched';
 }
 
-function buildReport(teams: Team[], players: Player[], picks: Pick[]): string {
+function buildReport(
+  teams: Team[],
+  players: Player[],
+  picks: Pick[],
+  teamsPerPlayer: number,
+): string {
   const matched = picks.filter((p) => p.matched);
   const didNotQualify = picks.filter((p) => !p.matched && p.note?.startsWith(DNQ_PREFIX));
   const unmatched = picks.filter((p) => !p.matched && !p.note?.startsWith(DNQ_PREFIX));
@@ -61,12 +69,14 @@ function buildReport(teams: Team[], players: Player[], picks: Pick[]): string {
   L.push('');
 
   L.push('## Summary');
-  L.push(`- Total picks: **${picks.length}** (expected 48)`);
+  L.push(`- Total picks: **${picks.length}** (expected ${teams.length})`);
   L.push(`- ✅ Matched to a team: **${matched.length}**`);
   L.push(`- 🚫 Did not qualify (dead pick): **${didNotQualify.length}**`);
   L.push(`- ❓ Unmatched (needs input): **${unmatched.length}**`);
-  const perPlayerOk = players.every((pl) => picks.filter((p) => p.playerId === pl.id).length === 8);
-  L.push(`- Picks per player: ${perPlayerOk ? 'all 8 ✓' : '⚠️ NOT all 8'}`);
+  const perPlayerOk = players.every(
+    (pl) => picks.filter((p) => p.playerId === pl.id).length === teamsPerPlayer,
+  );
+  L.push(`- Picks per player: ${perPlayerOk ? `all ${teamsPerPlayer} ✓` : `⚠️ NOT all ${teamsPerPlayer}`}`);
   L.push('');
 
   L.push('## Findings');
@@ -123,18 +133,26 @@ function buildReport(teams: Team[], players: Player[], picks: Pick[]): string {
   return L.join('\n');
 }
 
-function main(): void {
-  const teams = loadTeams();
-  const { players, picks } = normalizePicks(teams);
+function parseSlug(argv: string[]): string | undefined {
+  const i = argv.indexOf('--sweepstake');
+  return i >= 0 ? argv[i + 1] : undefined;
+}
 
+function main(): void {
+  const sweepstake = resolveSweepstake(parseSlug(process.argv));
+  const teams = loadTeams();
+  const { players, picks } = normalizePicks(teams, sweepstake);
+
+  const reportPath = join(sweepstake.dir, 'PICKS_MAPPING_REPORT.md');
+  const jsonPath = join(sweepstake.dir, 'picks.normalized.json');
+  writeFileSync(reportPath, buildReport(teams, players, picks, sweepstake.teamsPerPlayer), 'utf8');
   writeFileSync(
-    join(DOCS_DIR, 'PICKS_MAPPING_REPORT.md'),
-    buildReport(teams, players, picks),
-    'utf8',
-  );
-  writeFileSync(
-    join(DATASETS_DIR, 'picks.normalized.json'),
-    `${JSON.stringify({ generatedAt: new Date().toISOString(), players, picks }, null, 2)}\n`,
+    jsonPath,
+    `${JSON.stringify(
+      { generatedAt: new Date().toISOString(), sweepstake: sweepstake.slug, players, picks },
+      null,
+      2,
+    )}\n`,
     'utf8',
   );
 
@@ -142,8 +160,8 @@ function main(): void {
   const dnq = picks.filter((p) => !p.matched && p.note?.startsWith(DNQ_PREFIX)).length;
   const unmatched = picks.length - matched - dnq;
   console.log(
-    `[report:picks] ${picks.length} picks → ${matched} matched, ${dnq} did-not-qualify, ` +
-      `${unmatched} unmatched. Wrote docs/PICKS_MAPPING_REPORT.md and datasets/picks.normalized.json`,
+    `[report:picks] sweepstake "${sweepstake.name}": ${picks.length} picks → ${matched} matched, ` +
+      `${dnq} did-not-qualify, ${unmatched} unmatched. Wrote ${reportPath} and ${jsonPath}`,
   );
 }
 

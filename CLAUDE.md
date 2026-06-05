@@ -32,7 +32,11 @@ player leaderboard, and a tournament bracket view.
   Run live with `DATA_SOURCE=live` in `server/.env`.
 - `web/` — Vite + React + Tailwind app. **Complete: WP5 shell, WP6 player/groups views,
   WP7 bracket.** Run live against real API; `VITE_MOCKS=on` for offline dev.
-- `datasets/` — canonical CSVs (unchanged).
+- `datasets/` — shared tournament CSVs (teams, matches, venues, stages, scenarios).
+  Per-sweepstake picks live in `datasets/sweepstakes/<slug>/` (`player_picks.csv` +
+  `sweepstake.json`); the active one is set by the `SWEEPSTAKE` env (default `friends`),
+  resolved in `server/src/data/sweepstake.ts`. Validation derives pick rules from
+  `teamsPerPlayer`; only tournament cardinalities are fixed.
 
 ## Working in this repo (for agents)
 - **ESM everywhere**, Node 22, TypeScript `strict`. Do not introduce CommonJS.

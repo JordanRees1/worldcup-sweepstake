@@ -7,19 +7,34 @@ const GROUP_LETTERS = 'ABCDEFGHIJKL'.split('');
  * a single combined error, so bad data fails loudly with an actionable message.
  */
 export function validateDataset(ds: Dataset): void {
-  const { teams, venues, stages, matches, players, picks } = ds;
+  const { teams, venues, stages, matches, players, picks, sweepstake } = ds;
   const issues: string[] = [];
   const check = (ok: boolean, msg: string): void => {
     if (!ok) issues.push(msg);
   };
 
-  // Cardinalities.
+  // Tournament cardinalities — constant for World Cup 2026, shared by every sweepstake.
   check(teams.length === 48, `expected 48 teams, got ${teams.length}`);
   check(venues.length === 16, `expected 16 venues, got ${venues.length}`);
   check(stages.length === 7, `expected 7 stages, got ${stages.length}`);
   check(matches.length === 104, `expected 104 matches, got ${matches.length}`);
-  check(players.length === 6, `expected 6 players, got ${players.length}`);
-  check(picks.length === 48, `expected 48 picks, got ${picks.length}`);
+
+  // Per-sweepstake cardinalities — derived from teamsPerPlayer. The draft model is
+  // "every team owned exactly once", so players = teams / teamsPerPlayer.
+  const { teamsPerPlayer, name: sweepstakeName } = sweepstake;
+  const expectedPlayers = teams.length / teamsPerPlayer;
+  check(
+    Number.isInteger(expectedPlayers),
+    `sweepstake "${sweepstakeName}": teamsPerPlayer ${teamsPerPlayer} does not divide ${teams.length} teams evenly`,
+  );
+  check(
+    players.length === expectedPlayers,
+    `sweepstake "${sweepstakeName}": expected ${expectedPlayers} players, got ${players.length}`,
+  );
+  check(
+    picks.length === teams.length,
+    `sweepstake "${sweepstakeName}": expected ${teams.length} picks, got ${picks.length}`,
+  );
 
   const teamById = new Map(teams.map((t) => [t.id, t]));
   const venueIds = new Set(venues.map((v) => v.id));
@@ -65,6 +80,12 @@ export function validateDataset(ds: Dataset): void {
   }
 
   // Picks integrity.
+  const unresolved = picks.filter((p) => p.teamId === null);
+  check(
+    unresolved.length === 0,
+    `${unresolved.length} pick(s) did not resolve to a team ` +
+      `(e.g. "${unresolved[0]?.rawName ?? ''}") — run \`npm run report:picks\` and fix the CSV/aliases`,
+  );
   for (const p of picks) {
     if (p.teamId !== null) check(teamById.has(p.teamId), `pick: unknown teamId ${p.teamId}`);
   }
@@ -72,7 +93,7 @@ export function validateDataset(ds: Dataset): void {
   check(new Set(pickedIds).size === pickedIds.length, 'a team is picked by more than one player');
   for (const pl of players) {
     const n = picks.filter((p) => p.playerId === pl.id).length;
-    check(n === 8, `player ${pl.name}: ${n} picks (expected 8)`);
+    check(n === teamsPerPlayer, `player ${pl.name}: ${n} picks (expected ${teamsPerPlayer})`);
   }
 
   if (issues.length > 0) {
