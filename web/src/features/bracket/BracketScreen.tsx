@@ -99,7 +99,7 @@ export function BracketScreen() {
             <button
               key={r.stage}
               onClick={() => setSelectedStage(r.stage)}
-              className={`relative shrink-0 rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors ${
+              className={`relative shrink-0 rounded-full px-3.5 py-2 text-sm font-medium transition-colors ${
                 isActive
                   ? 'bg-brand-500 text-white'
                   : isPast
@@ -126,7 +126,7 @@ export function BracketScreen() {
         >
           <button
             onClick={() => setSelectedPlayerId(null)}
-            className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+            className={`shrink-0 rounded-full px-3 py-2 text-xs font-medium transition-colors ${
               selectedPlayerId === null
                 ? 'bg-emerald-500/20 text-emerald-300 ring-1 ring-emerald-500/40'
                 : 'bg-white/5 text-slate-400'
@@ -144,19 +144,25 @@ export function BracketScreen() {
                 onClick={() =>
                   setSelectedPlayerId((prev) => (prev === p.player.id ? null : p.player.id))
                 }
-                className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+                className={`shrink-0 rounded-full px-3 py-2 text-xs font-medium transition-colors ${
                   isSelected
                     ? 'bg-emerald-500/20 text-emerald-300 ring-1 ring-emerald-500/40'
                     : isOut
                       ? 'bg-white/5 text-slate-600 line-through decoration-slate-700'
                       : 'bg-white/5 text-slate-400 active:bg-white/10'
                 }`}
-                title={isOut ? `${p.player.name} — out by ${currentStage ?? 'this stage'}` : undefined}
+                aria-label={
+                  isOut
+                    ? `${p.player.name} — out by ${currentStage ?? 'this stage'}`
+                    : isSelected && count > 0
+                      ? `${p.player.name} — ${count} team${count !== 1 ? 's' : ''} at this stage`
+                      : p.player.name
+                }
               >
-                {p.player.name}
-                {isSelected && count > 0 && <span className="ml-1 text-emerald-400">{count}</span>}
+                <span aria-hidden>{p.player.name}</span>
+                {isSelected && count > 0 && <span className="ml-1 text-emerald-400" aria-hidden>{count}</span>}
                 {isOut && !isSelected && (
-                  <span className="ml-1 text-slate-600" aria-label="out">
+                  <span className="ml-1 text-slate-600" aria-hidden>
                     ✗
                   </span>
                 )}
