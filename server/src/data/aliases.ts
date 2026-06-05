@@ -10,6 +10,11 @@ export const PICK_ALIASES: Record<string, string> = {
   iran: 'IRN', // variant of "IR Iran"
   curacao: 'CUR', // spelling variant of "Curaçao"
   bosnia: 'BIH', // short form of "Bosnia and Herzegovina" (2026 UEFA playoff winner)
+  'czech republic': 'CZE', // old / English name for "Czechia"
+  'bosnia heregovina': 'BIH', // typo of "Bosnia and Herzegovina"
+  turkey: 'TUR', // English name for "Türkiye"
+  'congo dr': 'COD', // reversed word order for "DR Congo"
+  'cape verde': 'CPV', // English name for "Cabo Verde"
 };
 
 /**

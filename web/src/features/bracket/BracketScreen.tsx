@@ -120,10 +120,7 @@ export function BracketScreen() {
 
       {/* ── Player filter ── */}
       {playersData && (
-        <div
-          className="flex gap-2 overflow-x-auto pb-1"
-          style={{ WebkitOverflowScrolling: 'touch' } as React.CSSProperties}
-        >
+        <div className="flex flex-wrap gap-2">
           <button
             onClick={() => setSelectedPlayerId(null)}
             className={`shrink-0 rounded-full px-3 py-2 text-xs font-medium transition-colors ${
