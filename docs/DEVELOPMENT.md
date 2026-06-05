@@ -62,6 +62,28 @@ nav (WP5). Keep everything legible one-handed on a phone.
 Add a pure function in `server/src/engine/<name>.ts` plus `server/src/engine/<name>.test.ts`.
 Feed it fixtures; assert outputs. Run `npm run test`.
 
+## Demo scenarios (local testing at different tournament stages)
+
+Run the app at a simulated tournament stage without touching any real API calls:
+
+| Command | Stage |
+|---|---|
+| `npm run dev:group-stage` | Matchday 1+2 done — matchday 3 to come; partial standings |
+| `npm run dev:quarters` | R32 + R16 done — 8 teams left, QF fixtures set |
+| `npm run dev:final` | SFs + 3rd-place done — 2 finalists, Final tomorrow |
+| `npm run dev` | Default — all upcoming (pre-kickoff seed mode) |
+
+The scenario files live in `datasets/scenarios/` and are committed. To regenerate them
+(e.g. if you change the simulation rule):
+
+```bash
+npm run generate:scenarios
+```
+
+The simulation rule is deterministic: home team always wins 2-1. Best-third R32 slot
+assignment uses "most constrained first" so groups K and L (which appear in only one slot)
+are placed correctly.
+
 ## Data & environment
 - `DATA_SOURCE=seed` (default): no key; structure comes from `datasets/`, results are empty
   /seeded. `live`: copy `server/.env.example` → `server/.env`, set `FOOTBALL_API_KEY`
