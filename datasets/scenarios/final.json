@@ -1,0 +1,1146 @@
+{
+  "name": "World Cup Final",
+  "description": "Every match through the Semifinals and Third Place Playoff is complete. Two finalists remain — the Final is tomorrow.",
+  "results": [
+    {
+      "matchId": 1,
+      "homeScore": 2,
+      "awayScore": 1,
+      "winnerTeamId": 1
+    },
+    {
+      "matchId": 2,
+      "homeScore": 2,
+      "awayScore": 1,
+      "winnerTeamId": 3
+    },
+    {
+      "matchId": 3,
+      "homeScore": 2,
+      "awayScore": 1,
+      "winnerTeamId": 5
+    },
+    {
+      "matchId": 4,
+      "homeScore": 2,
+      "awayScore": 1,
+      "winnerTeamId": 13
+    },
+    {
+      "matchId": 5,
+      "homeScore": 2,
+      "awayScore": 1,
+      "winnerTeamId": 7
+    },
+    {
+      "matchId": 6,
+      "homeScore": 2,
+      "awayScore": 1,
+      "winnerTeamId": 9
+    },
+    {
+      "matchId": 7,
+      "homeScore": 2,
+      "awayScore": 1,
+      "winnerTeamId": 11
+    },
+    {
+      "matchId": 8,
+      "homeScore": 2,
+      "awayScore": 1,
+      "winnerTeamId": 15
+    },
+    {
+      "matchId": 9,
+      "homeScore": 2,
+      "awayScore": 1,
+      "winnerTeamId": 17
+    },
+    {
+      "matchId": 10,
+      "homeScore": 2,
+      "awayScore": 1,
+      "winnerTeamId": 21
+    },
+    {
+      "matchId": 11,
+      "homeScore": 2,
+      "awayScore": 1,
+      "winnerTeamId": 19
+    },
+    {
+      "matchId": 12,
+      "homeScore": 2,
+      "awayScore": 1,
+      "winnerTeamId": 23
+    },
+    {
+      "matchId": 13,
+      "homeScore": 2,
+      "awayScore": 1,
+      "winnerTeamId": 29
+    },
+    {
+      "matchId": 14,
+      "homeScore": 2,
+      "awayScore": 1,
+      "winnerTeamId": 25
+    },
+    {
+      "matchId": 15,
+      "homeScore": 2,
+      "awayScore": 1,
+      "winnerTeamId": 31
+    },
+    {
+      "matchId": 16,
+      "homeScore": 2,
+      "awayScore": 1,
+      "winnerTeamId": 27
+    },
+    {
+      "matchId": 17,
+      "homeScore": 2,
+      "awayScore": 1,
+      "winnerTeamId": 33
+    },
+    {
+      "matchId": 18,
+      "homeScore": 2,
+      "awayScore": 1,
+      "winnerTeamId": 35
+    },
+    {
+      "matchId": 19,
+      "homeScore": 2,
+      "awayScore": 1,
+      "winnerTeamId": 37
+    },
+    {
+      "matchId": 20,
+      "homeScore": 2,
+      "awayScore": 1,
+      "winnerTeamId": 39
+    },
+    {
+      "matchId": 21,
+      "homeScore": 2,
+      "awayScore": 1,
+      "winnerTeamId": 41
+    },
+    {
+      "matchId": 22,
+      "homeScore": 2,
+      "awayScore": 1,
+      "winnerTeamId": 45
+    },
+    {
+      "matchId": 23,
+      "homeScore": 2,
+      "awayScore": 1,
+      "winnerTeamId": 47
+    },
+    {
+      "matchId": 24,
+      "homeScore": 2,
+      "awayScore": 1,
+      "winnerTeamId": 43
+    },
+    {
+      "matchId": 25,
+      "homeScore": 2,
+      "awayScore": 1,
+      "winnerTeamId": 4
+    },
+    {
+      "matchId": 26,
+      "homeScore": 2,
+      "awayScore": 1,
+      "winnerTeamId": 8
+    },
+    {
+      "matchId": 27,
+      "homeScore": 2,
+      "awayScore": 1,
+      "winnerTeamId": 5
+    },
+    {
+      "matchId": 28,
+      "homeScore": 2,
+      "awayScore": 1,
+      "winnerTeamId": 1
+    },
+    {
+      "matchId": 29,
+      "homeScore": 2,
+      "awayScore": 1,
+      "winnerTeamId": 13
+    },
+    {
+      "matchId": 30,
+      "homeScore": 2,
+      "awayScore": 1,
+      "winnerTeamId": 12
+    },
+    {
+      "matchId": 31,
+      "homeScore": 2,
+      "awayScore": 1,
+      "winnerTeamId": 9
+    },
+    {
+      "matchId": 32,
+      "homeScore": 2,
+      "awayScore": 1,
+      "winnerTeamId": 16
+    },
+    {
+      "matchId": 33,
+      "homeScore": 2,
+      "awayScore": 1,
+      "winnerTeamId": 21
+    },
+    {
+      "matchId": 34,
+      "homeScore": 2,
+      "awayScore": 1,
+      "winnerTeamId": 17
+    },
+    {
+      "matchId": 35,
+      "homeScore": 2,
+      "awayScore": 1,
+      "winnerTeamId": 20
+    },
+    {
+      "matchId": 36,
+      "homeScore": 2,
+      "awayScore": 1,
+      "winnerTeamId": 24
+    },
+    {
+      "matchId": 37,
+      "homeScore": 2,
+      "awayScore": 1,
+      "winnerTeamId": 29
+    },
+    {
+      "matchId": 38,
+      "homeScore": 2,
+      "awayScore": 1,
+      "winnerTeamId": 25
+    },
+    {
+      "matchId": 39,
+      "homeScore": 2,
+      "awayScore": 1,
+      "winnerTeamId": 32
+    },
+    {
+      "matchId": 40,
+      "homeScore": 2,
+      "awayScore": 1,
+      "winnerTeamId": 28
+    },
+    {
+      "matchId": 41,
+      "homeScore": 2,
+      "awayScore": 1,
+      "winnerTeamId": 37
+    },
+    {
+      "matchId": 42,
+      "homeScore": 2,
+      "awayScore": 1,
+      "winnerTeamId": 33
+    },
+    {
+      "matchId": 43,
+      "homeScore": 2,
+      "awayScore": 1,
+      "winnerTeamId": 36
+    },
+    {
+      "matchId": 44,
+      "homeScore": 2,
+      "awayScore": 1,
+      "winnerTeamId": 40
+    },
+    {
+      "matchId": 45,
+      "homeScore": 2,
+      "awayScore": 1,
+      "winnerTeamId": 41
+    },
+    {
+      "matchId": 46,
+      "homeScore": 2,
+      "awayScore": 1,
+      "winnerTeamId": 45
+    },
+    {
+      "matchId": 47,
+      "homeScore": 2,
+      "awayScore": 1,
+      "winnerTeamId": 48
+    },
+    {
+      "matchId": 48,
+      "homeScore": 2,
+      "awayScore": 1,
+      "winnerTeamId": 44
+    },
+    {
+      "matchId": 49,
+      "homeScore": 2,
+      "awayScore": 1,
+      "winnerTeamId": 8
+    },
+    {
+      "matchId": 50,
+      "homeScore": 2,
+      "awayScore": 1,
+      "winnerTeamId": 6
+    },
+    {
+      "matchId": 51,
+      "homeScore": 2,
+      "awayScore": 1,
+      "winnerTeamId": 12
+    },
+    {
+      "matchId": 52,
+      "homeScore": 2,
+      "awayScore": 1,
+      "winnerTeamId": 10
+    },
+    {
+      "matchId": 53,
+      "homeScore": 2,
+      "awayScore": 1,
+      "winnerTeamId": 4
+    },
+    {
+      "matchId": 54,
+      "homeScore": 2,
+      "awayScore": 1,
+      "winnerTeamId": 2
+    },
+    {
+      "matchId": 55,
+      "homeScore": 2,
+      "awayScore": 1,
+      "winnerTeamId": 18
+    },
+    {
+      "matchId": 56,
+      "homeScore": 2,
+      "awayScore": 1,
+      "winnerTeamId": 20
+    },
+    {
+      "matchId": 57,
+      "homeScore": 2,
+      "awayScore": 1,
+      "winnerTeamId": 22
+    },
+    {
+      "matchId": 58,
+      "homeScore": 2,
+      "awayScore": 1,
+      "winnerTeamId": 24
+    },
+    {
+      "matchId": 59,
+      "homeScore": 2,
+      "awayScore": 1,
+      "winnerTeamId": 16
+    },
+    {
+      "matchId": 60,
+      "homeScore": 2,
+      "awayScore": 1,
+      "winnerTeamId": 14
+    },
+    {
+      "matchId": 61,
+      "homeScore": 2,
+      "awayScore": 1,
+      "winnerTeamId": 36
+    },
+    {
+      "matchId": 62,
+      "homeScore": 2,
+      "awayScore": 1,
+      "winnerTeamId": 34
+    },
+    {
+      "matchId": 63,
+      "homeScore": 2,
+      "awayScore": 1,
+      "winnerTeamId": 30
+    },
+    {
+      "matchId": 64,
+      "homeScore": 2,
+      "awayScore": 1,
+      "winnerTeamId": 32
+    },
+    {
+      "matchId": 65,
+      "homeScore": 2,
+      "awayScore": 1,
+      "winnerTeamId": 26
+    },
+    {
+      "matchId": 66,
+      "homeScore": 2,
+      "awayScore": 1,
+      "winnerTeamId": 28
+    },
+    {
+      "matchId": 67,
+      "homeScore": 2,
+      "awayScore": 1,
+      "winnerTeamId": 48
+    },
+    {
+      "matchId": 68,
+      "homeScore": 2,
+      "awayScore": 1,
+      "winnerTeamId": 46
+    },
+    {
+      "matchId": 69,
+      "homeScore": 2,
+      "awayScore": 1,
+      "winnerTeamId": 44
+    },
+    {
+      "matchId": 70,
+      "homeScore": 2,
+      "awayScore": 1,
+      "winnerTeamId": 42
+    },
+    {
+      "matchId": 71,
+      "homeScore": 2,
+      "awayScore": 1,
+      "winnerTeamId": 38
+    },
+    {
+      "matchId": 72,
+      "homeScore": 2,
+      "awayScore": 1,
+      "winnerTeamId": 40
+    },
+    {
+      "matchId": 73,
+      "homeScore": 2,
+      "awayScore": 1,
+      "winnerTeamId": 1
+    },
+    {
+      "matchId": 74,
+      "homeScore": 2,
+      "awayScore": 1,
+      "winnerTeamId": 12
+    },
+    {
+      "matchId": 75,
+      "homeScore": 2,
+      "awayScore": 1,
+      "winnerTeamId": 20
+    },
+    {
+      "matchId": 76,
+      "homeScore": 2,
+      "awayScore": 1,
+      "winnerTeamId": 24
+    },
+    {
+      "matchId": 77,
+      "homeScore": 2,
+      "awayScore": 1,
+      "winnerTeamId": 17
+    },
+    {
+      "matchId": 78,
+      "homeScore": 2,
+      "awayScore": 1,
+      "winnerTeamId": 36
+    },
+    {
+      "matchId": 79,
+      "homeScore": 2,
+      "awayScore": 1,
+      "winnerTeamId": 4
+    },
+    {
+      "matchId": 80,
+      "homeScore": 2,
+      "awayScore": 1,
+      "winnerTeamId": 48
+    },
+    {
+      "matchId": 81,
+      "homeScore": 2,
+      "awayScore": 1,
+      "winnerTeamId": 28
+    },
+    {
+      "matchId": 82,
+      "homeScore": 2,
+      "awayScore": 1,
+      "winnerTeamId": 16
+    },
+    {
+      "matchId": 83,
+      "homeScore": 2,
+      "awayScore": 1,
+      "winnerTeamId": 32
+    },
+    {
+      "matchId": 84,
+      "homeScore": 2,
+      "awayScore": 1,
+      "winnerTeamId": 41
+    },
+    {
+      "matchId": 85,
+      "homeScore": 2,
+      "awayScore": 1,
+      "winnerTeamId": 8
+    },
+    {
+      "matchId": 86,
+      "homeScore": 2,
+      "awayScore": 1,
+      "winnerTeamId": 13
+    },
+    {
+      "matchId": 87,
+      "homeScore": 2,
+      "awayScore": 1,
+      "winnerTeamId": 40
+    },
+    {
+      "matchId": 88,
+      "homeScore": 2,
+      "awayScore": 1,
+      "winnerTeamId": 44
+    },
+    {
+      "matchId": 89,
+      "homeScore": 2,
+      "awayScore": 1,
+      "winnerTeamId": 1
+    },
+    {
+      "matchId": 90,
+      "homeScore": 2,
+      "awayScore": 1,
+      "winnerTeamId": 12
+    },
+    {
+      "matchId": 91,
+      "homeScore": 2,
+      "awayScore": 1,
+      "winnerTeamId": 24
+    },
+    {
+      "matchId": 92,
+      "homeScore": 2,
+      "awayScore": 1,
+      "winnerTeamId": 4
+    },
+    {
+      "matchId": 93,
+      "homeScore": 2,
+      "awayScore": 1,
+      "winnerTeamId": 32
+    },
+    {
+      "matchId": 94,
+      "homeScore": 2,
+      "awayScore": 1,
+      "winnerTeamId": 28
+    },
+    {
+      "matchId": 95,
+      "homeScore": 2,
+      "awayScore": 1,
+      "winnerTeamId": 13
+    },
+    {
+      "matchId": 96,
+      "homeScore": 2,
+      "awayScore": 1,
+      "winnerTeamId": 8
+    },
+    {
+      "matchId": 97,
+      "homeScore": 2,
+      "awayScore": 1,
+      "winnerTeamId": 1
+    },
+    {
+      "matchId": 98,
+      "homeScore": 2,
+      "awayScore": 1,
+      "winnerTeamId": 32
+    },
+    {
+      "matchId": 99,
+      "homeScore": 2,
+      "awayScore": 1,
+      "winnerTeamId": 24
+    },
+    {
+      "matchId": 100,
+      "homeScore": 2,
+      "awayScore": 1,
+      "winnerTeamId": 13
+    },
+    {
+      "matchId": 101,
+      "homeScore": 2,
+      "awayScore": 1,
+      "winnerTeamId": 1
+    },
+    {
+      "matchId": 102,
+      "homeScore": 2,
+      "awayScore": 1,
+      "winnerTeamId": 24
+    },
+    {
+      "matchId": 103,
+      "homeScore": 2,
+      "awayScore": 1,
+      "winnerTeamId": 32
+    }
+  ],
+  "slots": [
+    {
+      "matchId": 1,
+      "homeTeamId": 1,
+      "awayTeamId": 2
+    },
+    {
+      "matchId": 2,
+      "homeTeamId": 3,
+      "awayTeamId": 4
+    },
+    {
+      "matchId": 3,
+      "homeTeamId": 5,
+      "awayTeamId": 6
+    },
+    {
+      "matchId": 4,
+      "homeTeamId": 13,
+      "awayTeamId": 14
+    },
+    {
+      "matchId": 5,
+      "homeTeamId": 7,
+      "awayTeamId": 8
+    },
+    {
+      "matchId": 6,
+      "homeTeamId": 9,
+      "awayTeamId": 10
+    },
+    {
+      "matchId": 7,
+      "homeTeamId": 11,
+      "awayTeamId": 12
+    },
+    {
+      "matchId": 8,
+      "homeTeamId": 15,
+      "awayTeamId": 16
+    },
+    {
+      "matchId": 9,
+      "homeTeamId": 17,
+      "awayTeamId": 18
+    },
+    {
+      "matchId": 10,
+      "homeTeamId": 21,
+      "awayTeamId": 22
+    },
+    {
+      "matchId": 11,
+      "homeTeamId": 19,
+      "awayTeamId": 20
+    },
+    {
+      "matchId": 12,
+      "homeTeamId": 23,
+      "awayTeamId": 24
+    },
+    {
+      "matchId": 13,
+      "homeTeamId": 29,
+      "awayTeamId": 30
+    },
+    {
+      "matchId": 14,
+      "homeTeamId": 25,
+      "awayTeamId": 26
+    },
+    {
+      "matchId": 15,
+      "homeTeamId": 31,
+      "awayTeamId": 32
+    },
+    {
+      "matchId": 16,
+      "homeTeamId": 27,
+      "awayTeamId": 28
+    },
+    {
+      "matchId": 17,
+      "homeTeamId": 33,
+      "awayTeamId": 34
+    },
+    {
+      "matchId": 18,
+      "homeTeamId": 35,
+      "awayTeamId": 36
+    },
+    {
+      "matchId": 19,
+      "homeTeamId": 37,
+      "awayTeamId": 38
+    },
+    {
+      "matchId": 20,
+      "homeTeamId": 39,
+      "awayTeamId": 40
+    },
+    {
+      "matchId": 21,
+      "homeTeamId": 41,
+      "awayTeamId": 42
+    },
+    {
+      "matchId": 22,
+      "homeTeamId": 45,
+      "awayTeamId": 46
+    },
+    {
+      "matchId": 23,
+      "homeTeamId": 47,
+      "awayTeamId": 48
+    },
+    {
+      "matchId": 24,
+      "homeTeamId": 43,
+      "awayTeamId": 44
+    },
+    {
+      "matchId": 25,
+      "homeTeamId": 4,
+      "awayTeamId": 2
+    },
+    {
+      "matchId": 26,
+      "homeTeamId": 8,
+      "awayTeamId": 6
+    },
+    {
+      "matchId": 27,
+      "homeTeamId": 5,
+      "awayTeamId": 7
+    },
+    {
+      "matchId": 28,
+      "homeTeamId": 1,
+      "awayTeamId": 3
+    },
+    {
+      "matchId": 29,
+      "homeTeamId": 13,
+      "awayTeamId": 15
+    },
+    {
+      "matchId": 30,
+      "homeTeamId": 12,
+      "awayTeamId": 10
+    },
+    {
+      "matchId": 31,
+      "homeTeamId": 9,
+      "awayTeamId": 11
+    },
+    {
+      "matchId": 32,
+      "homeTeamId": 16,
+      "awayTeamId": 14
+    },
+    {
+      "matchId": 33,
+      "homeTeamId": 21,
+      "awayTeamId": 23
+    },
+    {
+      "matchId": 34,
+      "homeTeamId": 17,
+      "awayTeamId": 19
+    },
+    {
+      "matchId": 35,
+      "homeTeamId": 20,
+      "awayTeamId": 18
+    },
+    {
+      "matchId": 36,
+      "homeTeamId": 24,
+      "awayTeamId": 22
+    },
+    {
+      "matchId": 37,
+      "homeTeamId": 29,
+      "awayTeamId": 31
+    },
+    {
+      "matchId": 38,
+      "homeTeamId": 25,
+      "awayTeamId": 27
+    },
+    {
+      "matchId": 39,
+      "homeTeamId": 32,
+      "awayTeamId": 30
+    },
+    {
+      "matchId": 40,
+      "homeTeamId": 28,
+      "awayTeamId": 26
+    },
+    {
+      "matchId": 41,
+      "homeTeamId": 37,
+      "awayTeamId": 39
+    },
+    {
+      "matchId": 42,
+      "homeTeamId": 33,
+      "awayTeamId": 35
+    },
+    {
+      "matchId": 43,
+      "homeTeamId": 36,
+      "awayTeamId": 34
+    },
+    {
+      "matchId": 44,
+      "homeTeamId": 40,
+      "awayTeamId": 38
+    },
+    {
+      "matchId": 45,
+      "homeTeamId": 41,
+      "awayTeamId": 43
+    },
+    {
+      "matchId": 46,
+      "homeTeamId": 45,
+      "awayTeamId": 47
+    },
+    {
+      "matchId": 47,
+      "homeTeamId": 48,
+      "awayTeamId": 46
+    },
+    {
+      "matchId": 48,
+      "homeTeamId": 44,
+      "awayTeamId": 42
+    },
+    {
+      "matchId": 49,
+      "homeTeamId": 8,
+      "awayTeamId": 5
+    },
+    {
+      "matchId": 50,
+      "homeTeamId": 6,
+      "awayTeamId": 7
+    },
+    {
+      "matchId": 51,
+      "homeTeamId": 12,
+      "awayTeamId": 9
+    },
+    {
+      "matchId": 52,
+      "homeTeamId": 10,
+      "awayTeamId": 11
+    },
+    {
+      "matchId": 53,
+      "homeTeamId": 4,
+      "awayTeamId": 1
+    },
+    {
+      "matchId": 54,
+      "homeTeamId": 2,
+      "awayTeamId": 3
+    },
+    {
+      "matchId": 55,
+      "homeTeamId": 18,
+      "awayTeamId": 19
+    },
+    {
+      "matchId": 56,
+      "homeTeamId": 20,
+      "awayTeamId": 17
+    },
+    {
+      "matchId": 57,
+      "homeTeamId": 22,
+      "awayTeamId": 23
+    },
+    {
+      "matchId": 58,
+      "homeTeamId": 24,
+      "awayTeamId": 21
+    },
+    {
+      "matchId": 59,
+      "homeTeamId": 16,
+      "awayTeamId": 13
+    },
+    {
+      "matchId": 60,
+      "homeTeamId": 14,
+      "awayTeamId": 15
+    },
+    {
+      "matchId": 61,
+      "homeTeamId": 36,
+      "awayTeamId": 33
+    },
+    {
+      "matchId": 62,
+      "homeTeamId": 34,
+      "awayTeamId": 35
+    },
+    {
+      "matchId": 63,
+      "homeTeamId": 30,
+      "awayTeamId": 31
+    },
+    {
+      "matchId": 64,
+      "homeTeamId": 32,
+      "awayTeamId": 29
+    },
+    {
+      "matchId": 65,
+      "homeTeamId": 26,
+      "awayTeamId": 27
+    },
+    {
+      "matchId": 66,
+      "homeTeamId": 28,
+      "awayTeamId": 25
+    },
+    {
+      "matchId": 67,
+      "homeTeamId": 48,
+      "awayTeamId": 45
+    },
+    {
+      "matchId": 68,
+      "homeTeamId": 46,
+      "awayTeamId": 47
+    },
+    {
+      "matchId": 69,
+      "homeTeamId": 44,
+      "awayTeamId": 41
+    },
+    {
+      "matchId": 70,
+      "homeTeamId": 42,
+      "awayTeamId": 43
+    },
+    {
+      "matchId": 71,
+      "homeTeamId": 38,
+      "awayTeamId": 39
+    },
+    {
+      "matchId": 72,
+      "homeTeamId": 40,
+      "awayTeamId": 37
+    },
+    {
+      "matchId": 73,
+      "homeTeamId": 1,
+      "awayTeamId": 5
+    },
+    {
+      "matchId": 74,
+      "homeTeamId": 12,
+      "awayTeamId": 21
+    },
+    {
+      "matchId": 75,
+      "homeTeamId": 20,
+      "awayTeamId": 10
+    },
+    {
+      "matchId": 76,
+      "homeTeamId": 24,
+      "awayTeamId": 9
+    },
+    {
+      "matchId": 77,
+      "homeTeamId": 17,
+      "awayTeamId": 33
+    },
+    {
+      "matchId": 78,
+      "homeTeamId": 36,
+      "awayTeamId": 30
+    },
+    {
+      "matchId": 79,
+      "homeTeamId": 4,
+      "awayTeamId": 22
+    },
+    {
+      "matchId": 80,
+      "homeTeamId": 48,
+      "awayTeamId": 18
+    },
+    {
+      "matchId": 81,
+      "homeTeamId": 28,
+      "awayTeamId": 2
+    },
+    {
+      "matchId": 82,
+      "homeTeamId": 16,
+      "awayTeamId": 6
+    },
+    {
+      "matchId": 83,
+      "homeTeamId": 32,
+      "awayTeamId": 37
+    },
+    {
+      "matchId": 84,
+      "homeTeamId": 41,
+      "awayTeamId": 45
+    },
+    {
+      "matchId": 85,
+      "homeTeamId": 8,
+      "awayTeamId": 26
+    },
+    {
+      "matchId": 86,
+      "homeTeamId": 13,
+      "awayTeamId": 25
+    },
+    {
+      "matchId": 87,
+      "homeTeamId": 40,
+      "awayTeamId": 29
+    },
+    {
+      "matchId": 88,
+      "homeTeamId": 44,
+      "awayTeamId": 14
+    },
+    {
+      "matchId": 89,
+      "homeTeamId": 1,
+      "awayTeamId": 20
+    },
+    {
+      "matchId": 90,
+      "homeTeamId": 12,
+      "awayTeamId": 17
+    },
+    {
+      "matchId": 91,
+      "homeTeamId": 24,
+      "awayTeamId": 36
+    },
+    {
+      "matchId": 92,
+      "homeTeamId": 4,
+      "awayTeamId": 48
+    },
+    {
+      "matchId": 93,
+      "homeTeamId": 32,
+      "awayTeamId": 41
+    },
+    {
+      "matchId": 94,
+      "homeTeamId": 28,
+      "awayTeamId": 16
+    },
+    {
+      "matchId": 95,
+      "homeTeamId": 13,
+      "awayTeamId": 44
+    },
+    {
+      "matchId": 96,
+      "homeTeamId": 8,
+      "awayTeamId": 40
+    },
+    {
+      "matchId": 97,
+      "homeTeamId": 1,
+      "awayTeamId": 12
+    },
+    {
+      "matchId": 98,
+      "homeTeamId": 32,
+      "awayTeamId": 28
+    },
+    {
+      "matchId": 99,
+      "homeTeamId": 24,
+      "awayTeamId": 4
+    },
+    {
+      "matchId": 100,
+      "homeTeamId": 13,
+      "awayTeamId": 8
+    },
+    {
+      "matchId": 101,
+      "homeTeamId": 1,
+      "awayTeamId": 32
+    },
+    {
+      "matchId": 102,
+      "homeTeamId": 24,
+      "awayTeamId": 13
+    },
+    {
+      "matchId": 103,
+      "homeTeamId": 32,
+      "awayTeamId": 13
+    },
+    {
+      "matchId": 104,
+      "homeTeamId": 1,
+      "awayTeamId": 24
+    }
+  ]
+}
