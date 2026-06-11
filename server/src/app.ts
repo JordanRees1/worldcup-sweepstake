@@ -1,14 +1,11 @@
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
-import { fileURLToPath } from 'node:url';
 import cors from 'cors';
 import express, { type Express } from 'express';
+import { WEB_DIST_DIR as WEB_DIST } from './data/paths';
 import type { ServerConfig } from './env';
 import { createApiRouter } from './routes';
 import type { AppStateService } from './services/appState';
-
-// Absolute path to the built web app — server/src/app.ts → ../../web/dist.
-const WEB_DIST = fileURLToPath(new URL('../../web/dist', import.meta.url));
 
 const IS_PROD = process.env.NODE_ENV === 'production';
 

@@ -1,8 +1,9 @@
 # Dependencies — reinstalled fresh in each Docker stage
 node_modules
 
-# Previous web build — rebuilt inside the container
+# Previous build artifacts — rebuilt inside the container
 web/dist
+server/dist
 
 # Secrets — NEVER bake these into an image
 server/.env

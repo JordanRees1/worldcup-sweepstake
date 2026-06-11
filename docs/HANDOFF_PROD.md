@@ -31,6 +31,12 @@ architecture. This document covers only the production-specific decisions still 
 In dev, Vite runs on `:5173` and proxies `/api` to Express on `:8787`. In production there is
 no Vite — the web build is static HTML/JS/CSS in `web/dist/`. Express should serve it.
 
+> ✅ **Implemented.** Production static serving (`server/src/app.ts`, guarded by `NODE_ENV`),
+> the multi-stage `Dockerfile` (repo root), and a fast-boot **esbuild server bundle** are all
+> done. The server no longer runs TypeScript through `tsx` at runtime — it ships a pre-built
+> `server/dist/index.js` that plain `node` runs (cold boot ≈0.5s locally vs ≈1–1.6s under tsx).
+> See `docs/DEPLOYMENT.md` for the canonical guide. The notes below are the original plan.
+
 What needs doing:
 - Add a static-file middleware route to `server/src/app.ts` (something like
   `express.static(path.join(__dirname, '../../web/dist'))` + a catch-all `index.html` fallback
@@ -62,14 +68,16 @@ COPY --from=builder /app/datasets ./datasets
 COPY --from=builder /app/package*.json ./
 ENV NODE_ENV=production PORT=80
 EXPOSE 80
-CMD ["node", "--loader", "tsx/esm", "server/src/index.ts"]
+CMD ["node", "server/dist/index.js"]   # pre-built esbuild bundle — no tsx at runtime
 ```
 
 Notes:
 - The `datasets/` folder is COPY'd into the image — it contains the tournament CSVs and the
   sweepstake picks CSVs (no secrets). The `server/.env` is NOT copied (gitignored, secrets).
-- `tsx` is needed to run TypeScript directly. Alternatively, add a proper `tsc` compile step —
-  `server` and `shared` already have `tsconfig.json`; this is cleaner for production.
+- The server is bundled with **esbuild** at build time (`npm run bundle -w @sweepstake/server`
+  → `server/dist/index.js`, with `@sweepstake/shared` inlined). Runtime is plain `node`, so the
+  image carries no `tsx` and does no on-boot transpilation. Root-relative paths (datasets,
+  web/dist) resolve via `APP_ROOT` (set to `/app` in the image) — see `server/src/data/paths.ts`.
 - The `SWEEPSTAKE` env var selects which game to serve (see §3 below).
 - Add a `.dockerignore` to exclude `node_modules`, `web/dist` (rebuilt in the image),
   `server/.env`, and `datasets/sweepstakes/**/picks.normalized.json`.
