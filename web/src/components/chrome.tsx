@@ -1,6 +1,13 @@
 import { NavLink } from 'react-router-dom';
 import { useHealth } from '../lib/api';
 
+const TABS = [
+  { to: '/players', label: 'Players', icon: '👥' },
+  { to: '/groups', label: 'Groups', icon: '📊' },
+  { to: '/bracket', label: 'Bracket', icon: '🏆' },
+  { to: '/schedule', label: 'Schedule', icon: '📅' },
+];
+
 export function Header() {
   const { data, isError, isLoading } = useHealth();
   const dotClass = isLoading
@@ -12,12 +19,30 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-20 border-b border-white/10 bg-slate-950/80 backdrop-blur">
-      <div className="mx-auto flex w-full max-w-md items-center justify-between px-4 py-3">
-        <div>
-          <h1 className="text-base font-semibold tracking-tight">Sweepstake</h1>
-          <p className="text-[11px] text-slate-400">World Cup 2026</p>
+      <div className="mx-auto flex w-full max-w-md items-center justify-between gap-6 px-4 py-3 lg:max-w-6xl lg:px-8">
+        <div className="flex items-center gap-8">
+          <div>
+            <h1 className="text-base font-semibold tracking-tight">Sweepstake</h1>
+            <p className="text-[11px] text-slate-400">World Cup 2026</p>
+          </div>
+          {/* Desktop top nav — replaces the bottom tab bar on laptop/desktop screens. */}
+          <nav className="hidden items-center gap-1 lg:flex">
+            {TABS.map((tab) => (
+              <NavLink
+                key={tab.to}
+                to={tab.to}
+                className={({ isActive }) =>
+                  `rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors ${
+                    isActive ? 'bg-white/10 text-brand-400' : 'text-slate-400 hover:text-slate-200'
+                  }`
+                }
+              >
+                {tab.label}
+              </NavLink>
+            ))}
+          </nav>
         </div>
-        <span className="inline-flex items-center gap-1.5 rounded-full bg-white/5 px-2.5 py-1 text-[11px] text-slate-300">
+        <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-white/5 px-2.5 py-1 text-[11px] text-slate-300">
           <span className={`h-2 w-2 rounded-full ${dotClass}`} aria-hidden />
           {label}
         </span>
@@ -26,16 +51,9 @@ export function Header() {
   );
 }
 
-const TABS = [
-  { to: '/players', label: 'Players', icon: '👥' },
-  { to: '/groups', label: 'Groups', icon: '📊' },
-  { to: '/bracket', label: 'Bracket', icon: '🏆' },
-  { to: '/schedule', label: 'Schedule', icon: '📅' },
-];
-
 export function BottomNav() {
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-20 border-t border-white/10 bg-slate-950/90 pb-[env(safe-area-inset-bottom)] backdrop-blur">
+    <nav className="fixed inset-x-0 bottom-0 z-20 border-t border-white/10 bg-slate-950/90 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden">
       <div className="mx-auto flex w-full max-w-md">
         {TABS.map((tab) => (
           <NavLink

@@ -36,27 +36,31 @@ export function PlayerDetailScreen() {
         </p>
       </header>
 
-      <section>
-        <h3 className="mb-1 text-xs font-medium uppercase tracking-wide text-slate-400">Teams</h3>
-        <div className="divide-y divide-white/5 rounded-2xl border border-white/10 bg-white/5 px-3">
-          {sortPlayerTeams(player.teams).map((t) => (
-            <TeamRow key={t.team.id} team={t.team} status={t.status} />
-          ))}
-        </div>
-      </section>
-
-      <section>
-        <h3 className="mb-1 text-xs font-medium uppercase tracking-wide text-slate-400">Fixtures</h3>
-        {fixtures.length === 0 ? (
-          <EmptyState>No fixtures.</EmptyState>
-        ) : (
-          <div className="divide-y divide-white/5 rounded-2xl border border-white/10 bg-white/5">
-            {fixtures.map((m) => (
-              <FixtureRow key={m.id} match={m} teamMap={teamMap} highlightIds={ownTeamIds} />
+      <div className="space-y-5 lg:grid lg:grid-cols-2 lg:items-start lg:gap-5 lg:space-y-0">
+        <section>
+          <h3 className="mb-1 text-xs font-medium uppercase tracking-wide text-slate-400">Teams</h3>
+          <div className="divide-y divide-white/5 rounded-2xl border border-white/10 bg-white/5 px-3">
+            {sortPlayerTeams(player.teams).map((t) => (
+              <TeamRow key={t.team.id} team={t.team} status={t.status} />
             ))}
           </div>
-        )}
-      </section>
+        </section>
+
+        <section>
+          <h3 className="mb-1 text-xs font-medium uppercase tracking-wide text-slate-400">
+            Fixtures
+          </h3>
+          {fixtures.length === 0 ? (
+            <EmptyState>No fixtures.</EmptyState>
+          ) : (
+            <div className="divide-y divide-white/5 rounded-2xl border border-white/10 bg-white/5">
+              {fixtures.map((m) => (
+                <FixtureRow key={m.id} match={m} teamMap={teamMap} highlightIds={ownTeamIds} />
+              ))}
+            </div>
+          )}
+        </section>
+      </div>
     </div>
   );
 }

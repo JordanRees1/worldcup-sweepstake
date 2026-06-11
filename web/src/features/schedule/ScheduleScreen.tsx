@@ -32,7 +32,7 @@ export function ScheduleScreen() {
   if (days.length === 0) return <EmptyState>No fixtures scheduled.</EmptyState>;
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-5 lg:mx-auto lg:max-w-3xl">
       <h2 className="text-xs font-medium uppercase tracking-wide text-slate-400">Schedule</h2>
 
       {days.map((day, index) => {

@@ -8,10 +8,10 @@ import { stageRank } from '../../lib/stages';
 const ROUND_SHORT: Record<string, string> = {
   'Round of 32': 'R32',
   'Round of 16': 'R16',
-  'Quarterfinals': 'QF',
-  'Semifinals': 'SF',
+  Quarterfinals: 'QF',
+  Semifinals: 'SF',
   'Third Place Playoff': '3rd',
-  'Final': '🏆 Final',
+  Final: '🏆 Final',
 };
 
 type Round = BracketResponse['rounds'][number];
@@ -36,7 +36,8 @@ export function BracketScreen() {
   const [selectedStage, setSelectedStage] = useState<string | null>(null);
 
   const activeStage = useMemo(
-    () => (bracket ? (findActiveStage(bracket.rounds) ?? bracket.rounds.at(-1)?.stage ?? null) : null),
+    () =>
+      bracket ? (findActiveStage(bracket.rounds) ?? bracket.rounds.at(-1)?.stage ?? null) : null,
     [bracket],
   );
 
@@ -157,7 +158,11 @@ export function BracketScreen() {
                 }
               >
                 <span aria-hidden>{p.player.name}</span>
-                {isSelected && count > 0 && <span className="ml-1 text-emerald-400" aria-hidden>{count}</span>}
+                {isSelected && count > 0 && (
+                  <span className="ml-1 text-emerald-400" aria-hidden>
+                    {count}
+                  </span>
+                )}
                 {isOut && !isSelected && (
                   <span className="ml-1 text-slate-600" aria-hidden>
                     ✗
@@ -179,20 +184,24 @@ export function BracketScreen() {
             <span className="text-[11px] text-slate-500">{currentRound.nodes.length} matches</span>
           </div>
 
-          <div className="divide-y divide-white/5 overflow-hidden rounded-2xl border border-white/10 bg-white/5">
+          <div className="divide-y divide-white/5 overflow-hidden rounded-2xl border border-white/10 bg-white/5 lg:grid lg:grid-cols-2 lg:gap-3 lg:divide-y-0 lg:overflow-visible lg:rounded-none lg:border-0 lg:bg-transparent">
             {currentRound.nodes.length === 0 ? (
-              <div className="py-10 text-center text-sm text-slate-400">
+              <div className="py-10 text-center text-sm text-slate-400 lg:col-span-2">
                 Matches not yet scheduled.
               </div>
             ) : (
               currentRound.nodes.map((node) => (
-                <BracketMatchCard
+                <div
                   key={node.matchId}
-                  node={node}
-                  match={matchMap.get(node.matchId)}
-                  teamMap={teamMap}
-                  highlightIds={highlightIds}
-                />
+                  className="lg:rounded-xl lg:border lg:border-white/10 lg:bg-white/5"
+                >
+                  <BracketMatchCard
+                    node={node}
+                    match={matchMap.get(node.matchId)}
+                    teamMap={teamMap}
+                    highlightIds={highlightIds}
+                  />
+                </div>
               ))
             )}
           </div>

@@ -10,7 +10,7 @@ export default function App() {
   return (
     <div className="flex min-h-dvh flex-col bg-slate-950 text-slate-100">
       <Header />
-      <main className="mx-auto w-full max-w-md flex-1 px-4 pb-24 pt-4">
+      <main className="mx-auto w-full max-w-md flex-1 px-4 pb-24 pt-4 lg:max-w-6xl lg:px-8 lg:pb-12 lg:pt-8">
         <Routes>
           <Route path="/" element={<Navigate to="/players" replace />} />
           <Route path="/players" element={<PlayersScreen />} />
