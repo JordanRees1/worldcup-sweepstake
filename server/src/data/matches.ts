@@ -20,39 +20,21 @@ const LABEL_FIXES: Record<number, string> = {
 };
 
 /**
- * Shift an ISO instant by `hours`, re-expressing the result with the SAME UTC offset
- * (so the offset string is preserved and date rollover is handled correctly).
- */
-function shiftHours(iso: string, hours: number): string {
-  const m = /^(.*T\d{2}:\d{2}:\d{2})([+-]\d{2}:\d{2})$/.exec(iso);
-  if (!m) return iso;
-  const [, , offset] = m;
-  const shifted = new Date(new Date(iso).getTime() + hours * 3_600_000);
-  const offMin =
-    (offset[0] === '-' ? -1 : 1) * (Number(offset.slice(1, 3)) * 60 + Number(offset.slice(4, 6)));
-  // Re-express in the original offset by reading the wall-clock fields off a UTC-shifted copy.
-  const wall = new Date(shifted.getTime() + offMin * 60_000);
-  const p = (n: number) => String(n).padStart(2, '0');
-  const stamp =
-    `${wall.getUTCFullYear()}-${p(wall.getUTCMonth() + 1)}-${p(wall.getUTCDate())}` +
-    `T${p(wall.getUTCHours())}:${p(wall.getUTCMinutes())}:${p(wall.getUTCSeconds())}`;
-  return `${stamp}${offset}`;
-}
-
-/**
- * "2026-06-11 15:00:00-06" -> "2026-06-11T14:00:00-06:00" (valid ISO 8601).
+ * "2026-06-11 15:00:00-06" -> "2026-06-11T15:00:00-04:00" (valid ISO 8601).
  *
- * BF1: the dataset's kickoff wall-clock times run one hour late for our (all-UK) audience,
- * so we correct every kickoff by -1h here, preserving each venue's UTC offset. This is the
- * single source of the correction — change KICKOFF_CORRECTION_HOURS to 0 to disable it.
+ * BF1: every kickoff wall-clock time in the dataset is in US Eastern time (how the official
+ * schedule is published), but the CSV paired each one with its VENUE's local UTC offset — so
+ * non-Eastern venues came out 1-3h late (Central +1, Mexico/Mountain +2, Pacific +3). We
+ * discard the stored offset and re-attach the Eastern one. The whole June-July tournament is
+ * in US daylight time, so EDT (-04:00) applies throughout. The web renders the resulting
+ * (correct) instants in UK time.
  */
-const KICKOFF_CORRECTION_HOURS: number = -1;
+const EASTERN_OFFSET = '-04:00';
 function toIso(raw: string): string {
-  const iso = raw
+  return raw
     .trim()
     .replace(' ', 'T')
-    .replace(/([+-]\d{2})$/, '$1:00');
-  return KICKOFF_CORRECTION_HOURS === 0 ? iso : shiftHours(iso, KICKOFF_CORRECTION_HOURS);
+    .replace(/[+-]\d{2}(:\d{2})?$/, EASTERN_OFFSET);
 }
 
 function groupFromLabel(label: string): GroupLetter | undefined {
