@@ -17,6 +17,9 @@ import {
   type VenuesResponse,
 } from '@sweepstake/shared';
 
+// Poll every 60s — matches the server cache TTL so we never burn extra API calls.
+const POLL_INTERVAL = 60_000;
+
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -42,24 +45,28 @@ export const useOverview = () =>
   useQuery({
     queryKey: ['overview'],
     queryFn: () => fetchJson<OverviewResponse>(API_ROUTES.overview),
+    refetchInterval: POLL_INTERVAL,
   });
 
 export const usePlayers = () =>
   useQuery({
     queryKey: ['players'],
     queryFn: () => fetchJson<PlayersResponse>(API_ROUTES.players),
+    refetchInterval: POLL_INTERVAL,
   });
 
 export const useBracket = () =>
   useQuery({
     queryKey: ['bracket'],
     queryFn: () => fetchJson<BracketResponse>(API_ROUTES.bracket),
+    refetchInterval: POLL_INTERVAL,
   });
 
 export const useSchedule = () =>
   useQuery({
     queryKey: ['schedule'],
     queryFn: () => fetchJson<ScheduleResponse>(API_ROUTES.schedule),
+    refetchInterval: POLL_INTERVAL,
   });
 
 export const useTeams = () =>
@@ -69,12 +76,17 @@ export const useVenues = () =>
   useQuery({ queryKey: ['venues'], queryFn: () => fetchJson<VenuesResponse>(API_ROUTES.venues) });
 
 export const useGroups = () =>
-  useQuery({ queryKey: ['groups'], queryFn: () => fetchJson<GroupsResponse>(API_ROUTES.groups) });
+  useQuery({
+    queryKey: ['groups'],
+    queryFn: () => fetchJson<GroupsResponse>(API_ROUTES.groups),
+    refetchInterval: POLL_INTERVAL,
+  });
 
 export const useAllMatches = () =>
   useQuery({
     queryKey: ['matches'],
     queryFn: () => fetchJson<MatchesResponse>(API_ROUTES.matches),
+    refetchInterval: POLL_INTERVAL,
   });
 
 export const usePlayerDetail = (id: number) =>
@@ -82,6 +94,7 @@ export const usePlayerDetail = (id: number) =>
     queryKey: ['player', id],
     queryFn: () => fetchJson<PlayerDetailResponse>(API_ROUTES.player(id)),
     enabled: Number.isInteger(id) && id > 0,
+    refetchInterval: POLL_INTERVAL,
   });
 
 /** Memoized teamId → Team lookup, derived from /api/teams. */
