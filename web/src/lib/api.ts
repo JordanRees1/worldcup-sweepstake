@@ -13,6 +13,8 @@ import {
   type ScheduleResponse,
   type Team,
   type TeamsResponse,
+  type Venue,
+  type VenuesResponse,
 } from '@sweepstake/shared';
 
 export const queryClient = new QueryClient({
@@ -37,25 +39,43 @@ export const useHealth = () =>
   useQuery({ queryKey: ['health'], queryFn: () => fetchJson<HealthResponse>(API_ROUTES.health) });
 
 export const useOverview = () =>
-  useQuery({ queryKey: ['overview'], queryFn: () => fetchJson<OverviewResponse>(API_ROUTES.overview) });
+  useQuery({
+    queryKey: ['overview'],
+    queryFn: () => fetchJson<OverviewResponse>(API_ROUTES.overview),
+  });
 
 export const usePlayers = () =>
-  useQuery({ queryKey: ['players'], queryFn: () => fetchJson<PlayersResponse>(API_ROUTES.players) });
+  useQuery({
+    queryKey: ['players'],
+    queryFn: () => fetchJson<PlayersResponse>(API_ROUTES.players),
+  });
 
 export const useBracket = () =>
-  useQuery({ queryKey: ['bracket'], queryFn: () => fetchJson<BracketResponse>(API_ROUTES.bracket) });
+  useQuery({
+    queryKey: ['bracket'],
+    queryFn: () => fetchJson<BracketResponse>(API_ROUTES.bracket),
+  });
 
 export const useSchedule = () =>
-  useQuery({ queryKey: ['schedule'], queryFn: () => fetchJson<ScheduleResponse>(API_ROUTES.schedule) });
+  useQuery({
+    queryKey: ['schedule'],
+    queryFn: () => fetchJson<ScheduleResponse>(API_ROUTES.schedule),
+  });
 
 export const useTeams = () =>
   useQuery({ queryKey: ['teams'], queryFn: () => fetchJson<TeamsResponse>(API_ROUTES.teams) });
+
+export const useVenues = () =>
+  useQuery({ queryKey: ['venues'], queryFn: () => fetchJson<VenuesResponse>(API_ROUTES.venues) });
 
 export const useGroups = () =>
   useQuery({ queryKey: ['groups'], queryFn: () => fetchJson<GroupsResponse>(API_ROUTES.groups) });
 
 export const useAllMatches = () =>
-  useQuery({ queryKey: ['matches'], queryFn: () => fetchJson<MatchesResponse>(API_ROUTES.matches) });
+  useQuery({
+    queryKey: ['matches'],
+    queryFn: () => fetchJson<MatchesResponse>(API_ROUTES.matches),
+  });
 
 export const usePlayerDetail = (id: number) =>
   useQuery({
@@ -70,6 +90,28 @@ export function useTeamMap(): Map<number, Team> {
   return useMemo(() => {
     const map = new Map<number, Team>();
     for (const { team } of data?.teams ?? []) map.set(team.id, team);
+    return map;
+  }, [data]);
+}
+
+/** Memoized teamId → owning player's name, derived from /api/players (each team is owned once). */
+export function useTeamOwnerMap(): Map<number, string> {
+  const { data } = usePlayers();
+  return useMemo(() => {
+    const map = new Map<number, string>();
+    for (const p of data?.players ?? []) {
+      for (const t of p.teams) map.set(t.team.id, p.player.name);
+    }
+    return map;
+  }, [data]);
+}
+
+/** Memoized venueId → Venue lookup, derived from /api/venues. */
+export function useVenueMap(): Map<number, Venue> {
+  const { data } = useVenues();
+  return useMemo(() => {
+    const map = new Map<number, Venue>();
+    for (const v of data?.venues ?? []) map.set(v.id, v);
     return map;
   }, [data]);
 }

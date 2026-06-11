@@ -2,7 +2,14 @@ import { useEffect, useMemo, useState } from 'react';
 import type { BracketResponse, PlayerSummary } from '@sweepstake/shared';
 import { BracketMatchCard } from '../../components/BracketMatchCard';
 import { EmptyState, ErrorState, LoadingState } from '../../components/states';
-import { useBracket, useMatchMap, usePlayers, useTeamMap } from '../../lib/api';
+import {
+  useBracket,
+  useMatchMap,
+  usePlayers,
+  useTeamMap,
+  useTeamOwnerMap,
+  useVenueMap,
+} from '../../lib/api';
 import { stageRank } from '../../lib/stages';
 
 const ROUND_SHORT: Record<string, string> = {
@@ -30,6 +37,8 @@ export function BracketScreen() {
   const { data: bracket, isLoading, isError, error, refetch } = useBracket();
   const matchMap = useMatchMap();
   const teamMap = useTeamMap();
+  const venueMap = useVenueMap();
+  const ownerByTeam = useTeamOwnerMap();
   const { data: playersData } = usePlayers();
 
   // Stage selection — null until bracket data loads, then set to the active stage.
@@ -200,6 +209,8 @@ export function BracketScreen() {
                     match={matchMap.get(node.matchId)}
                     teamMap={teamMap}
                     highlightIds={highlightIds}
+                    venue={venueMap.get(matchMap.get(node.matchId)?.venueId ?? -1)}
+                    ownerByTeam={ownerByTeam}
                   />
                 </div>
               ))

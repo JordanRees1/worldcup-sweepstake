@@ -2,7 +2,7 @@ import { Link, useParams } from 'react-router-dom';
 import { FixtureRow } from '../../components/FixtureRow';
 import { EmptyState, ErrorState, LoadingState } from '../../components/states';
 import { TeamRow } from '../../components/TeamRow';
-import { usePlayerDetail, useTeamMap } from '../../lib/api';
+import { usePlayerDetail, useTeamMap, useTeamOwnerMap, useVenueMap } from '../../lib/api';
 import { sortPlayerTeams } from '../../lib/stages';
 
 export function PlayerDetailScreen() {
@@ -10,6 +10,8 @@ export function PlayerDetailScreen() {
   const playerId = Number(id);
   const { data, isLoading, isError, error, refetch } = usePlayerDetail(playerId);
   const teamMap = useTeamMap();
+  const venueMap = useVenueMap();
+  const ownerByTeam = useTeamOwnerMap();
 
   if (isLoading) return <LoadingState label="Loading player…" />;
   if (isError) return <ErrorState error={error} onRetry={() => void refetch()} />;
@@ -55,7 +57,14 @@ export function PlayerDetailScreen() {
           ) : (
             <div className="divide-y divide-white/5 rounded-2xl border border-white/10 bg-white/5">
               {fixtures.map((m) => (
-                <FixtureRow key={m.id} match={m} teamMap={teamMap} highlightIds={ownTeamIds} />
+                <FixtureRow
+                  key={m.id}
+                  match={m}
+                  teamMap={teamMap}
+                  highlightIds={ownTeamIds}
+                  venue={venueMap.get(m.venueId)}
+                  ownerByTeam={ownerByTeam}
+                />
               ))}
             </div>
           )}

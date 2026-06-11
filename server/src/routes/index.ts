@@ -11,6 +11,7 @@ import {
   buildPlayers,
   buildSchedule,
   buildTeams,
+  buildVenues,
 } from '../services/responses';
 
 /** Wrap an async handler so any rejection becomes a structured 500 envelope. */
@@ -69,6 +70,13 @@ export function createApiRouter(service: AppStateService, config: ServerConfig):
     '/teams',
     asyncRoute(async (_req, res) => {
       res.json(buildTeams(await service.get()));
+    }),
+  );
+
+  router.get(
+    '/venues',
+    asyncRoute(async (_req, res) => {
+      res.json(buildVenues(await service.get()));
     }),
   );
 

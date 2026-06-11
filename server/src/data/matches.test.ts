@@ -29,6 +29,7 @@ describe('loadMatches', () => {
     for (const m of matches) {
       expect(Number.isNaN(Date.parse(m.kickoffAt)), `match ${m.id}`).toBe(false);
     }
-    expect(matches[0]?.kickoffAt).toBe('2026-06-11T15:00:00-06:00');
+    // BF1: kickoffs are corrected by -1h (raw CSV value was 15:00:00-06), offset preserved.
+    expect(matches[0]?.kickoffAt).toBe('2026-06-11T14:00:00-06:00');
   });
 });

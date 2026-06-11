@@ -12,6 +12,7 @@ import {
   type ScheduleResponse,
   type StageName,
   type TeamsResponse,
+  type VenuesResponse,
 } from '@sweepstake/shared';
 import type { AppState } from './appState';
 
@@ -82,6 +83,10 @@ export function buildTeams(state: AppState): TeamsResponse {
       },
     })),
   };
+}
+
+export function buildVenues(state: AppState): VenuesResponse {
+  return { venues: state.venues };
 }
 
 export function buildGroups(state: AppState): GroupsResponse {

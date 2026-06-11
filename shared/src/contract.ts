@@ -11,6 +11,7 @@ import type {
   PlayerSummary,
   Team,
   TeamStatus,
+  Venue,
 } from './types';
 
 export const API_BASE = '/api';
@@ -22,6 +23,7 @@ export const API_ROUTES = {
   players: '/api/players',
   player: (id: number | ':id') => `/api/players/${id}`,
   teams: '/api/teams',
+  venues: '/api/venues',
   groups: '/api/groups',
   bracket: '/api/bracket',
   matches: '/api/matches',
@@ -55,6 +57,10 @@ export interface PlayerDetailResponse {
 
 export interface TeamsResponse {
   teams: Array<{ team: Team; status: TeamStatus }>;
+}
+
+export interface VenuesResponse {
+  venues: Venue[];
 }
 
 export interface GroupsResponse {

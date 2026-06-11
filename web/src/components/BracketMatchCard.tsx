@@ -1,4 +1,4 @@
-import type { BracketNode, Match, Team } from '@sweepstake/shared';
+import type { BracketNode, Match, Team, Venue } from '@sweepstake/shared';
 import { Crest } from './Crest';
 import { formatDay, formatTime } from '../lib/format';
 
@@ -23,36 +23,52 @@ interface TeamSideProps {
   isLoser: boolean;
   isHighlighted: boolean;
   align: 'left' | 'right';
+  /** Owning player's name — shown in brackets under the team name. */
+  owner?: string;
 }
 
-function TeamSide({ teamId, labelFrag, teamMap, isWinner, isLoser, isHighlighted, align }: TeamSideProps) {
+function TeamSide({
+  teamId,
+  labelFrag,
+  teamMap,
+  isWinner,
+  isLoser,
+  isHighlighted,
+  align,
+  owner,
+}: TeamSideProps) {
   const team = teamId !== null ? teamMap.get(teamId) : undefined;
   const displayName = team?.name ?? labelFrag;
   const cls = sideClass(isWinner, isLoser, isHighlighted);
+  // The owner turns green alongside the team name when its player is selected.
+  const ownerCls = isHighlighted ? 'text-emerald-400' : 'text-slate-500';
+
+  const crest = team ? (
+    <Crest team={team} size={22} />
+  ) : (
+    <span className="flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-sm bg-white/5 text-[9px] font-bold text-slate-500">
+      ?
+    </span>
+  );
+
+  const names = (
+    <span className={`flex min-w-0 flex-col ${align === 'right' ? 'items-end' : 'items-start'}`}>
+      <span className={`max-w-full truncate text-sm ${cls}`}>{displayName}</span>
+      {owner && <span className={`max-w-full truncate text-[10px] ${ownerCls}`}>({owner})</span>}
+    </span>
+  );
 
   return align === 'right' ? (
     // Home — crest on the right, name right-aligned
     <div className="flex min-w-0 items-center justify-end gap-1.5">
-      <span className={`truncate text-right text-sm ${cls}`}>{displayName}</span>
-      {team ? (
-        <Crest team={team} size={22} />
-      ) : (
-        <span className="flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-sm bg-white/5 text-[9px] font-bold text-slate-500">
-          ?
-        </span>
-      )}
+      {names}
+      {crest}
     </div>
   ) : (
     // Away — crest on the left, name left-aligned
     <div className="flex min-w-0 items-center gap-1.5">
-      {team ? (
-        <Crest team={team} size={22} />
-      ) : (
-        <span className="flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-sm bg-white/5 text-[9px] font-bold text-slate-500">
-          ?
-        </span>
-      )}
-      <span className={`truncate text-sm ${cls}`}>{displayName}</span>
+      {crest}
+      {names}
     </div>
   );
 }
@@ -62,14 +78,27 @@ interface Props {
   match?: Match;
   teamMap: Map<number, Team>;
   highlightIds: Set<number>;
+  venue?: Venue;
+  /** teamId → owning player's name, shown in brackets under each team. */
+  ownerByTeam?: Map<number, string>;
 }
 
-export function BracketMatchCard({ node, match, teamMap, highlightIds }: Props) {
+export function BracketMatchCard({
+  node,
+  match,
+  teamMap,
+  highlightIds,
+  venue,
+  ownerByTeam,
+}: Props) {
   const [homeLabel, awayLabel] = splitLabel(node.label);
 
   const homeId = node.homeTeamId;
   const awayId = node.awayTeamId;
   const winnerId = node.winnerTeamId;
+
+  const homeOwner = homeId !== null ? ownerByTeam?.get(homeId) : undefined;
+  const awayOwner = awayId !== null ? ownerByTeam?.get(awayId) : undefined;
 
   const homeWins = winnerId !== null && winnerId === homeId;
   const awayWins = winnerId !== null && winnerId === awayId;
@@ -94,6 +123,7 @@ export function BracketMatchCard({ node, match, teamMap, highlightIds }: Props) 
           isLoser={awayWins}
           isHighlighted={homeHi}
           align="right"
+          owner={homeOwner}
         />
 
         {/* Centre: score or kickoff time */}
@@ -105,9 +135,7 @@ export function BracketMatchCard({ node, match, teamMap, highlightIds }: Props) 
           ) : (
             <span className="text-xs tabular-nums text-slate-400">{timeStr}</span>
           )}
-          {!score && dateStr ? (
-            <span className="text-[10px] text-slate-500">{dateStr}</span>
-          ) : null}
+          {!score && dateStr ? <span className="text-[10px] text-slate-500">{dateStr}</span> : null}
         </div>
 
         <TeamSide
@@ -118,8 +146,16 @@ export function BracketMatchCard({ node, match, teamMap, highlightIds }: Props) 
           isLoser={homeWins}
           isHighlighted={awayHi}
           align="left"
+          owner={awayOwner}
         />
       </div>
+      {venue && (
+        <p className="mt-1 text-center text-[10px] leading-tight text-slate-500">
+          <span className="text-slate-400">{venue.venue}</span>
+          <br />
+          {venue.city}, {venue.country}
+        </p>
+      )}
     </div>
   );
 }

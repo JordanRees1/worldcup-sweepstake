@@ -1,12 +1,15 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { FixtureRow } from '../../components/FixtureRow';
 import { EmptyState, ErrorState, LoadingState } from '../../components/states';
-import { useSchedule, useTeamMap } from '../../lib/api';
+import { useSchedule, useTeamMap, useTeamOwnerMap, useVenueMap } from '../../lib/api';
 import { formatDay } from '../../lib/format';
 
 export function ScheduleScreen() {
   const { data, isLoading, isError, error, refetch } = useSchedule();
   const teamMap = useTeamMap();
+  const ownerByTeam = useTeamOwnerMap();
+  const venueMap = useVenueMap();
+  const [showPlayers, setShowPlayers] = useState(true);
   const currentRef = useRef<HTMLElement | null>(null);
   const didScroll = useRef(false);
 
@@ -33,7 +36,20 @@ export function ScheduleScreen() {
 
   return (
     <div className="space-y-5 lg:mx-auto lg:max-w-3xl">
-      <h2 className="text-xs font-medium uppercase tracking-wide text-slate-400">Schedule</h2>
+      <div className="flex items-center justify-between">
+        <h2 className="text-xs font-medium uppercase tracking-wide text-slate-400">Schedule</h2>
+        <button
+          onClick={() => setShowPlayers((v) => !v)}
+          aria-pressed={showPlayers}
+          className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
+            showPlayers
+              ? 'bg-brand-500/20 text-brand-300 ring-1 ring-brand-500/40'
+              : 'bg-white/5 text-slate-400 active:bg-white/10'
+          }`}
+        >
+          {showPlayers ? '✓ Players' : 'Show players'}
+        </button>
+      </div>
 
       {days.map((day, index) => {
         const isPast = index < currentIndex;
@@ -55,7 +71,13 @@ export function ScheduleScreen() {
             <div className="divide-y divide-white/5 rounded-2xl border border-white/10 bg-white/5">
               {day.matches.map((match) => (
                 <div key={match.id} className={match.status === 'finished' ? 'opacity-60' : ''}>
-                  <FixtureRow match={match} teamMap={teamMap} hideDate />
+                  <FixtureRow
+                    match={match}
+                    teamMap={teamMap}
+                    hideDate
+                    ownerByTeam={showPlayers ? ownerByTeam : undefined}
+                    venue={venueMap.get(match.venueId)}
+                  />
                 </div>
               ))}
             </div>

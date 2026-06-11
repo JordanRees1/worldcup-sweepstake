@@ -1,4 +1,4 @@
-import type { Match, Team } from '@sweepstake/shared';
+import type { Match, Team, Venue } from '@sweepstake/shared';
 import { formatDay, formatTime } from '../lib/format';
 
 function sideLabel(match: Match, side: 'home' | 'away', teamMap: Map<number, Team>): string {
@@ -14,16 +14,24 @@ export function FixtureRow({
   teamMap,
   highlightIds,
   hideDate = false,
+  ownerByTeam,
+  venue,
 }: {
   match: Match;
   teamMap: Map<number, Team>;
   highlightIds?: Set<number>;
   hideDate?: boolean;
+  /** When provided, shows the owning player's name under each team (Schedule "Show players"). */
+  ownerByTeam?: Map<number, string>;
+  /** When provided, shows the stadium + city/country under the fixture. */
+  venue?: Venue;
 }) {
   const home = sideLabel(match, 'home', teamMap);
   const away = sideLabel(match, 'away', teamMap);
   const homeHi = match.homeTeamId !== null && highlightIds?.has(match.homeTeamId);
   const awayHi = match.awayTeamId !== null && highlightIds?.has(match.awayTeamId);
+  const homeOwner = match.homeTeamId !== null ? ownerByTeam?.get(match.homeTeamId) : undefined;
+  const awayOwner = match.awayTeamId !== null ? ownerByTeam?.get(match.awayTeamId) : undefined;
   const center = match.result
     ? `${match.result.homeScore}–${match.result.awayScore}`
     : formatTime(match.kickoffAt);
@@ -33,11 +41,16 @@ export function FixtureRow({
   return (
     <div className="px-3 py-2.5">
       <div className="flex items-center gap-2 text-sm">
-        <span
-          className={`flex-1 truncate text-right ${homeHi ? 'font-semibold text-slate-100' : 'text-slate-300'}`}
-        >
-          {home}
-        </span>
+        <div className="min-w-0 flex-1 text-right">
+          <span
+            className={`block truncate ${homeHi ? 'font-semibold text-slate-100' : 'text-slate-300'}`}
+          >
+            {home}
+          </span>
+          {homeOwner && (
+            <span className="block truncate text-[10px] text-slate-400/60">({homeOwner})</span>
+          )}
+        </div>
         <span
           className={`shrink-0 rounded px-2 py-0.5 text-xs tabular-nums ${
             match.result ? 'bg-white/10 font-semibold text-slate-100' : 'text-slate-400'
@@ -45,13 +58,25 @@ export function FixtureRow({
         >
           {center}
         </span>
-        <span
-          className={`flex-1 truncate ${awayHi ? 'font-semibold text-slate-100' : 'text-slate-300'}`}
-        >
-          {away}
-        </span>
+        <div className="min-w-0 flex-1">
+          <span
+            className={`block truncate ${awayHi ? 'font-semibold text-slate-100' : 'text-slate-300'}`}
+          >
+            {away}
+          </span>
+          {awayOwner && (
+            <span className="block truncate text-[10px] text-slate-400/60">({awayOwner})</span>
+          )}
+        </div>
       </div>
       <p className="mt-0.5 text-center text-[10px] text-slate-500">{meta}</p>
+      {venue && (
+        <p className="mt-0.5 text-center text-[10px] leading-tight text-slate-500">
+          <span className="text-slate-400">{venue.venue}</span>
+          <br />
+          {venue.city}, {venue.country}
+        </p>
+      )}
     </div>
   );
 }
