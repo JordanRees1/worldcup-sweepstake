@@ -26,7 +26,8 @@
     "generate:scenarios": "tsx server/src/data/generateScenarios.ts",
     "dev:group-stage": "cross-env SEED_SCENARIO=group-stage concurrently -k -n api,web -c blue,magenta \"npm:dev:server\" \"npm:dev:web\"",
     "dev:quarters": "cross-env SEED_SCENARIO=quarterfinals concurrently -k -n api,web -c blue,magenta \"npm:dev:server\" \"npm:dev:web\"",
-    "dev:final": "cross-env SEED_SCENARIO=final concurrently -k -n api,web -c blue,magenta \"npm:dev:server\" \"npm:dev:web\""
+    "dev:final": "cross-env SEED_SCENARIO=final concurrently -k -n api,web -c blue,magenta \"npm:dev:server\" \"npm:dev:web\"",
+    "dev:live-demo": "cross-env SEED_SCENARIO=live-demo concurrently -k -n api,web -c blue,magenta \"npm:dev:server\" \"npm:dev:web\""
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

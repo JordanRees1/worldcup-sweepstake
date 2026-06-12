@@ -2,12 +2,13 @@
  * Scenario generator — produces pre-built tournament state JSON files for local dev/demo.
  * Run with: npm run generate:scenarios
  *
- * Three scenarios are written to datasets/scenarios/:
+ * Four scenarios are written to datasets/scenarios/:
  *   group-stage    — matchdays 1 + 2 done, matchday 3 still to play
  *   quarterfinals  — all group + R32 + R16 done; QF slots resolved
  *   final          — everything through SF + 3rd-place; Final slot resolved
+ *   live-demo      — matchdays 1 + 2 done + 3 matchday-3 games LIVE (for testing the in-play UI)
  *
- * All matches use a deterministic rule: home team always wins 2-1.
+ * All finished matches use a deterministic rule: home team always wins 2-1.
  */
 
 import { mkdirSync, writeFileSync } from 'node:fs';
@@ -37,11 +38,19 @@ interface SimSlot {
   awayTeamId: number;
 }
 
+interface SimLive {
+  matchId: number;
+  homeScore: number;
+  awayScore: number;
+  minute: number;
+}
+
 interface ScenarioFile {
   name: string;
   description: string;
   results: SimResult[];
   slots: SimSlot[];
+  live?: SimLive[];
 }
 
 // ── Best-third slot assignment ────────────────────────────────────────────────
@@ -264,10 +273,10 @@ function main(): void {
   const ds = loadDataset();
   const outDir = join(DATASETS_DIR, 'scenarios');
   mkdirSync(outDir, { recursive: true });
-  console.log('[generate:scenarios] Dataset loaded — 3 scenarios to build\n');
+  console.log('[generate:scenarios] Dataset loaded — 4 scenarios to build\n');
 
   // ── Scenario 1: Group Stage (matchday 1+2) ──────────────────────────────────
-  console.log('1/3  group-stage  (matchdays 1+2 complete, matchday 3 pending)');
+  console.log('1/4  group-stage  (matchdays 1+2 complete, matchday 3 pending)');
   {
     const state = new BracketState();
     runGroupStage(ds.matches, 2, state);
@@ -282,7 +291,7 @@ function main(): void {
   }
 
   // ── Scenario 2: Quarterfinals ─────────────────────────────────────────────
-  console.log('2/3  quarterfinals  (groups + R32 + R16 done, QF fixtures set)');
+  console.log('2/4  quarterfinals  (groups + R32 + R16 done, QF fixtures set)');
   {
     const state = new BracketState();
     runGroupStage(ds.matches, 3, state);
@@ -301,7 +310,7 @@ function main(): void {
   }
 
   // ── Scenario 3: Final ────────────────────────────────────────────────────────
-  console.log('3/3  final  (through SF + 3rd-place done, Final slot set)');
+  console.log('3/4  final  (through SF + 3rd-place done, Final slot set)');
   {
     const state = new BracketState();
     runGroupStage(ds.matches, 3, state);
@@ -319,6 +328,38 @@ function main(): void {
         'Two finalists remain — the Final is tomorrow.',
       results: state.results,
       slots: state.slots,
+    });
+  }
+
+  // ── Scenario 4: Live demo (matchday 1+2 done, a few matchday-3 games in progress) ──
+  console.log('4/4  live-demo  (matchdays 1+2 done, 3 matchday-3 games LIVE)');
+  {
+    const state = new BracketState();
+    runGroupStage(ds.matches, 2, state);
+    // The first three matchday-3 group games (ids just past the 48 already played) go in-play.
+    const md3 = ds.matches
+      .filter((m) => m.stage === 'Group Stage')
+      .sort((a, b) => a.id - b.id)
+      .slice(48, 51);
+    const liveScores = [
+      { home: 1, away: 0, minute: 23 },
+      { home: 2, away: 2, minute: 67 },
+      { home: 0, away: 1, minute: 88 },
+    ];
+    const live: SimLive[] = md3.map((m, i) => ({
+      matchId: m.id,
+      homeScore: liveScores[i].home,
+      awayScore: liveScores[i].away,
+      minute: liveScores[i].minute,
+    }));
+    write(outDir, 'live-demo.json', {
+      name: 'Live Demo — Matchday 3 In Progress',
+      description:
+        'Matchdays 1 and 2 are complete; three matchday-3 group games are currently LIVE ' +
+        '(running scores + clock) for testing the in-play UI offline.',
+      results: state.results,
+      slots: state.slots,
+      live,
     });
   }
 

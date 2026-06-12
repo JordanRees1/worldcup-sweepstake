@@ -80,6 +80,23 @@ describe('applyResults', () => {
     expect(m.result).toMatchObject({ homePenalties: 4, awayPenalties: 3, winnerTeamId: 5 });
   });
 
+  it('attaches a running result + match minute for a live (in-play) match', () => {
+    const result: MatchResultDTO = {
+      matchId: 1,
+      status: 'live',
+      homeScore: 1,
+      awayScore: 0,
+      homePenalties: null,
+      awayPenalties: null,
+      winnerTeamId: null,
+      minute: 67,
+    };
+    const [m] = applyResults([baseGroup], [result], []);
+    expect(m.status).toBe('live');
+    expect(m.minute).toBe(67);
+    expect(m.result).toEqual({ homeScore: 1, awayScore: 0, winnerTeamId: null });
+  });
+
   it('resolves knockout slots (home/away team ids)', () => {
     const slot: ResolvedSlotDTO = { matchId: 73, homeTeamId: 9, awayTeamId: 21 };
     const [m] = applyResults([baseKnockout], [], [slot]);

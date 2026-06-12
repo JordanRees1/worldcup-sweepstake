@@ -18,11 +18,21 @@ interface ScenarioSlot {
   awayTeamId: number;
 }
 
+/** A match currently in progress — running score + clock, no winner yet. */
+interface ScenarioLive {
+  matchId: number;
+  homeScore: number;
+  awayScore: number;
+  minute: number;
+}
+
 interface ScenarioFile {
   name: string;
   description: string;
   results: ScenarioResult[];
   slots: ScenarioSlot[];
+  /** Optional in-progress matches (for testing the live UI offline). */
+  live?: ScenarioLive[];
 }
 
 function loadScenario(scenario: string): { results: MatchResultDTO[]; slots: ResolvedSlotDTO[] } | null {
@@ -36,23 +46,39 @@ function loadScenario(scenario: string): { results: MatchResultDTO[]; slots: Res
   }
 
   const file = JSON.parse(readFileSync(path, 'utf8')) as ScenarioFile;
+  const live = file.live ?? [];
   console.log(
     `[seedProvider] Loaded scenario "${file.name}" ` +
-      `(${file.results.length} results, ${file.slots.length} slots)`,
+      `(${file.results.length} results, ${file.slots.length} slots, ${live.length} live)`,
+  );
+
+  const finishedResults = file.results.map(
+    (r): MatchResultDTO => ({
+      matchId: r.matchId,
+      status: 'finished',
+      homeScore: r.homeScore,
+      awayScore: r.awayScore,
+      homePenalties: null,
+      awayPenalties: null,
+      winnerTeamId: r.winnerTeamId,
+    }),
+  );
+
+  const liveResults = live.map(
+    (l): MatchResultDTO => ({
+      matchId: l.matchId,
+      status: 'live',
+      homeScore: l.homeScore,
+      awayScore: l.awayScore,
+      homePenalties: null,
+      awayPenalties: null,
+      winnerTeamId: null,
+      minute: l.minute,
+    }),
   );
 
   return {
-    results: file.results.map(
-      (r): MatchResultDTO => ({
-        matchId: r.matchId,
-        status: 'finished',
-        homeScore: r.homeScore,
-        awayScore: r.awayScore,
-        homePenalties: null,
-        awayPenalties: null,
-        winnerTeamId: r.winnerTeamId,
-      }),
-    ),
+    results: [...finishedResults, ...liveResults],
     slots: file.slots.map(
       (s): ResolvedSlotDTO => ({
         matchId: s.matchId,

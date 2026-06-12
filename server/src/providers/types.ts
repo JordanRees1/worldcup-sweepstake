@@ -10,6 +10,8 @@ export interface MatchResultDTO {
   awayPenalties: number | null;
   /** Resolved winner team id, or null for draws / not yet known. */
   winnerTeamId: number | null;
+  /** Live match clock in minutes — set only while `status === 'live'` (when the API provides it). */
+  minute?: number | null;
 }
 
 /**

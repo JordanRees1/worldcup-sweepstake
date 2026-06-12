@@ -286,12 +286,20 @@ az containerapp update --name sweepstake-work --resource-group $RESOURCE_GROUP \
 
 ### Cost
 
-With `--min-replicas 0`, each app **scales to zero** when nobody is using it — you pay nothing
-for idle time. At your scale (≤50 users, occasional visits) the cost is effectively £0/month
-on the Azure Container Apps free grant (750,000 vCPU-seconds and 1.5 million GiB-seconds free
-per month per subscription).
+With `--min-replicas 0`, each app **scales to zero** when nobody is using it — at zero replicas
+you pay nothing. At your scale (≤50 users, occasional visits) the cost is effectively £0/month,
+comfortably inside the Azure Container Apps free grant: **180,000 vCPU-seconds, 360,000
+GiB-seconds, and 2 million requests per subscription per calendar month**. The grant applies to
+**active usage only** (a replica handling requests). Each app runs at **0.25 vCPU / 0.5 GiB**.
 
-The Azure Container Registry Basic tier costs ~£3.50/month. On your MPN credits that's covered.
+The image is hosted on **GitHub Container Registry (GHCR)** — free for public images — so there's
+no container-registry cost.
+
+> ⚠️ **Always-warm (instant boot) costs extra.** Idle compute from `--min-replicas > 0` is billed
+> at a reduced idle rate (~$0.000008/vCPU-s, ~$0.000001/GiB-s) **from the first second and is NOT
+> covered by the free grant**. At 0.25 vCPU / 0.5 GiB that's ≈ **$0.009/hr ≈ $6.5 (~£5) per app
+> per month** for a single always-on replica. Keep `min-replicas 0` unless you specifically need to
+> eliminate the (~1s, post-bundle) cold start.
 
 ---
 

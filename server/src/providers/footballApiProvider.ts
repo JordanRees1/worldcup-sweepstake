@@ -38,6 +38,8 @@ interface ApiMatch {
   id: number;
   utcDate: string;
   status: string;
+  /** Live match clock (minutes), present on livescore-enabled tiers while a match is IN_PLAY/PAUSED. */
+  minute?: number | string | null;
   stage: string;
   group: string | null;
   homeTeam: ApiTeamRef;
@@ -138,6 +140,10 @@ export function createFootballApiProvider(
     const status = mapStatus(m.status);
     const { fullTime, penalties } = m.score;
 
+    // Live clock — only meaningful while in play, and only on livescore-enabled tiers.
+    const minuteNum = m.minute != null ? Number(m.minute) : NaN;
+    const minute = status === 'live' && Number.isFinite(minuteNum) ? minuteNum : null;
+
     const result: MatchResultDTO = {
       matchId: ourMatchId,
       status,
@@ -145,6 +151,7 @@ export function createFootballApiProvider(
       awayScore: fullTime.away,
       homePenalties: penalties?.home ?? null,
       awayPenalties: penalties?.away ?? null,
+      minute,
       winnerTeamId:
         m.score.winner === 'HOME_TEAM' ? (fifaCodeToTeamId.get(normalizeTla(m.homeTeam.tla ?? '')) ?? null)
         : m.score.winner === 'AWAY_TEAM' ? (fifaCodeToTeamId.get(normalizeTla(m.awayTeam.tla ?? '')) ?? null)

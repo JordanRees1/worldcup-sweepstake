@@ -91,6 +91,8 @@ export interface Match {
   awayTeamId: number | null;
   status: MatchStatus;
   result?: MatchResult;
+  /** Live match clock in minutes — present only while `status === 'live'` (when the API provides it). */
+  minute?: number;
 }
 
 export interface GroupStandingRow {

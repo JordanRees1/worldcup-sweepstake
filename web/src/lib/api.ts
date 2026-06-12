@@ -17,8 +17,9 @@ import {
   type VenuesResponse,
 } from '@sweepstake/shared';
 
-// Poll every 60s — matches the server cache TTL so we never burn extra API calls.
-const POLL_INTERVAL = 60_000;
+// Poll every 30s — matches the server cache TTL (RESULTS_CACHE_TTL_SECONDS=30) so we surface
+// live scores promptly without burning extra upstream API calls (server coalesces to ≤2/min).
+const POLL_INTERVAL = 30_000;
 
 export const queryClient = new QueryClient({
   defaultOptions: {

@@ -1,6 +1,7 @@
 import type { BracketNode, Match, Team, Venue } from '@sweepstake/shared';
 import { Crest } from './Crest';
 import { formatDay, formatTime } from '../lib/format';
+import { LiveBadge } from './LiveBadge';
 
 // Split "1C vs 2F" or "W73 vs W75" into the two label fragments.
 function splitLabel(label: string): [string, string] {
@@ -108,6 +109,7 @@ export function BracketMatchCard({
   const score = match?.result
     ? `${match.result.homeScore}–${match.result.awayScore}${match.result.homePenalties != null ? ` (${match.result.homePenalties}–${match.result.awayPenalties} pens)` : ''}`
     : null;
+  const isLive = match?.status === 'live';
 
   const timeStr = match ? formatTime(match.kickoffAt) : '–';
   const dateStr = match ? formatDay(match.kickoffAt) : '';
@@ -126,16 +128,24 @@ export function BracketMatchCard({
           owner={homeOwner}
         />
 
-        {/* Centre: score or kickoff time */}
+        {/* Centre: score (live or final) or kickoff time */}
         <div className="flex shrink-0 flex-col items-center gap-0.5">
           {score ? (
-            <span className="rounded bg-white/10 px-2 py-0.5 text-xs font-semibold tabular-nums text-slate-100">
+            <span
+              className={`rounded px-2 py-0.5 text-xs font-semibold tabular-nums text-slate-100 ${
+                isLive ? 'bg-red-500/15 ring-1 ring-red-500/40' : 'bg-white/10'
+              }`}
+            >
               {score}
             </span>
           ) : (
             <span className="text-xs tabular-nums text-slate-400">{timeStr}</span>
           )}
-          {!score && dateStr ? <span className="text-[10px] text-slate-500">{dateStr}</span> : null}
+          {isLive ? (
+            <LiveBadge minute={match?.minute} />
+          ) : !score && dateStr ? (
+            <span className="text-[10px] text-slate-500">{dateStr}</span>
+          ) : null}
         </div>
 
         <TeamSide

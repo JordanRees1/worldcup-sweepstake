@@ -1,5 +1,6 @@
 import type { Match, Team, Venue } from '@sweepstake/shared';
 import { formatDay, formatTime } from '../lib/format';
+import { LiveBadge } from './LiveBadge';
 
 function sideLabel(match: Match, side: 'home' | 'away', teamMap: Map<number, Team>): string {
   const id = side === 'home' ? match.homeTeamId : match.awayTeamId;
@@ -32,6 +33,7 @@ export function FixtureRow({
   const awayHi = match.awayTeamId !== null && highlightIds?.has(match.awayTeamId);
   const homeOwner = match.homeTeamId !== null ? ownerByTeam?.get(match.homeTeamId) : undefined;
   const awayOwner = match.awayTeamId !== null ? ownerByTeam?.get(match.awayTeamId) : undefined;
+  const isLive = match.status === 'live';
   const center = match.result
     ? `${match.result.homeScore}–${match.result.awayScore}`
     : formatTime(match.kickoffAt);
@@ -51,13 +53,20 @@ export function FixtureRow({
             <span className="block truncate text-[10px] text-slate-400/60">({homeOwner})</span>
           )}
         </div>
-        <span
-          className={`shrink-0 rounded px-2 py-0.5 text-xs tabular-nums ${
-            match.result ? 'bg-white/10 font-semibold text-slate-100' : 'text-slate-400'
-          }`}
-        >
-          {center}
-        </span>
+        <div className="flex shrink-0 flex-col items-center gap-0.5">
+          <span
+            className={`rounded px-2 py-0.5 text-xs tabular-nums ${
+              isLive
+                ? 'bg-red-500/15 font-semibold text-slate-100 ring-1 ring-red-500/40'
+                : match.result
+                  ? 'bg-white/10 font-semibold text-slate-100'
+                  : 'text-slate-400'
+            }`}
+          >
+            {center}
+          </span>
+          {isLive && <LiveBadge minute={match.minute} />}
+        </div>
         <div className="min-w-0 flex-1">
           <span
             className={`block truncate ${awayHi ? 'font-semibold text-slate-100' : 'text-slate-300'}`}

@@ -28,6 +28,8 @@ export function applyResults(
 
     if (dto) {
       next.status = dto.status;
+      // Live match clock (when the provider supplies it for an in-play game).
+      if (dto.minute != null) next.minute = dto.minute;
       // Only attach a result once there are actual scores.
       if (dto.homeScore !== null && dto.awayScore !== null) {
         next.result = {
