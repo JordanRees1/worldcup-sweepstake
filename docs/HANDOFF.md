@@ -349,23 +349,23 @@ Write `README.md` that lets a fresh clone get running in one command:
 
 ## 13. Scoring rules (confirmed, do not change without asking the user)
 
-**Sort order:** aliveCount ↓ → furthestStage ↓ → points ↓ → goalDifference ↓ → playerId ↑
+**Pure game points** — player points = the sum of each team's match points across every finished game.
 
-**Points per furthest stage reached:**
+**Sort order:** points ↓ → goalDifference ↓ → aliveCount ↓ → furthestStage ↓ → playerId ↑
+
+**Match points per team:**
 
 ```
-Group Stage: 0 pts
-Round of 32: 1 pt
-Round of 16: 2 pts
-Quarterfinals: 4 pts
-Semifinals: 6 pts
-Third Place Playoff: 6 pts  (same as SF — losers of both SFs played here)
-Final: 8 pts
-Champion (wins Final): 12 pts  (8 + 4 bonus)
+Win (group or knockout, incl. penalty-shootout win): +3
+Group draw:                                          +1 each
+Loss:                                  − the goal margin  (lose 1–3 → −2; level score lost on pens → 0)
+🥄 Wooden spoon (a player who played ≥1 game and lost them all, no W/D): −50
 ```
 
-**Goal difference** is a _tracked display metric_, not a tiebreaker that changes rank.
-It shows as `GD ±n` alongside points on leaderboard cards and player detail headers.
+There is no stage-milestone table — reaching later rounds is rewarded implicitly (more games won).
+Config: `DEFAULT_SCORING` in `server/src/engine/scoring.ts` (`pointsPerWin`, `pointsPerDraw`,
+`woodenSpoonPenalty`). **Goal difference** is now the primary tiebreaker; shown as `GD ±n` on
+leaderboard cards and player detail headers.
 
 ---
 

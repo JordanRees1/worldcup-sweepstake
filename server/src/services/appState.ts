@@ -16,6 +16,7 @@ import {
   computeDecidedGroups,
   computeQualification,
   computeTeamGoalDifferences,
+  computeTeamScores,
   computeTeamStatuses,
 } from '../engine';
 import type { ResultsProvider } from '../providers';
@@ -54,12 +55,14 @@ export async function computeAppState(
     qualification,
   );
   const teamGDs = computeTeamGoalDifferences(matches);
+  const teamScores = computeTeamScores(matches);
   const leaderboard = buildLeaderboard(
     dataset.players,
     dataset.picks,
     dataset.teams,
     teamStatuses,
     teamGDs,
+    teamScores,
   );
 
   const meta = provider.meta();

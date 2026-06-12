@@ -17,6 +17,10 @@ export function PlayersScreen() {
         <h2 className="text-xs font-medium uppercase tracking-wide text-slate-400">Leaderboard</h2>
         <span className="text-[11px] text-slate-500">{data.currentStage}</span>
       </div>
+      <p className="-mt-2 text-[11px] text-slate-500">
+        <span className="text-slate-400">Win +3</span> · <span className="text-slate-400">draw +1</span>{' '}
+        · losses dock points. Tap a player for the full rules.
+      </p>
 
       <div className="grid gap-3 lg:grid-cols-2 xl:grid-cols-3">
         {data.leaderboard.map((entry) => (
@@ -35,13 +39,20 @@ export function PlayersScreen() {
                   ›
                 </span>
               </div>
-              <div className="text-right text-[11px] text-slate-400">
-                <p>
-                  <span className="font-semibold text-brand-400">{entry.aliveCount}</span> alive ·{' '}
-                  {entry.points} pts
+              <div className="text-right">
+                <p className="leading-none">
+                  <span
+                    className={`text-lg font-bold tabular-nums ${
+                      entry.points < 0 ? 'text-red-400' : 'text-brand-400'
+                    }`}
+                  >
+                    {entry.points}
+                  </span>
+                  <span className="ml-1 text-[10px] font-medium text-slate-500">pts</span>
                 </p>
-                <p>
-                  {entry.furthestStage} · GD {entry.goalDifference >= 0 ? '+' : ''}
+                <p className="mt-1 text-[11px] text-slate-400">
+                  <span className="font-semibold text-slate-300">{entry.aliveCount}</span> alive · GD{' '}
+                  {entry.goalDifference >= 0 ? '+' : ''}
                   {entry.goalDifference}
                 </p>
               </div>

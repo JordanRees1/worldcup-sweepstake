@@ -72,8 +72,9 @@ player leaderboard, and a tournament bracket view.
 ## Open decisions / pending input
 1. **API key** — provider chosen (**football-data.org**); user creates a free account + key
    when ready. App runs in `seed` mode until then.
-2. **Scoring** — default accepted (alive → furthest stage → points); confirm exact rule if
-   the sweepstake differs.
+2. **Scoring** — ✅ **pure game points**: win +3, group draw +1, loss −goal-margin, and a −50
+   🥄 wooden spoon for losing every game. Sort: points → GD → alive → stage. Config in
+   `server/src/engine/scoring.ts` (`DEFAULT_SCORING`). See DATA_AND_RULES §5.
 3. **Picks mapping report** — generated in WP1 for user sign-off.
 
 ## Docs

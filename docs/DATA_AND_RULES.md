@@ -117,13 +117,21 @@ mathematically eliminated. Simplest correct rule for MVP: a team is `alive` unti
 match eliminates it (group: fails to reach top-2/best-third once its group is decided;
 knockout: loses its tie).
 
-### Scoring / leaderboard (✅ confirmed)
-Default sort: **(1) teams still alive (desc) → (2) furthest stage reached → (3) points.**
-**Plus a separate tracked metric — total goal difference:** the sum of each of a player's teams'
-goal differences (across the matches they've played), surfaced as `PlayerSummary.goalDifference`
-and displayed alongside points. Not currently a tie-breaker.
-Proposed points per team by furthest stage reached:
-`Group 0 · R32 1 · R16 2 · QF 4 · SF 6 · Final 8 · Champion 12` (summed across a player’s teams).
-Open question for the user: is the sweepstake “**owner of the winning team wins**”, a
-cumulative-points league, or “**last player with a team standing**”? Make the rule a small
-config (`server/src/engine/scoring.ts`) so it’s trivial to change.
+### Scoring / leaderboard (✅ confirmed — **pure game points**)
+Player points = the sum of each of their teams' **match points**, accumulated across every
+finished game (group + knockout):
+- **Win** +3 — group or knockout (a penalty-shootout win counts as a win)
+- **Group draw** +1 each (knockouts always resolve to a winner)
+- **Loss** — minus that match's goal margin (lose 1–3 → −2; a level score lost on pens → 0)
+- **🥄 Wooden spoon** — −50 to any player whose teams have played ≥1 game and lost every one
+  (no wins, no draws); clears the instant they manage a win or draw
+
+Reaching later stages is rewarded implicitly — deeper teams simply play and win more games, so
+there is no separate stage-milestone table any more.
+
+**Sort order:** `points ↓ → goalDifference ↓ → aliveCount ↓ → furthestStage ↓ → playerId ↑`.
+Total goal difference (sum of each team's GDs) is surfaced as `PlayerSummary.goalDifference` and
+is now the primary tiebreaker.
+
+The rule is a small config (`DEFAULT_SCORING` in `server/src/engine/scoring.ts`:
+`pointsPerWin`, `pointsPerDraw`, `woodenSpoonPenalty`) so it's trivial to change.
