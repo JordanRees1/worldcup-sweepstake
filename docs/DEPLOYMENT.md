@@ -142,147 +142,110 @@ The `● seed` / `● live` badge in the header tells you which mode it's runnin
 
 ## Part 4 — Deploying to Azure Container Apps
 
-### Overview: one container per sweepstake
+> **Where it lives now (migrated June 2026):** the apps run in the **work subscription**
+> `Sandbox` (`94442dd5-4818-4620-8e2d-c557baf52b6b`), resource group
+> `rg-personal-n-jordan-rg-jordan-sandbox`, region **uksouth**. The image is hosted on
+> **GitHub Container Registry (GHCR)**, not Azure Container Registry.
 
-Each sweepstake is a separate Azure Container App running the **same image**, just with
-different environment variables. Two games = two apps, both from one `docker build`.
+### Architecture: one image, two apps
+
+Both sweepstakes run the **same public image**, differing only by the `SWEEPSTAKE` env var:
 
 ```
-Azure Container Registry
-  └── sweepstake:latest (one image)
+ghcr.io/jordanrees1/sweepstake:latest   (one public image)
         │
-        ├── Container App: sweepstake-friends   SWEEPSTAKE=friends
-        │   https://sweepstake-friends.<region>.azurecontainerapps.io
-        │
-        └── Container App: sweepstake-work      SWEEPSTAKE=work
-            https://sweepstake-work.<region>.azurecontainerapps.io
+   env: sweepstake-env   (uksouth, in rg-personal-n-jordan-rg-jordan-sandbox)
+        ├── sweepstake-dev    SWEEPSTAKE=friends  → https://crackers.sstake.co.uk
+        └── sweepstake-prod   SWEEPSTAKE=work     → https://aa.sstake.co.uk
 ```
+
+Each app: **0.25 vCPU / 0.5 GiB**, external ingress on `:8080`, `DATA_SOURCE=live`,
+`RESULTS_CACHE_TTL_SECONDS=30`, the API key as the Azure secret `football-api-key`, and
+**`min-replicas 1 / max-replicas 1`** (always-warm — see the Cost note below).
 
 ### Prerequisites
 
-1. **Azure CLI** — install from https://docs.microsoft.com/en-us/cli/azure/install-azure-cli
-   ```bash
-   # Verify it's installed:
-   az version
-   ```
+- **Azure CLI** + **Docker Desktop** installed. On this Windows machine they aren't on PATH by
+  default — prepend them in PowerShell:
+  ```powershell
+  $env:PATH = "C:\Program Files\Microsoft SDKs\Azure\CLI2\wbin;C:\Program Files\Docker\Docker\resources\bin;$env:PATH"
+  ```
+- `az login`, then target the work sub:
+  ```powershell
+  az account set --subscription 94442dd5-4818-4620-8e2d-c557baf52b6b
+  ```
 
-2. **Login to Azure:**
-   ```bash
-   az login
-   ```
+### Routine redeploy (the common case)
 
-3. **Choose a subscription** (if you have multiple):
-   ```bash
-   az account list --output table
-   az account set --subscription "your-subscription-name"
-   ```
+After a code change is merged to `main`, rebuild → push → roll both apps:
 
-### Step 1 — Create a resource group and registry (once only)
+```powershell
+$rg  = "rg-personal-n-jordan-rg-jordan-sandbox"
+$sub = "94442dd5-4818-4620-8e2d-c557baf52b6b"
 
-```bash
-# Pick a name and region (uksouth is closest to the UK)
-RESOURCE_GROUP=sweepstake-rg
-LOCATION=uksouth
-REGISTRY=sweepstakeregistry   # must be globally unique, lowercase, no hyphens
+docker build -t ghcr.io/jordanrees1/sweepstake:latest .
+docker push  ghcr.io/jordanrees1/sweepstake:latest
 
-az group create --name $RESOURCE_GROUP --location $LOCATION
-
-az acr create \
-  --resource-group $RESOURCE_GROUP \
-  --name $REGISTRY \
-  --sku Basic \
-  --admin-enabled true
+# A unique --revision-suffix forces both apps to re-pull :latest
+$suffix = (git rev-parse --short HEAD) + "-" + (Get-Date -Format 'MMddHHmm')
+foreach ($app in @('sweepstake-dev','sweepstake-prod')) {
+  az containerapp update -n $app -g $rg --subscription $sub `
+    --image ghcr.io/jordanrees1/sweepstake:latest --revision-suffix $suffix
+}
 ```
 
-### Step 2 — Build and push the image
+Health-check: `https://crackers.sstake.co.uk/api/health` and `https://aa.sstake.co.uk/api/health`
+should each return `{"ok":true,"dataSource":"live"}`.
 
-```bash
-# Log in to your registry
-az acr login --name $REGISTRY
+> First GHCR push from a new machine needs a one-time `docker login ghcr.io` with a GitHub PAT
+> (scope `write:packages`). The image is **public**, so the apps pull it with no registry creds.
 
-# Build and push (from the repo root)
-az acr build \
-  --registry $REGISTRY \
-  --image sweepstake:latest \
-  .
+### One-time setup (only if recreating from scratch)
+
+The environment and apps already exist. To rebuild them in a fresh resource group:
+
+```powershell
+az containerapp env create -n sweepstake-env -g $rg --location uksouth --subscription $sub
+
+# dev = friends, prod = work. $KEY = your football-data.org key (never commit it).
+$apps = [ordered]@{ 'sweepstake-dev'='friends'; 'sweepstake-prod'='work' }
+foreach ($app in $apps.Keys) {
+  az containerapp create -n $app -g $rg --subscription $sub `
+    --environment sweepstake-env `
+    --image ghcr.io/jordanrees1/sweepstake:latest `
+    --target-port 8080 --ingress external `
+    --cpu 0.25 --memory 0.5Gi --min-replicas 1 --max-replicas 1 `
+    --secrets football-api-key=$KEY `
+    --env-vars "SWEEPSTAKE=$($apps[$app])" DATA_SOURCE=live `
+      FOOTBALL_API_KEY=secretref:football-api-key RESULTS_CACHE_TTL_SECONDS=30
+}
 ```
 
-This builds the image in Azure (no local Docker needed after the test) and pushes it
-automatically. ~3-4 minutes.
+Then bind the custom domains (Part 6).
 
-### Step 3 — Create the Container Apps environment (once only)
+### CI/CD — automated build on push to `main`
 
-```bash
-az containerapp env create \
-  --name sweepstake-env \
-  --resource-group $RESOURCE_GROUP \
-  --location $LOCATION
-```
+`.github/workflows/deploy.yml` runs on every push to `main`:
 
-### Step 4 — Deploy the friends game
+- **`build-and-push`** _(always runs, free)_ — builds the image and pushes
+  `ghcr.io/jordanrees1/sweepstake:latest` + `:<sha>` to GHCR using the built-in `GITHUB_TOKEN`
+  (no external secrets). Public repo → unlimited Actions minutes; private → 2,000 free min/month,
+  ample here.
+- **`deploy`** _(opt-in, off by default)_ — updates both Container Apps to the new image. It only
+  runs when the repo **variable `DEPLOY_ENABLED` = `true`** and the Azure OIDC secrets are present.
 
-```bash
-az containerapp create \
-  --name sweepstake-friends \
-  --resource-group $RESOURCE_GROUP \
-  --environment sweepstake-env \
-  --image $REGISTRY.azurecr.io/sweepstake:latest \
-  --registry-server $REGISTRY.azurecr.io \
-  --target-port 8080 \
-  --ingress external \
-  --env-vars \
-    SWEEPSTAKE=friends \
-    DATA_SOURCE=live \
-    FOOTBALL_API_KEY=secretref:football-api-key \
-  --secrets football-api-key=YOUR_KEY_HERE \
-  --min-replicas 0 \
-  --max-replicas 1
-```
+**To enable auto-deploy** you need an Azure identity GitHub can assume. This requires creating an
+app registration + federated credential in the **work tenant**, which a corporate sandbox may
+restrict — ask IT if blocked:
 
-Replace `YOUR_KEY_HERE` with your real football-data.org key.
-The key is stored as a **secret** in Azure — it never appears in the image or the command history
-after this initial setup.
+1. Create an app registration + service principal; assign it **Contributor** on the resource group.
+2. Add a **federated credential** trusting `repo:JordanRees1/worldcup-sweepstake:ref:refs/heads/main`.
+3. Add repo **secrets** `AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`.
+4. Add repo **variable** `DEPLOY_ENABLED=true`.
 
-The command prints a URL like `https://sweepstake-friends.yellowsea-abc12345.uksouth.azurecontainerapps.io`.
-Share that with your friends group.
-
-### Step 5 — Deploy the work game
-
-```bash
-az containerapp create \
-  --name sweepstake-work \
-  --resource-group $RESOURCE_GROUP \
-  --environment sweepstake-env \
-  --image $REGISTRY.azurecr.io/sweepstake:latest \
-  --registry-server $REGISTRY.azurecr.io \
-  --target-port 8080 \
-  --ingress external \
-  --env-vars \
-    SWEEPSTAKE=work \
-    DATA_SOURCE=live \
-    FOOTBALL_API_KEY=secretref:football-api-key \
-  --secrets football-api-key=YOUR_KEY_HERE \
-  --min-replicas 0 \
-  --max-replicas 1
-```
-
-Same image, different `SWEEPSTAKE` env var.
-
-### Step 6 — Update after a code change
-
-When you push a code change, rebuild and update both apps:
-
-```bash
-# Rebuild + push
-az acr build --registry $REGISTRY --image sweepstake:latest .
-
-# Update both apps to the new image
-az containerapp update --name sweepstake-friends --resource-group $RESOURCE_GROUP \
-  --image $REGISTRY.azurecr.io/sweepstake:latest
-
-az containerapp update --name sweepstake-work --resource-group $RESOURCE_GROUP \
-  --image $REGISTRY.azurecr.io/sweepstake:latest
-```
+Until then the image still auto-builds on every push — you just run the one
+`az containerapp update` from **Routine redeploy** above (fast: no local build needed, since CI
+already pushed the image).
 
 ### Cost
 
@@ -344,14 +307,31 @@ no container-registry cost.
 
 ---
 
-## Part 6 — Optional: custom domain
+## Part 6 — Custom domains (live)
 
-By default Azure gives you a URL like `sweepstake-friends.yellowsea-abc.uksouth.azurecontainerapps.io`.
-That works fine to share. If you want a shorter URL (e.g. `friends.yoursweep.co.uk`):
+The apps are served on **`sstake.co.uk`** (registered at 123-reg), with free auto-renewing Azure
+managed TLS certificates:
 
-1. Buy a domain — `yoursweep.co.uk` costs ~£8/yr at most registrars (Namecheap, Cloudflare).
-2. In the Azure portal → your Container App → Custom domains → Add.
-3. Follow the prompts to add a CNAME DNS record at your registrar.
-4. Azure provisions a free TLS certificate automatically.
+- **https://crackers.sstake.co.uk** → `sweepstake-dev`
+- **https://aa.sstake.co.uk** → `sweepstake-prod`
 
-One domain, two subdomains: `friends.yoursweep.co.uk` and `work.yoursweep.co.uk`.
+The `*.azurecontainerapps.io` URLs keep working alongside them.
+
+### To (re)bind a subdomain
+
+1. At the registrar, add two records (the verification ID is per-environment — fetch it with
+   `az containerapp show -n <app> -g $rg --query properties.customDomainVerificationId -o tsv`):
+
+   | Type | Name | Value |
+   |---|---|---|
+   | `CNAME` | `<sub>` | `<app>.<env-default-domain>` (e.g. `sweepstake-prod.ambitiousisland-9356d105.uksouth.azurecontainerapps.io`) |
+   | `TXT` | `asuid.<sub>` | the verification ID |
+
+2. Once DNS resolves, add the hostname and provision the managed cert:
+   ```powershell
+   az containerapp hostname add  --hostname crackers.sstake.co.uk -n sweepstake-dev -g $rg --subscription $sub
+   az containerapp hostname bind --hostname crackers.sstake.co.uk -n sweepstake-dev -g $rg --subscription $sub `
+     --environment sweepstake-env --validation-method CNAME
+   ```
+
+Azure renews the certificates automatically.
