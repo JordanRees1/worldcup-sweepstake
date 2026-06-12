@@ -63,9 +63,8 @@ jobs:
           azcliversion: latest
           inlineScript: |
             suffix="gh-${GITHUB_SHA::7}-$(date +%H%M%S)"
-            for app in sweepstake-dev sweepstake-prod; do
-              echo "Updating $app -> $suffix"
-              az containerapp update -n "$app" -g "$RG" \
-                --image "${IMAGE}:${GITHUB_SHA}" \
-                --revision-suffix "$suffix"
-            done
+            # Single multi-tenant gateway app (hosts all sweepstakes by code).
+            echo "Updating sweepstake-prod -> $suffix"
+            az containerapp update -n sweepstake-prod -g "$RG" \
+              --image "${IMAGE}:${GITHUB_SHA}" \
+              --revision-suffix "$suffix"

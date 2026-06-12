@@ -1,11 +1,13 @@
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { DATASETS_DIR } from './paths';
 
 /** A single sweepstake: which picks file to load and how many teams each player owns. */
 export interface SweepstakeConfig {
-  /** Folder name under datasets/sweepstakes/ and the value of the SWEEPSTAKE env var. */
+  /** Folder name under datasets/sweepstakes/. */
   slug: string;
+  /** Short code used in the URL (`/s/<code>`), lowercased. Defaults to the slug. */
+  code: string;
   /** Display name (e.g. "Friends", "Work"). */
   name: string;
   /** Teams owned per player. Must divide the 48-team field evenly (e.g. 8 → 6 players, 2 → 24). */
@@ -19,17 +21,16 @@ export interface SweepstakeConfig {
 const DEFAULT_SLUG = 'friends';
 
 /**
- * Resolve the active sweepstake. Defaults to the SWEEPSTAKE env var, then `friends`.
- * Each sweepstake lives in `datasets/sweepstakes/<slug>/` with a `sweepstake.json`
- * config and a `player_picks.csv`. The tournament structure (teams, fixtures, …) is
- * shared across all sweepstakes from `datasets/`.
+ * Resolve a sweepstake by slug (folder `datasets/sweepstakes/<slug>/`). Defaults to the SWEEPSTAKE
+ * env var, then `friends`. Each folder has a `sweepstake.json` (name, teamsPerPlayer, optional code)
+ * + a `player_picks.csv`. The tournament structure is shared across all sweepstakes.
  */
 export function resolveSweepstake(
   slug: string = process.env.SWEEPSTAKE ?? DEFAULT_SLUG,
 ): SweepstakeConfig {
   const dir = join(DATASETS_DIR, 'sweepstakes', slug);
 
-  let raw: { name?: string; teamsPerPlayer?: number };
+  let raw: { name?: string; teamsPerPlayer?: number; code?: string };
   try {
     raw = JSON.parse(readFileSync(join(dir, 'sweepstake.json'), 'utf8')) as typeof raw;
   } catch {
@@ -45,9 +46,37 @@ export function resolveSweepstake(
 
   return {
     slug,
+    code: (raw.code ?? slug).trim().toLowerCase(),
     name: raw.name ?? slug,
     teamsPerPlayer: raw.teamsPerPlayer,
     dir,
     picksPath: join(dir, 'player_picks.csv'),
   };
+}
+
+/** Every sweepstake under datasets/sweepstakes/ — each a tenant in the multi-tenant gateway. */
+export function listSweepstakes(): SweepstakeConfig[] {
+  const root = join(DATASETS_DIR, 'sweepstakes');
+  let slugs: string[];
+  try {
+    slugs = readdirSync(root, { withFileTypes: true })
+      .filter((d) => d.isDirectory())
+      .map((d) => d.name);
+  } catch {
+    return [];
+  }
+  return slugs.flatMap((slug) => {
+    try {
+      return [resolveSweepstake(slug)];
+    } catch {
+      return []; // skip folders without a valid sweepstake.json
+    }
+  });
+}
+
+/** Resolve a sweepstake by its URL code (case-insensitive), or null if no tenant has that code. */
+export function resolveSweepstakeByCode(code: string): SweepstakeConfig | null {
+  const norm = code.trim().toLowerCase();
+  if (!norm) return null;
+  return listSweepstakes().find((s) => s.code === norm) ?? null;
 }

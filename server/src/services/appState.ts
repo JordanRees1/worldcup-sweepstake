@@ -9,7 +9,8 @@ import type {
   TeamStatus,
   Venue,
 } from '@sweepstake/shared';
-import type { Dataset } from '../data/dataset';
+import { loadTenantDataset, type Dataset, type StructuralData } from '../data/dataset';
+import { resolveSweepstakeByCode } from '../data/sweepstake';
 import {
   buildLeaderboard,
   computeAllGroupStandings,
@@ -19,10 +20,10 @@ import {
   computeTeamScores,
   computeTeamStatuses,
 } from '../engine';
-import type { ResultsProvider } from '../providers';
+import type { ProviderMeta, ResultsProvider } from '../providers';
 import { applyResults } from './applyResults';
 
-/** Everything the routes need, computed from the canonical data + current results. */
+/** Everything the routes need for one sweepstake, computed from the canonical data + results. */
 export interface AppState {
   teams: Team[];
   venues: Venue[];
@@ -34,6 +35,8 @@ export interface AppState {
   leaderboard: PlayerSummary[];
   dataSource: DataSource;
   lastUpdated: string | null;
+  /** Identity of the sweepstake (tenant) this state was computed for. */
+  sweepstake: { code: string; name: string; teamsPerPlayer: number };
 }
 
 /** Run the full pipeline: provider results → hydrate matches → engine → app state. */
@@ -77,6 +80,11 @@ export async function computeAppState(
     leaderboard,
     dataSource: meta.source,
     lastUpdated: meta.lastUpdated,
+    sweepstake: {
+      code: dataset.sweepstake.code,
+      name: dataset.sweepstake.name,
+      teamsPerPlayer: dataset.sweepstake.teamsPerPlayer,
+    },
   };
 }
 
@@ -85,9 +93,8 @@ export interface AppStateService {
 }
 
 /**
- * Memoizes the computed app state for `ttlMs` and shares a single in-flight computation
- * across concurrent requests. The provider also caches its HTTP fetch, so this layer mostly
- * avoids re-running the (cheap) engine on bursts of requests.
+ * Single-sweepstake state service (legacy / tests). Memoizes for `ttlMs` and coalesces
+ * concurrent computations. The multi-tenant server uses {@link createGateway} instead.
  */
 export function createAppStateService(
   dataset: Dataset,
@@ -112,6 +119,60 @@ export function createAppStateService(
           throw err;
         });
       return inflight;
+    },
+  };
+}
+
+/** Multi-tenant gateway: resolves a sweepstake by code and computes its state on demand. */
+export interface Gateway {
+  /** Per-code app state, or null if no sweepstake has that code. */
+  get(code: string): Promise<AppState | null>;
+  /** Provider meta for the global /health route. */
+  meta(): ProviderMeta;
+}
+
+/**
+ * One server hosting many sweepstakes. All tenants share the single `provider` (so the upstream
+ * results fetch happens once, cached); each tenant's state is computed from the shared tournament
+ * structure + that tenant's picks, and memoized per code for `ttlMs`.
+ */
+export function createGateway(
+  structural: StructuralData,
+  provider: ResultsProvider,
+  ttlMs: number,
+): Gateway {
+  const cache = new Map<string, { state: AppState; at: number }>();
+  const inflight = new Map<string, Promise<AppState>>();
+
+  return {
+    async get(code: string): Promise<AppState | null> {
+      const sweepstake = resolveSweepstakeByCode(code);
+      if (!sweepstake) return null;
+      const key = sweepstake.code;
+
+      const hit = cache.get(key);
+      if (hit && Date.now() - hit.at < ttlMs) return hit.state;
+
+      let pending = inflight.get(key);
+      if (!pending) {
+        pending = computeAppState(loadTenantDataset(structural, sweepstake), provider)
+          .then((state) => {
+            cache.set(key, { state, at: Date.now() });
+            inflight.delete(key);
+            return state;
+          })
+          .catch((err: unknown) => {
+            inflight.delete(key);
+            const stale = cache.get(key);
+            if (stale) return stale.state; // serve stale on failure
+            throw err;
+          });
+        inflight.set(key, pending);
+      }
+      return pending;
+    },
+    meta(): ProviderMeta {
+      return provider.meta();
     },
   };
 }

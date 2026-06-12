@@ -1,27 +1,31 @@
 import 'dotenv/config';
 import { createApp } from './app';
-import { loadDataset } from './data/dataset';
+import { loadStructural } from './data/dataset';
+import { listSweepstakes } from './data/sweepstake';
 import { loadConfig } from './env';
 import { createProvider } from './providers';
-import { createAppStateService } from './services/appState';
+import { createGateway } from './services/appState';
 
 const config = loadConfig();
-const dataset = loadDataset();
+const structural = loadStructural();
 
-const provider = createProvider(dataset.teams, dataset.matches, {
+const provider = createProvider(structural.teams, structural.matches, {
   source: config.dataSource,
   apiKey: config.apiKey,
   cacheTtlMs: config.cacheTtlMs,
 });
 
-const service = createAppStateService(dataset, provider, config.cacheTtlMs);
-const app = createApp(service, config);
+const gateway = createGateway(structural, provider, config.cacheTtlMs);
+const app = createApp(gateway, config);
 
 const server = app.listen(config.port, () => {
+  const tenants = listSweepstakes()
+    .map((s) => s.code)
+    .join(', ');
   console.log(
-    `[sweepstake] API on http://localhost:${config.port} ` +
-      `(sweepstake=${dataset.sweepstake.name}, source=${config.dataSource}, ` +
-      `teams=${dataset.teams.length}, matches=${dataset.matches.length})`,
+    `[sweepstake] gateway on http://localhost:${config.port} ` +
+      `(source=${config.dataSource}, teams=${structural.teams.length}, ` +
+      `matches=${structural.matches.length}, tenants=[${tenants}])`,
   );
 });
 

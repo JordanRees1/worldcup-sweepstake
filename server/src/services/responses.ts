@@ -6,6 +6,7 @@ import {
   type HealthResponse,
   type Match,
   type MatchesResponse,
+  type MetaResponse,
   type OverviewResponse,
   type PlayerDetailResponse,
   type PlayersResponse,
@@ -40,6 +41,15 @@ function currentStage(state: AppState): StageName {
     }
   }
   return (next ?? last)?.stage ?? 'Group Stage';
+}
+
+export function buildMeta(state: AppState): MetaResponse {
+  return {
+    code: state.sweepstake.code,
+    name: state.sweepstake.name,
+    teamsPerPlayer: state.sweepstake.teamsPerPlayer,
+    playerCount: state.leaderboard.length,
+  };
 }
 
 export function buildOverview(state: AppState): OverviewResponse {

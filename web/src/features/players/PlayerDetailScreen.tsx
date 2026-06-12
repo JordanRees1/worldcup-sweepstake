@@ -5,10 +5,12 @@ import { EmptyState, ErrorState, LoadingState } from '../../components/states';
 import { TeamRow } from '../../components/TeamRow';
 import { usePlayerDetail, useTeamMap, useTeamOwnerMap, useVenueMap } from '../../lib/api';
 import { sortPlayerTeams } from '../../lib/stages';
+import { useSweepstakeCode } from '../../lib/sweepstake';
 
 export function PlayerDetailScreen() {
   const { id } = useParams();
   const playerId = Number(id);
+  const code = useSweepstakeCode();
   const { data, isLoading, isError, error, refetch } = usePlayerDetail(playerId);
   const teamMap = useTeamMap();
   const venueMap = useVenueMap();
@@ -24,7 +26,7 @@ export function PlayerDetailScreen() {
 
   return (
     <div className="space-y-5">
-      <Link to="/players" className="inline-flex items-center gap-1 text-sm text-slate-400">
+      <Link to={`/s/${code}`} className="inline-flex items-center gap-1 text-sm text-slate-400">
         ← Leaderboard
       </Link>
 

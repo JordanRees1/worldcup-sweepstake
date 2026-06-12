@@ -1,11 +1,11 @@
 import { Router, type Request, type Response } from 'express';
 import type { ServerConfig } from '../env';
-import type { AppStateService } from '../services/appState';
+import type { AppState, Gateway } from '../services/appState';
 import {
   buildBracket,
   buildGroups,
-  buildHealth,
   buildMatches,
+  buildMeta,
   buildOverview,
   buildPlayerDetail,
   buildPlayers,
@@ -25,39 +25,40 @@ function asyncRoute(handler: (req: Request, res: Response) => Promise<void>) {
   };
 }
 
-export function createApiRouter(service: AppStateService, config: ServerConfig): Router {
+export function createApiRouter(gateway: Gateway, config: ServerConfig): Router {
   const router = Router();
 
-  router.get(
-    '/health',
-    asyncRoute(async (_req, res) => {
-      res.json(buildHealth(await service.get(), config.version));
-    }),
-  );
+  // Global health (no tenant) — used by Azure ingress + smoke tests.
+  router.get('/health', (_req, res) => {
+    const meta = gateway.meta();
+    res.json({ ok: true, dataSource: meta.source, lastUpdated: meta.lastUpdated, version: config.version });
+  });
 
-  router.get(
-    '/overview',
-    asyncRoute(async (_req, res) => {
-      res.json(buildOverview(await service.get()));
-    }),
-  );
-
-  router.get(
-    '/players',
-    asyncRoute(async (_req, res) => {
-      res.json(buildPlayers(await service.get()));
-    }),
-  );
-
-  router.get(
-    '/players/:id',
+  // Resolve the tenant for an /api/s/:code/* route, or 404 if the code is unknown.
+  const tenant = (handler: (state: AppState, req: Request, res: Response) => void) =>
     asyncRoute(async (req, res) => {
+      const state = await gateway.get(req.params.code);
+      if (!state) {
+        res
+          .status(404)
+          .json({ error: { code: 'not_found', message: `No sweepstake with code "${req.params.code}"` } });
+        return;
+      }
+      handler(state, req, res);
+    });
+
+  router.get('/s/:code/meta', tenant((s, _req, res) => res.json(buildMeta(s))));
+  router.get('/s/:code/overview', tenant((s, _req, res) => res.json(buildOverview(s))));
+  router.get('/s/:code/players', tenant((s, _req, res) => res.json(buildPlayers(s))));
+  router.get(
+    '/s/:code/players/:id',
+    tenant((s, req, res) => {
       const id = Number(req.params.id);
       if (!Number.isInteger(id)) {
         res.status(400).json({ error: { code: 'bad_request', message: 'Invalid player id' } });
         return;
       }
-      const detail = buildPlayerDetail(await service.get(), id);
+      const detail = buildPlayerDetail(s, id);
       if (!detail) {
         res.status(404).json({ error: { code: 'not_found', message: `Player ${id} not found` } });
         return;
@@ -65,41 +66,16 @@ export function createApiRouter(service: AppStateService, config: ServerConfig):
       res.json(detail);
     }),
   );
-
+  router.get('/s/:code/teams', tenant((s, _req, res) => res.json(buildTeams(s))));
+  router.get('/s/:code/venues', tenant((s, _req, res) => res.json(buildVenues(s))));
+  router.get('/s/:code/groups', tenant((s, _req, res) => res.json(buildGroups(s))));
+  router.get('/s/:code/bracket', tenant((s, _req, res) => res.json(buildBracket(s))));
   router.get(
-    '/teams',
-    asyncRoute(async (_req, res) => {
-      res.json(buildTeams(await service.get()));
-    }),
-  );
-
-  router.get(
-    '/venues',
-    asyncRoute(async (_req, res) => {
-      res.json(buildVenues(await service.get()));
-    }),
-  );
-
-  router.get(
-    '/groups',
-    asyncRoute(async (_req, res) => {
-      res.json(buildGroups(await service.get()));
-    }),
-  );
-
-  router.get(
-    '/bracket',
-    asyncRoute(async (_req, res) => {
-      res.json(buildBracket(await service.get()));
-    }),
-  );
-
-  router.get(
-    '/matches',
-    asyncRoute(async (req, res) => {
+    '/s/:code/matches',
+    tenant((s, req, res) => {
       const { stage, group, date } = req.query;
       res.json(
-        buildMatches(await service.get(), {
+        buildMatches(s, {
           stage: typeof stage === 'string' ? stage : undefined,
           group: typeof group === 'string' ? group : undefined,
           date: typeof date === 'string' ? date : undefined,
@@ -107,13 +83,7 @@ export function createApiRouter(service: AppStateService, config: ServerConfig):
       );
     }),
   );
-
-  router.get(
-    '/schedule',
-    asyncRoute(async (_req, res) => {
-      res.json(buildSchedule(await service.get()));
-    }),
-  );
+  router.get('/s/:code/schedule', tenant((s, _req, res) => res.json(buildSchedule(s))));
 
   return router;
 }

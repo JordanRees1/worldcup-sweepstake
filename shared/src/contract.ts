@@ -16,18 +16,22 @@ import type {
 
 export const API_BASE = '/api';
 
-/** Canonical, versionless route paths. */
+/**
+ * Canonical route paths. `health` is global; the rest are scoped to a sweepstake `code`
+ * (`/api/s/<code>/…`) so one server hosts many sweepstakes (the multi-tenant gateway).
+ */
 export const API_ROUTES = {
   health: '/api/health',
-  overview: '/api/overview',
-  players: '/api/players',
-  player: (id: number | ':id') => `/api/players/${id}`,
-  teams: '/api/teams',
-  venues: '/api/venues',
-  groups: '/api/groups',
-  bracket: '/api/bracket',
-  matches: '/api/matches',
-  schedule: '/api/schedule',
+  meta: (code: string) => `/api/s/${code}/meta`,
+  overview: (code: string) => `/api/s/${code}/overview`,
+  players: (code: string) => `/api/s/${code}/players`,
+  player: (code: string, id: number | ':id') => `/api/s/${code}/players/${id}`,
+  teams: (code: string) => `/api/s/${code}/teams`,
+  venues: (code: string) => `/api/s/${code}/venues`,
+  groups: (code: string) => `/api/s/${code}/groups`,
+  bracket: (code: string) => `/api/s/${code}/bracket`,
+  matches: (code: string) => `/api/s/${code}/matches`,
+  schedule: (code: string) => `/api/s/${code}/schedule`,
 } as const;
 
 export interface HealthResponse {
@@ -36,6 +40,14 @@ export interface HealthResponse {
   /** ISO timestamp of the last results refresh, or null in seed mode. */
   lastUpdated: string | null;
   version: string;
+}
+
+/** Lightweight tenant identity — used to validate a code + label saved sweepstakes. */
+export interface MetaResponse {
+  code: string;
+  name: string;
+  teamsPerPlayer: number;
+  playerCount: number;
 }
 
 export interface OverviewResponse {

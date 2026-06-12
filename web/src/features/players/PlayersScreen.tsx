@@ -3,9 +3,11 @@ import { EmptyState, ErrorState, LoadingState } from '../../components/states';
 import { TeamRow } from '../../components/TeamRow';
 import { useOverview } from '../../lib/api';
 import { sortPlayerTeams } from '../../lib/stages';
+import { useSweepstakeCode } from '../../lib/sweepstake';
 
 export function PlayersScreen() {
   const { data, isLoading, isError, error, refetch } = useOverview();
+  const code = useSweepstakeCode();
 
   if (isLoading) return <LoadingState label="Loading leaderboard…" />;
   if (isError) return <ErrorState error={error} onRetry={() => void refetch()} />;
@@ -26,7 +28,7 @@ export function PlayersScreen() {
         {data.leaderboard.map((entry) => (
           <Link
             key={entry.player.id}
-            to={`/players/${entry.player.id}`}
+            to={`/s/${code}/players/${entry.player.id}`}
             className="block rounded-2xl border border-white/10 bg-white/5 p-4 transition-colors active:bg-white/10 lg:hover:bg-white/10"
           >
             <header className="flex items-center justify-between">
