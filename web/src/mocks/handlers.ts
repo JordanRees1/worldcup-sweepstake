@@ -26,4 +26,22 @@ export const handlers = [
   http.get(API_ROUTES.bracket(':code'), () => HttpResponse.json(bracketFixture)),
   http.get(API_ROUTES.matches(':code'), () => HttpResponse.json(matchesFixture)),
   http.get(API_ROUTES.schedule(':code'), () => HttpResponse.json(scheduleFixture)),
+  http.get(API_ROUTES.admin, () =>
+    HttpResponse.json({
+      totals: { sweepstakes: 1, players: playersFixture.players.length },
+      metricsNote: 'Views/active-now are best-effort, per-replica, and reset on restart.',
+      sweepstakes: [
+        {
+          code: 'demo',
+          name: 'Demo Sweepstake',
+          kind: 'custom',
+          teamsPerPlayer: 8,
+          playerCount: playersFixture.players.length,
+          createdAt: '2026-06-01T00:00:00.000Z',
+          views: 42,
+          activeNow: 3,
+        },
+      ],
+    }),
+  ),
 ];

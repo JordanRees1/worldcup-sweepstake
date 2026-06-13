@@ -1,10 +1,12 @@
 import { createHash, randomBytes } from 'node:crypto';
 import { Router, type Request, type Response } from 'express';
-import { loadStructural } from '../data/dataset';
-import { resolveSweepstakeByCode } from '../data/sweepstake';
+import type { AdminSweepstake } from '@sweepstake/shared';
+import { loadStructural, loadTenantDataset } from '../data/dataset';
+import { listSweepstakes, resolveSweepstakeByCode } from '../data/sweepstake';
 import type { TenantRecord, TenantStore } from '../data/tenantStore';
 import type { ServerConfig } from '../env';
 import type { AppState, Gateway } from '../services/appState';
+import { createMetrics } from '../services/metrics';
 import {
   buildBracket,
   buildGroups,
@@ -33,7 +35,9 @@ const sha256 = (s: string): string => createHash('sha256').update(s).digest('hex
 
 export function createApiRouter(gateway: Gateway, store: TenantStore, config: ServerConfig): Router {
   const router = Router();
-  const teams = loadStructural().teams; // for create/validate normalization (loaded once)
+  const structural = loadStructural(); // teams/matches/venues (loaded once)
+  const teams = structural.teams; // for create/validate normalization
+  const metrics = createMetrics(); // best-effort, in-memory usage signals
 
   const header = (req: Request, name: string): string => (req.header(name) ?? '').trim();
   const createAllowed = (req: Request): boolean =>
@@ -59,6 +63,55 @@ export function createApiRouter(gateway: Gateway, store: TenantStore, config: Se
     const meta = gateway.meta();
     res.json({ ok: true, dataSource: meta.source, lastUpdated: meta.lastUpdated, version: config.version });
   });
+
+  // ── Admin (global token) ────────────────────────────────────────────────────────
+  router.get(
+    '/a/admin',
+    asyncRoute(async (req, res) => {
+      if (!isAdmin(req)) {
+        res.status(401).json({ error: { code: 'unauthorized', message: 'Invalid or missing admin token' } });
+        return;
+      }
+      const baked: AdminSweepstake[] = listSweepstakes().map((cfg) => {
+        const m = metrics.snapshot(cfg.code);
+        return {
+          code: cfg.code,
+          name: cfg.name,
+          kind: 'baked',
+          teamsPerPlayer: cfg.teamsPerPlayer,
+          playerCount: loadTenantDataset(structural, cfg).players.length,
+          createdAt: null,
+          views: m.views,
+          activeNow: m.activeNow,
+        };
+      });
+      const bakedCodes = new Set(baked.map((b) => b.code));
+      const custom: AdminSweepstake[] = (await store.list())
+        .filter((r) => !bakedCodes.has(r.code.toLowerCase())) // a baked code shadows the store
+        .map((r) => {
+          const m = metrics.snapshot(r.code);
+          return {
+            code: r.code,
+            name: r.name,
+            kind: 'custom' as const,
+            teamsPerPlayer: r.teamsPerPlayer,
+            playerCount: r.players.length,
+            createdAt: r.createdAt,
+            views: m.views,
+            activeNow: m.activeNow,
+          };
+        });
+      const sweepstakes = [...baked, ...custom];
+      res.json({
+        totals: {
+          sweepstakes: sweepstakes.length,
+          players: sweepstakes.reduce((n, s) => n + s.playerCount, 0),
+        },
+        metricsNote: 'Views/active-now are best-effort, per-replica, and reset on restart.',
+        sweepstakes,
+      });
+    }),
+  );
 
   // ── Create / validate ─────────────────────────────────────────────────────────
   router.post(
@@ -186,7 +239,13 @@ export function createApiRouter(gateway: Gateway, store: TenantStore, config: Se
       handler(state, req, res);
     });
 
-  router.get('/s/:code/meta', tenant((s, _req, res) => res.json(buildMeta(s))));
+  router.get(
+    '/s/:code/meta',
+    tenant((s, req, res) => {
+      metrics.track(s.sweepstake.code, header(req, 'x-client-id') || undefined);
+      res.json(buildMeta(s));
+    }),
+  );
   router.get('/s/:code/overview', tenant((s, _req, res) => res.json(buildOverview(s))));
   router.get('/s/:code/players', tenant((s, _req, res) => res.json(buildPlayers(s))));
   router.get(

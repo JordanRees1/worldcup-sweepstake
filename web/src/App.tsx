@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { Link, Navigate, Outlet, Route, Routes, useParams } from 'react-router-dom';
 import { BottomNav, Header } from './components/chrome';
 import { EmptyState, LoadingState } from './components/states';
+import { AdminScreen } from './features/admin/AdminScreen';
 import { BracketScreen } from './features/bracket/BracketScreen';
 import { CreateScreen } from './features/create/CreateScreen';
 import { ManageScreen } from './features/create/ManageScreen';
@@ -58,6 +59,7 @@ export default function App() {
     <Routes>
       <Route path="/" element={<LandingScreen />} />
       <Route path="/new" element={<CreateScreen />} />
+      <Route path="/a/admin" element={<AdminScreen />} />
       <Route path="/s/:code" element={<TenantLayout />}>
         <Route index element={<PlayersScreen />} />
         <Route path="players/:id" element={<PlayerDetailScreen />} />

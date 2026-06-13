@@ -36,6 +36,8 @@ export const API_ROUTES = {
   createSweepstake: '/api/sweepstakes',
   validateSweepstake: '/api/sweepstakes/validate',
   sweepstake: (code: string) => `/api/s/${code}`,
+  // Admin (global ADMIN_TOKEN gated).
+  admin: '/api/a/admin',
 } as const;
 
 /** Roster submitted to create/edit a sweepstake (picks are team names; the server resolves them). */
@@ -129,6 +131,29 @@ export interface MatchesResponse {
 
 export interface ScheduleResponse {
   days: Array<{ date: string; matches: Match[] }>;
+}
+
+/** One row in the admin panel — a sweepstake plus best-effort usage signals. */
+export interface AdminSweepstake {
+  code: string;
+  name: string;
+  /** `baked` = committed dataset (aa26/crackers, read-only); `custom` = runtime store (editable). */
+  kind: 'baked' | 'custom';
+  teamsPerPlayer: number;
+  playerCount: number;
+  /** ISO creation time (custom only; null for baked sweepstakes). */
+  createdAt: string | null;
+  /** Page loads seen this server lifetime (best-effort, per-replica). */
+  views: number;
+  /** Distinct anonymous clients in the last ~5 min (best-effort, per-replica). */
+  activeNow: number;
+}
+
+export interface AdminResponse {
+  totals: { sweepstakes: number; players: number };
+  /** Human note on metric accuracy (per-replica / reset on restart). */
+  metricsNote: string;
+  sweepstakes: AdminSweepstake[];
 }
 
 /** Uniform error envelope returned by every endpoint on failure. */

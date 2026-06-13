@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import type { SweepstakeInput } from '@sweepstake/shared';
 import { EmptyState, LoadingState } from '../../components/states';
 import { deleteSweepstake, updateSweepstake, useMeta, useOverview } from '../../lib/api';
+import { getAdminToken } from '../../lib/clientId';
 import { removeSweep } from '../../lib/savedSweeps';
 import { useSweepstakeCode } from '../../lib/sweepstake';
 import { SweepstakeForm, type FormResult } from './SweepstakeForm';
@@ -11,7 +12,7 @@ export function ManageScreen() {
   const code = useSweepstakeCode();
   const navigate = useNavigate();
   const [params] = useSearchParams();
-  const [token, setToken] = useState(params.get('owner') ?? '');
+  const [token, setToken] = useState(params.get('owner') ?? getAdminToken());
   const [confirming, setConfirming] = useState(false);
   const [deleteErr, setDeleteErr] = useState('');
   const meta = useMeta();

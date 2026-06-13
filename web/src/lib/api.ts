@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { QueryClient, useQuery } from '@tanstack/react-query';
 import {
   API_ROUTES,
+  type AdminResponse,
   type BracketResponse,
   type CreateResponse,
   type GroupsResponse,
@@ -21,6 +22,7 @@ import {
   type Venue,
   type VenuesResponse,
 } from '@sweepstake/shared';
+import { getClientId } from './clientId';
 import { useSweepstakeCode } from './sweepstake';
 
 // Poll every 30s — matches the server cache TTL (RESULTS_CACHE_TTL_SECONDS=30) so we surface
@@ -39,8 +41,8 @@ export const queryClient = new QueryClient({
   },
 });
 
-async function fetchJson<T>(path: string): Promise<T> {
-  const res = await fetch(path);
+async function fetchJson<T>(path: string, headers?: Record<string, string>): Promise<T> {
+  const res = await fetch(path, headers ? { headers } : undefined);
   if (!res.ok) throw new Error(`Request failed (${res.status}) for ${path}`);
   return (await res.json()) as T;
 }
@@ -54,7 +56,7 @@ export const useMeta = () => {
   const code = useSweepstakeCode();
   return useQuery({
     queryKey: ['meta', code],
-    queryFn: () => fetchJson<MetaResponse>(API_ROUTES.meta(code)),
+    queryFn: () => fetchJson<MetaResponse>(API_ROUTES.meta(code), { 'x-client-id': getClientId() }),
     enabled: !!code,
     retry: 1, // an unknown code should 404 fast, not retry 3×
   });
@@ -247,3 +249,15 @@ export async function deleteSweepstake(code: string, token: string): Promise<boo
   });
   return res.ok;
 }
+
+// ── Admin panel ─────────────────────────────────────────────────────────────────
+
+/** Admin overview — only fires once a token is entered; a wrong token surfaces as isError (401). */
+export const useAdmin = (token: string) =>
+  useQuery({
+    queryKey: ['admin', token],
+    queryFn: () => fetchJson<AdminResponse>(API_ROUTES.admin, { 'x-admin-token': token }),
+    enabled: !!token,
+    retry: false,
+    refetchInterval: 30_000,
+  });
