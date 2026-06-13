@@ -32,7 +32,38 @@ export const API_ROUTES = {
   bracket: (code: string) => `/api/s/${code}/bracket`,
   matches: (code: string) => `/api/s/${code}/matches`,
   schedule: (code: string) => `/api/s/${code}/schedule`,
+  // Create / validate / edit / delete (multi-tenant self-service).
+  createSweepstake: '/api/sweepstakes',
+  validateSweepstake: '/api/sweepstakes/validate',
+  sweepstake: (code: string) => `/api/s/${code}`,
 } as const;
+
+/** Roster submitted to create/edit a sweepstake (picks are team names; the server resolves them). */
+export interface SweepstakeInput {
+  name: string;
+  teamsPerPlayer: number;
+  players: { name: string; picks: string[] }[];
+}
+
+/** A pick that didn't resolve, with a "did you mean…?" suggestion when one is close. */
+export interface PickIssue {
+  player: string;
+  rawName: string;
+  suggestion?: string;
+}
+
+export interface ValidateResponse {
+  ok: boolean;
+  issues?: PickIssue[];
+  errors?: string[];
+}
+
+export interface CreateResponse {
+  /** The new sweepstake's short code (its URL is /s/<code>). */
+  code: string;
+  /** Owner token — shown once; needed to edit/delete this sweepstake later. */
+  ownerToken: string;
+}
 
 export interface HealthResponse {
   ok: boolean;

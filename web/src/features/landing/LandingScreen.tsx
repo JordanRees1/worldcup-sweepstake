@@ -61,9 +61,15 @@ export function LandingScreen() {
           </section>
         )}
 
-        <p className="mt-10 text-[11px] text-slate-600">
-          Creating your own sweepstake is coming soon.
-        </p>
+        <div className="mt-10 border-t border-white/10 pt-6">
+          <p className="text-sm text-slate-400">Running your own?</p>
+          <Link
+            to="/new"
+            className="mt-2 inline-block rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-sm font-medium transition-colors active:bg-white/10 lg:hover:bg-white/10"
+          >
+            + Create a sweepstake
+          </Link>
+        </div>
       </main>
     </div>
   );

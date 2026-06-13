@@ -1,21 +1,20 @@
 /**
- * CLI — scaffold a new sweepstake (tenant) from a local player_picks.csv.
+ * CLI — create a new sweepstake (tenant) from a local player_picks.csv.
  *
  *   npm run sweepstake:create -- --picks ./mates.csv --name "Dave's Mates" --teams-per-player 8
- *   npm run sweepstake:create -- --picks ./x.csv --name "X" --teams-per-player 2 --code aa26 --slug x
+ *   npm run sweepstake:create -- --picks ./x.csv --name "X" --teams-per-player 2 --code aa27
  *
  * The CSV needs `player,team` columns. Picks are validated against the canonical teams (typos
- * surfaced, 48-team partition enforced). A 6-hex code is generated if --code is omitted; a slug is
- * derived from the name if --slug is omitted. Writes datasets/sweepstakes/<slug>/ — then commit +
- * rebuild/redeploy the image to make the sweepstake live at https://sstake.co.uk/s/<code>.
+ * surfaced, 48-team partition enforced). A 6-hex code is generated if --code is omitted. The
+ * tenant is written to the store — local `datasets/tenants/` in dev (commit it, or it stays local),
+ * Azure Blob in prod (live immediately at https://sstake.co.uk/s/<code>).
  */
 import { randomBytes } from 'node:crypto';
-import { copyFileSync, existsSync, mkdirSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { existsSync } from 'node:fs';
 import { loadStructural } from '../data/dataset';
-import { DATASETS_DIR } from '../data/paths';
 import { normalizePicks } from '../data/picks';
-import { listSweepstakes, type SweepstakeConfig } from '../data/sweepstake';
+import { resolveSweepstakeByCode, type SweepstakeConfig } from '../data/sweepstake';
+import { createTenantStore, type TenantRecord } from '../data/tenantStore';
 import { validateDataset } from '../data/validate';
 
 function arg(name: string): string | undefined {
@@ -28,15 +27,7 @@ function fail(msg: string): never {
   process.exit(1);
 }
 
-function slugify(s: string): string {
-  return s
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '');
-}
-
-function main(): void {
+async function main(): Promise<void> {
   const picksPath = arg('picks');
   const name = arg('name');
   const teamsPerPlayer = Number(arg('teams-per-player'));
@@ -47,19 +38,17 @@ function main(): void {
     fail('--teams-per-player <n> must be a positive integer');
   }
 
-  const existing = listSweepstakes();
   const code = (arg('code') ?? randomBytes(3).toString('hex')).trim().toLowerCase();
   if (!/^[a-z0-9]+$/.test(code)) fail(`code "${code}" must be alphanumeric`);
-  if (existing.some((s) => s.code === code)) fail(`code "${code}" is already in use`);
 
-  const slug = arg('slug') ?? slugify(name);
-  if (!slug) fail('could not derive a slug from the name — pass --slug');
-  const dir = join(DATASETS_DIR, 'sweepstakes', slug);
-  if (existsSync(dir)) fail(`slug "${slug}" already exists (${dir}) — pass a different --slug`);
+  const store = createTenantStore();
+  if (resolveSweepstakeByCode(code) || (await store.resolve(code))) {
+    fail(`code "${code}" is already in use`);
+  }
 
-  // Validate the picks against the canonical teams before writing anything.
+  // Validate the picks against the canonical teams.
   const structural = loadStructural();
-  const probe: SweepstakeConfig = { slug, code, name, teamsPerPlayer, dir, picksPath };
+  const probe: SweepstakeConfig = { slug: code, code, name, teamsPerPlayer, dir: '', picksPath };
   const { players, picks } = normalizePicks(structural.teams, probe);
 
   const unmatched = picks.filter((p) => p.teamId === null);
@@ -74,19 +63,18 @@ function main(): void {
     fail((err as Error).message);
   }
 
-  // Valid — scaffold the tenant folder.
-  mkdirSync(dir, { recursive: true });
-  writeFileSync(
-    join(dir, 'sweepstake.json'),
-    `${JSON.stringify({ name, teamsPerPlayer, code }, null, 2)}\n`,
-    'utf8',
-  );
-  copyFileSync(picksPath, join(dir, 'player_picks.csv'));
+  const record: TenantRecord = {
+    code,
+    name,
+    teamsPerPlayer,
+    players,
+    picks: picks.map((p) => ({ playerId: p.playerId, teamId: p.teamId as number })),
+    createdAt: new Date().toISOString(),
+  };
+  await store.save(record);
 
   console.log(`✓ Created "${name}" — ${players.length} players, ${picks.length} picks`);
-  console.log(`   code:   ${code}  →  https://sstake.co.uk/s/${code}`);
-  console.log(`   folder: datasets/sweepstakes/${slug}/`);
-  console.log('   Next: commit + rebuild/redeploy the image to make it live.');
+  console.log(`   code: ${code}  →  https://sstake.co.uk/s/${code}`);
 }
 
-main();
+main().catch((err: unknown) => fail(err instanceof Error ? err.message : String(err)));

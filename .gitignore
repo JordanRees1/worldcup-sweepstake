@@ -37,5 +37,8 @@ coverage/
 datasets/sweepstakes/**/picks.normalized.json
 datasets/sweepstakes/**/PICKS_MAPPING_REPORT.md
 
+# ── Runtime tenant store (dev scratch; prod uses Azure Blob) ──
+datasets/tenants/
+
 # ── Misc cache ───────────────────────────────────
 .cache/

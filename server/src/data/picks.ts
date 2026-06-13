@@ -14,12 +14,44 @@ export interface NormalizedPicks {
   picks: Pick[];
 }
 
+export interface ResolvedTeam {
+  teamId: number | null;
+  matched: boolean;
+  note?: string;
+}
+
 /**
- * Reconcile a sweepstake's `player_picks.csv` against the canonical team list. Each pick
- * resolves to one of:
- *  - a confirmed team (exact, diacritic-insensitive, or via the alias table);
- *  - playoff-contingent (a team still in the playoffs → not yet a real entrant);
- *  - unmatched (needs human review — should be empty once aliases are complete).
+ * Build a reusable matcher: raw pick name → canonical team. Matches exact (diacritic-insensitive),
+ * known typos/variants (alias table), flags playoff non-qualifiers, else unmatched. Used by the
+ * CSV loader and the runtime create/validate APIs.
+ */
+export function createTeamResolver(teams: Team[]): (rawName: string) => ResolvedTeam {
+  const confirmedByNorm = new Map<string, Team>();
+  const byFifa = new Map<string, Team>();
+  for (const team of teams) {
+    byFifa.set(team.fifaCode, team);
+    if (!team.isPlaceholder) confirmedByNorm.set(normalizeName(team.name), team);
+  }
+
+  return (rawName: string): ResolvedTeam => {
+    const norm = normalizeName(rawName);
+
+    const exact = confirmedByNorm.get(norm);
+    if (exact) return { teamId: exact.id, matched: true };
+
+    const aliasCode = PICK_ALIASES[norm];
+    const aliased = aliasCode ? byFifa.get(aliasCode) : undefined;
+    if (aliased) return { teamId: aliased.id, matched: true, note: `variant of ${aliased.name}` };
+
+    const dnqReason = DID_NOT_QUALIFY[norm];
+    if (dnqReason) return { teamId: null, matched: false, note: `did not qualify: ${dnqReason}` };
+
+    return { teamId: null, matched: false, note: 'UNMATCHED — needs review' };
+  };
+}
+
+/**
+ * Reconcile a sweepstake's `player_picks.csv` against the canonical team list.
  */
 export function normalizePicks(
   teams: Team[],
@@ -38,55 +70,16 @@ export function normalizePicks(
     }
   }
 
-  const confirmedByNorm = new Map<string, Team>();
-  const byFifa = new Map<string, Team>();
-  for (const team of teams) {
-    byFifa.set(team.fifaCode, team);
-    if (!team.isPlaceholder) confirmedByNorm.set(normalizeName(team.name), team);
-  }
-
+  const resolve = createTeamResolver(teams);
   const picks = rows.map((row): Pick => {
     const playerId = playerIds.get(row.player) ?? 0;
-    const norm = normalizeName(row.team);
-
-    // 1) Exact (diacritic-insensitive) match to a confirmed team.
-    const exact = confirmedByNorm.get(norm);
-    if (exact) {
-      return { playerId, teamId: exact.id, rawName: row.team, matched: true };
-    }
-
-    // 2) Known typo / name variant.
-    const aliasCode = PICK_ALIASES[norm];
-    const aliased = aliasCode ? byFifa.get(aliasCode) : undefined;
-    if (aliased) {
-      return {
-        playerId,
-        teamId: aliased.id,
-        rawName: row.team,
-        matched: true,
-        note: `variant of ${aliased.name}`,
-      };
-    }
-
-    // 3) Picked a team that did not qualify (lost its 2026 playoff).
-    const dnqReason = DID_NOT_QUALIFY[norm];
-    if (dnqReason) {
-      return {
-        playerId,
-        teamId: null,
-        rawName: row.team,
-        matched: false,
-        note: `did not qualify: ${dnqReason}`,
-      };
-    }
-
-    // 4) Could not be resolved.
+    const r = resolve(row.team);
     return {
       playerId,
-      teamId: null,
+      teamId: r.teamId,
       rawName: row.team,
-      matched: false,
-      note: 'UNMATCHED — needs review',
+      matched: r.matched,
+      ...(r.note ? { note: r.note } : {}),
     };
   });
 

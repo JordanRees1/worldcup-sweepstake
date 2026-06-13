@@ -4,6 +4,7 @@ import cors from 'cors';
 import express, { type Express } from 'express';
 import { WEB_DIST_DIR as WEB_DIST } from './data/paths';
 import type { ServerConfig } from './env';
+import type { TenantStore } from './data/tenantStore';
 import { createApiRouter } from './routes';
 import type { Gateway } from './services/appState';
 
@@ -23,7 +24,7 @@ const VANITY_HOSTS: Record<string, string> = {
  * Prod: CORS not needed (web is served from the same origin as the API).
  *       express.static serves web/dist; catch-all returns index.html for client-side routing.
  */
-export function createApp(gateway: Gateway, config: ServerConfig): Express {
+export function createApp(gateway: Gateway, store: TenantStore, config: ServerConfig): Express {
   const app = express();
   app.set('trust proxy', true);
 
@@ -39,7 +40,7 @@ export function createApp(gateway: Gateway, config: ServerConfig): Express {
 
   if (!IS_PROD) app.use(cors());
   app.use(express.json());
-  app.use('/api', createApiRouter(gateway, config));
+  app.use('/api', createApiRouter(gateway, store, config));
 
   if (IS_PROD && existsSync(WEB_DIST)) {
     // Serve the Vite-built static files and fall back to index.html for React Router.

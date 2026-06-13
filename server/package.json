@@ -13,6 +13,8 @@
     "smoke:provider": "tsx src/scripts/smokeProvider.ts"
   },
   "dependencies": {
+    "@azure/identity": "^4.13.1",
+    "@azure/storage-blob": "^12.32.0",
     "cors": "^2.8.6",
     "csv-parse": "^6.2.1",
     "dotenv": "^17.4.2",

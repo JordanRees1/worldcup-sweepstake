@@ -12,7 +12,8 @@ import type {
   TeamsResponse,
 } from '@sweepstake/shared';
 import { createApp } from '../app';
-import { loadStructural } from '../data/dataset';
+import { loadDataset, loadStructural } from '../data/dataset';
+import type { TenantRecord, TenantStore } from '../data/tenantStore';
 import { createSeedProvider } from '../providers/seedProvider';
 import { createGateway } from '../services/appState';
 
@@ -26,8 +27,26 @@ describe('API routes (in-process HTTP, seed mode, multi-tenant gateway)', () => 
   const code = 'crackers'; // the friends sweepstake (6 players)
 
   beforeAll(async () => {
-    const gateway = createGateway(loadStructural(), createSeedProvider(), 1000);
-    const app = createApp(gateway, { port: 0, dataSource: 'seed', cacheTtlMs: 1000, version: 'test' });
+    // An in-memory runtime-store tenant (built from the friends dataset) to exercise the store path.
+    const ds = loadDataset();
+    const storeRecord: TenantRecord = {
+      code: 'storey',
+      name: 'Store Tenant',
+      teamsPerPlayer: 8,
+      players: ds.players,
+      picks: ds.picks
+        .filter((p) => p.teamId !== null)
+        .map((p) => ({ playerId: p.playerId, teamId: p.teamId as number })),
+      createdAt: '2026-06-01T00:00:00Z',
+    };
+    const store: TenantStore = {
+      resolve: async (c) => (c === 'storey' ? storeRecord : null),
+      list: async () => [storeRecord],
+      save: async () => {},
+      remove: async () => false,
+    };
+    const gateway = createGateway(loadStructural(), createSeedProvider(), 1000, store);
+    const app = createApp(gateway, store, { port: 0, dataSource: 'seed', cacheTtlMs: 1000, version: 'test' });
     await new Promise<void>((resolve) => {
       server = app.listen(0, resolve);
     });
@@ -91,6 +110,11 @@ describe('API routes (in-process HTTP, seed mode, multi-tenant gateway)', () => 
   it('GET /s/:code/players/abc → 400 for non-numeric id', async () => {
     const res = await fetch(`${base}/s/${code}/players/abc`);
     expect(res.status).toBe(400);
+  });
+
+  it('GET /s/storey/overview → resolves a runtime-store tenant (6 players)', async () => {
+    const body = await getJson<OverviewResponse>(await fetch(`${base}/s/storey/overview`));
+    expect(body.leaderboard).toHaveLength(6);
   });
 
   it('GET /s/zzzz/overview → 404 for an unknown sweepstake code', async () => {

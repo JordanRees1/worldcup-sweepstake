@@ -3,8 +3,12 @@ import { QueryClient, useQuery } from '@tanstack/react-query';
 import {
   API_ROUTES,
   type BracketResponse,
+  type CreateResponse,
   type GroupsResponse,
   type HealthResponse,
+  type PickIssue,
+  type SweepstakeInput,
+  type ValidateResponse,
   type Match,
   type MatchesResponse,
   type MetaResponse,
@@ -184,4 +188,62 @@ export function useMatchMap(): Map<number, Match> {
     for (const m of data?.matches ?? []) map.set(m.id, m);
     return map;
   }, [data]);
+}
+
+// ── Create / edit / delete (self-service) ───────────────────────────────────────
+
+export interface MutationOutcome {
+  ok: boolean;
+  status: number;
+  data?: CreateResponse;
+  issues?: PickIssue[];
+  errors?: string[];
+}
+
+export async function validateSweepstake(input: SweepstakeInput): Promise<ValidateResponse> {
+  const res = await fetch(API_ROUTES.validateSweepstake, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(input),
+  });
+  return (await res.json()) as ValidateResponse;
+}
+
+export async function createSweepstake(
+  input: SweepstakeInput,
+  createToken: string,
+): Promise<MutationOutcome> {
+  const res = await fetch(API_ROUTES.createSweepstake, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', 'x-create-token': createToken },
+    body: JSON.stringify(input),
+  });
+  const body = (await res.json().catch(() => ({}))) as Record<string, unknown>;
+  return res.ok
+    ? { ok: true, status: res.status, data: body as unknown as CreateResponse }
+    : { ok: false, status: res.status, issues: body.issues as PickIssue[], errors: body.errors as string[] };
+}
+
+export async function updateSweepstake(
+  code: string,
+  body: Partial<SweepstakeInput>,
+  token: string,
+): Promise<MutationOutcome> {
+  const res = await fetch(API_ROUTES.sweepstake(code), {
+    method: 'PATCH',
+    headers: { 'content-type': 'application/json', 'x-owner-token': token, 'x-admin-token': token },
+    body: JSON.stringify(body),
+  });
+  const resp = (await res.json().catch(() => ({}))) as Record<string, unknown>;
+  return res.ok
+    ? { ok: true, status: res.status }
+    : { ok: false, status: res.status, issues: resp.issues as PickIssue[], errors: resp.errors as string[] };
+}
+
+export async function deleteSweepstake(code: string, token: string): Promise<boolean> {
+  const res = await fetch(API_ROUTES.sweepstake(code), {
+    method: 'DELETE',
+    headers: { 'x-owner-token': token, 'x-admin-token': token },
+  });
+  return res.ok;
 }

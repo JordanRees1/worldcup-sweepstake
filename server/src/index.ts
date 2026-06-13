@@ -4,6 +4,7 @@ import { loadStructural } from './data/dataset';
 import { listSweepstakes } from './data/sweepstake';
 import { loadConfig } from './env';
 import { createProvider } from './providers';
+import { createTenantStore } from './data/tenantStore';
 import { createGateway } from './services/appState';
 
 const config = loadConfig();
@@ -15,8 +16,9 @@ const provider = createProvider(structural.teams, structural.matches, {
   cacheTtlMs: config.cacheTtlMs,
 });
 
-const gateway = createGateway(structural, provider, config.cacheTtlMs);
-const app = createApp(gateway, config);
+const store = createTenantStore();
+const gateway = createGateway(structural, provider, config.cacheTtlMs, store);
+const app = createApp(gateway, store, config);
 
 const server = app.listen(config.port, () => {
   const tenants = listSweepstakes()

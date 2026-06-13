@@ -11,6 +11,7 @@ import type {
 } from '@sweepstake/shared';
 import { loadTenantDataset, type Dataset, type StructuralData } from '../data/dataset';
 import { resolveSweepstakeByCode } from '../data/sweepstake';
+import { datasetFromRecord, type TenantStore } from '../data/tenantStore';
 import {
   buildLeaderboard,
   computeAllGroupStandings,
@@ -127,6 +128,8 @@ export function createAppStateService(
 export interface Gateway {
   /** Per-code app state, or null if no sweepstake has that code. */
   get(code: string): Promise<AppState | null>;
+  /** Drop a tenant's cached state (after it's edited or deleted). */
+  invalidate(code: string): void;
   /** Provider meta for the global /health route. */
   meta(): ProviderMeta;
 }
@@ -140,24 +143,33 @@ export function createGateway(
   structural: StructuralData,
   provider: ResultsProvider,
   ttlMs: number,
+  store: TenantStore,
 ): Gateway {
   const cache = new Map<string, { state: AppState; at: number }>();
-  const inflight = new Map<string, Promise<AppState>>();
+  const inflight = new Map<string, Promise<AppState | null>>();
+
+  // Resolve a code to a Dataset: baked sweepstakes (CSV) first, then the runtime store.
+  async function resolveDataset(key: string): Promise<Dataset | null> {
+    const baked = resolveSweepstakeByCode(key);
+    if (baked) return loadTenantDataset(structural, baked);
+    const record = await store.resolve(key);
+    return record ? datasetFromRecord(structural, record) : null;
+  }
 
   return {
     async get(code: string): Promise<AppState | null> {
-      const sweepstake = resolveSweepstakeByCode(code);
-      if (!sweepstake) return null;
-      const key = sweepstake.code;
+      const key = code.trim().toLowerCase();
+      if (!key) return null;
 
       const hit = cache.get(key);
       if (hit && Date.now() - hit.at < ttlMs) return hit.state;
 
       let pending = inflight.get(key);
       if (!pending) {
-        pending = computeAppState(loadTenantDataset(structural, sweepstake), provider)
+        pending = resolveDataset(key)
+          .then((dataset) => (dataset ? computeAppState(dataset, provider) : null))
           .then((state) => {
-            cache.set(key, { state, at: Date.now() });
+            if (state) cache.set(key, { state, at: Date.now() });
             inflight.delete(key);
             return state;
           })
@@ -170,6 +182,9 @@ export function createGateway(
         inflight.set(key, pending);
       }
       return pending;
+    },
+    invalidate(code: string): void {
+      cache.delete(code.trim().toLowerCase());
     },
     meta(): ProviderMeta {
       return provider.meta();
