@@ -15,9 +15,14 @@
 ```
 
 **Principle:** the CSVs are the source of truth for *structure* (teams, groups, all 104
-fixtures, the bracket skeleton, venues, picks). The football API only provides *results*
+fixtures, the bracket skeleton, venues). The football API only provides *results*
 (scores, statuses, and — once the knockouts begin — which teams fill each slot). The engine
 joins the two and derives everything the UI needs.
+
+**Multi-tenant:** one server hosts **many** sweepstakes, each addressed by a short `code`
+(`/s/<code>`). The tournament *structure + results* are shared and computed once (cached); each
+sweepstake overlays only its own **players + picks** to produce its leaderboard. See §6a for the
+gateway, tenant store, and permission model.
 
 ## 2. Why a backend at all
 The user chose a live API. A browser SPA must not call it directly because:
@@ -42,24 +47,32 @@ sweepstake/
 │     ├─ types.ts              # domain model (Team, Match, Standing, TeamStatus, …)
 │     ├─ contract.ts           # REST request/response shapes + endpoint paths
 │     └─ index.ts
-├─ server/                     # @sweepstake/server  (Express + TS, tsx watch)
+├─ server/                     # @sweepstake/server  (Express gateway; tsx in dev, bundled in prod)
 │  ├─ .env.example
 │  └─ src/
-│     ├─ index.ts              # app bootstrap, port 8787
-│     ├─ data/                 # WP1: CSV loaders, normalization, validation, mapping report
-│     ├─ engine/               # WP2: standings, third-place ranking, bracket resolve, status, scoring
-│     ├─ providers/            # WP3: ResultsProvider — seedProvider, footballApiProvider, fixtureMatch
-│     ├─ services/             # composition: build the “app state” the routes serve
-│     └─ routes/               # WP4: REST endpoints
+│     ├─ index.ts              # app bootstrap: build gateway + tenant store, listen on :8787
+│     ├─ app.ts                # Express app (routes, static web in prod, vanity-host redirects)
+│     ├─ data/                 # CSV loaders, normalization (createTeamResolver), validation;
+│     │                        #   sweepstake.ts (baked tenants by code), tenantStore.ts (runtime)
+│     ├─ engine/               # standings, third-place ranking, bracket resolve, status, scoring
+│     ├─ providers/            # ResultsProvider — seedProvider, footballApiProvider, fixtureMatch
+│     ├─ services/             # appState (computeAppState + createGateway), responses,
+│     │                        #   sweepstakeCreate (validate roster), metrics (best-effort usage)
+│     ├─ scripts/              # createSweepstake.ts — the `sweepstake:create` CLI
+│     └─ routes/               # all REST endpoints (tenant reads + create/edit/delete + admin)
 └─ web/                        # @sweepstake/web (Vite + React + TS, port 5173)
    └─ src/
-      ├─ main.tsx, app/        # WP5: shell, routing, tab nav, theme tokens
-      ├─ lib/api/              # WP5: typed fetch client + React Query hooks (imports shared/contract)
-      ├─ mocks/                # WP5: MSW handlers (lets UI build before the server is ready)
-      ├─ components/           # shared UI (StatusChip, TeamRow, Crest, …)
-      ├─ features/players/     # WP6: leaderboard, player cards, team status table (CORE)
-      ├─ features/bracket/     # WP7: mobile bracket (vertical → radial enhancement)
-      └─ styles/
+      ├─ App.tsx               # React Router: /, /new, /a/admin, /s/:code/* (tenant shell)
+      ├─ lib/                  # api.ts (code-aware React Query hooks + mutations), sweepstake.tsx
+      │                        #   (code context), savedSweeps.ts, clientId.ts (anon id + admin token)
+      ├─ mocks/                # MSW handlers (VITE_MOCKS=on for offline UI dev)
+      ├─ components/           # shared UI (chrome, StatusChip, TeamRow, LiveBadge, states, …)
+      ├─ features/players/     # leaderboard, player cards, team status table (CORE)
+      ├─ features/groups/      # group standings
+      ├─ features/bracket/     # mobile + desktop knockout bracket
+      ├─ features/landing/     # landing picker / enter-a-code / create entry
+      ├─ features/create/      # /new (CreateScreen) + /s/:code/manage (ManageScreen) + SweepstakeForm
+      └─ features/admin/       # /a/admin (AdminScreen) — global-token panel
 ```
 
 ## 4. Data flow
@@ -90,19 +103,37 @@ export interface ResultsProvider {
 Selected by `DATA_SOURCE` env. This is why no other workstream blocks on the API key.
 
 ## 6. REST API contract (served under `/api`)
-Exact TypeScript shapes live in `shared/src/contract.ts`. Endpoints:
+Exact TypeScript shapes + canonical paths live in `shared/src/contract.ts` (`API_ROUTES`). All
+read endpoints are **tenant-scoped** by `code` (`/api/s/<code>/…`); a handful of global routes
+handle health, create/validate, edit/delete, and admin.
 
-| Method & path             | Purpose                                                                 |
-|---------------------------|-------------------------------------------------------------------------|
-| `GET /api/health`         | `{ ok, dataSource, lastUpdated }`                                       |
-| `GET /api/overview`       | `asOf`, leaderboard (`PlayerSummary[]`), current stage, `dataSource`   |
-| `GET /api/players`        | `PlayerSummary[]` (each: teams + status, aliveCount, furthestStage, rank)|
-| `GET /api/players/:id`    | One player + each team’s fixtures & detailed status                     |
-| `GET /api/teams`          | `Team[]` each with `TeamStatus`                                         |
-| `GET /api/groups`         | Per group: 4 teams + `GroupStandingRow[]`                              |
-| `GET /api/bracket`        | Knockout tree: nodes (stage, match, resolved teams, winner)            |
-| `GET /api/matches`        | `Match[]` filterable by `?stage=&group=&date=`                          |
-| `GET /api/schedule`       | Matches grouped by local date                                          |
+**Global**
+
+| Method & path                  | Purpose                                                              |
+|--------------------------------|----------------------------------------------------------------------|
+| `GET /api/health`              | `{ ok, dataSource, lastUpdated, version }` (cheap; no tenant)        |
+| `POST /api/sweepstakes/validate` | Dry-run a roster → `{ ok, issues?, errors? }` ("did you mean…?")    |
+| `POST /api/sweepstakes`        | Create a sweepstake → `{ code, ownerToken }`. **Needs `x-create-token`** |
+| `PATCH /api/s/:code`           | Edit name/roster. **Needs `x-owner-token` or `x-admin-token`** (baked → 403) |
+| `DELETE /api/s/:code`          | Delete. **Needs owner/admin token** (baked → 403)                    |
+| `GET /api/a/admin`             | Admin overview. **Needs `x-admin-token`** — see §6a                  |
+
+**Tenant reads** (`<code>` = e.g. `crackers`, `aa26`, a 6-hex custom code)
+
+| Method & path                  | Purpose                                                              |
+|--------------------------------|----------------------------------------------------------------------|
+| `GET /api/s/:code/meta`        | `{ code, name, teamsPerPlayer, playerCount }` — validates the code; records a best-effort view (`x-client-id`) |
+| `GET /api/s/:code/overview`    | `asOf`, leaderboard (`PlayerSummary[]`), current stage, `dataSource` |
+| `GET /api/s/:code/players`     | `PlayerSummary[]` (teams + status, aliveCount, furthestStage, rank)  |
+| `GET /api/s/:code/players/:id` | One player + each team's fixtures & detailed status                  |
+| `GET /api/s/:code/teams`       | `Team[]` each with `TeamStatus`                                      |
+| `GET /api/s/:code/groups`      | Per group: 4 teams + `GroupStandingRow[]`                            |
+| `GET /api/s/:code/bracket`     | Knockout tree: nodes (stage, match, resolved teams, winner)          |
+| `GET /api/s/:code/matches`     | `Match[]` filterable by `?stage=&group=&date=`                       |
+| `GET /api/s/:code/schedule`    | Matches grouped by local date                                        |
+
+An unknown code → `404`. Tokens are passed as request headers (`x-create-token` /
+`x-owner-token` / `x-admin-token`), never in the URL.
 
 Example `PlayerSummary` (sketch):
 ```jsonc
@@ -121,6 +152,39 @@ Example `PlayerSummary` (sketch):
 }
 ```
 
+## 6a. Multi-tenant gateway
+One server, many sweepstakes — addressed by short `code`.
+
+- **Gateway** (`createGateway` in `services/appState.ts`): resolves a `code` → a `Dataset`, runs
+  the pipeline (§4), and memoizes per-code state for the cache TTL. All tenants share the single
+  `ResultsProvider`, so the upstream results fetch happens **once** regardless of how many
+  sweepstakes exist — API usage stays flat (≤2 calls/min). `gateway.invalidate(code)` drops a
+  tenant's cached state after it's edited/deleted.
+- **Two tenant sources**, resolved in order:
+  1. **Baked** — committed `datasets/sweepstakes/<slug>/` (CSV + `sweepstake.json` with a `code`),
+     via `resolveSweepstakeByCode`. Read-only at runtime (PATCH/DELETE → 403).
+  2. **Runtime store** — a `TenantStore` (`data/tenantStore.ts`) holding `TenantRecord`s with picks
+     **already resolved to team ids** at creation (so reads never re-parse a CSV).
+- **TenantStore seam** (mirrors `ResultsProvider`): `createBlobTenantStore` (Azure Blob, one JSON
+  per tenant, authed by the container's **managed identity** — no secret) in prod;
+  `createLocalTenantStore` (a local directory) in dev + the CLI. Selected by the
+  `AZURE_STORAGE_ACCOUNT` env var.
+- **Creation/validation** (`services/sweepstakeCreate.ts`): enforces the 48-team partition
+  (`teamsPerPlayer × players = 48`, every team exactly once) and resolves messy pick names with the
+  shared `createTeamResolver` + a Levenshtein "did you mean…?" suggester. Same code path for the
+  web `/new` flow and the `sweepstake:create` CLI.
+- **Permissions — three tokens, no accounts** (all host-managed secrets, never in source):
+  - **`CREATE_TOKEN`** — shared anti-bot gate on `POST /api/sweepstakes`. Unset = creation open (dev).
+  - **owner token** — random per-sweepstake, returned once at creation, stored only as a SHA-256
+    hash; lets that creator edit/delete their own sweepstake.
+  - **`ADMIN_TOKEN`** — global: edit/delete any sweepstake + the `/a/admin` panel.
+
+  The CLI bypasses the create gate (run locally by a trusted operator). View codes are read-only.
+- **Admin metrics** (`services/metrics.ts`): the panel's priority numbers (sweepstake/player counts)
+  are exact (from the store); **views / active-now are best-effort**, held in-memory per replica
+  (reset on restart, approximate under scale-out). "Active now" counts distinct anonymous
+  `x-client-id`s (a localStorage UUID — no PII) seen in the last ~5 min.
+
 ## 7. Config & environment
 `server/.env` (gitignored; documented by `.env.example`):
 ```
@@ -128,9 +192,14 @@ PORT=8787
 DATA_SOURCE=seed            # seed | live
 FOOTBALL_API_PROVIDER=football-data
 FOOTBALL_API_KEY=           # required only when DATA_SOURCE=live
-RESULTS_CACHE_TTL_SECONDS=60
+RESULTS_CACHE_TTL_SECONDS=60   # 30 in prod (in-play scores)
+CREATE_TOKEN=               # shared create password; unset = creation open (dev)
+ADMIN_TOKEN=                # global admin (edit any + /a/admin); unset = admin disabled
+AZURE_STORAGE_ACCOUNT=      # set → Blob tenant store (prod); unset → local dir (dev)
 ```
-`web/.env` (optional): `VITE_API_BASE=/api` (default). Vite dev server proxies `/api` → `:8787`.
+`SWEEPSTAKE` is **no longer used** by the gateway (it hosts all tenants by code); it survives only
+in the legacy single-sweepstake path. `web/.env` (optional): `VITE_API_BASE=/api` (default), and
+`VITE_MOCKS=on` to serve MSW fixtures offline. Vite dev proxies `/api` → `:8787`.
 
 ## 8. Running locally
 - One command: `npm run dev` (root) starts the API (`tsx watch`) and web (`vite`) together.

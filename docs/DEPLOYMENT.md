@@ -33,27 +33,24 @@ npm run dev
 ### Dev commands
 
 ```bash
-npm run dev              # default (friends sweepstake, seed/no-API mode)
-npm run dev:work         # work sweepstake
+npm run dev              # gateway + web (seed/no-API mode) — all sweepstakes by code
 npm run dev:group-stage  # demo: matchday 1+2 done
 npm run dev:quarters     # demo: groups + R32 + R16 done
 npm run dev:final        # demo: everything through the semis, Final tomorrow
+npm run dev:live-demo    # demo: some matches in play (LIVE badge)
 
 # Live results (needs server/.env with FOOTBALL_API_KEY set — see server/.env.example):
 DATA_SOURCE=live npm run dev       # macOS/Linux
 $env:DATA_SOURCE="live"; npm run dev  # Windows PowerShell
 ```
 
-### Switching between sweepstakes
+### Working with sweepstakes locally
 
-```bash
-npm run dev                     # friends (default)
-npm run dev:work                # work
-
-# Any sweepstake by name:
-$env:SWEEPSTAKE="work"; npm run dev       # PowerShell
-SWEEPSTAKE=work npm run dev               # macOS/Linux
-```
+The gateway serves every sweepstake at once by code — no env switch. The two committed (baked)
+ones are at `/s/crackers` (6×8) and `/s/aa26` (24×2); the landing page (`/`) is the picker.
+To add one, either commit a baked sweepstake under `datasets/sweepstakes/<slug>/` or create a
+runtime one with `npm run sweepstake:create -- …` (writes to `datasets/tenants/` in dev). See
+[Part 5](#part-5--adding-a-new-sweepstake).
 
 ---
 
@@ -82,17 +79,24 @@ This means:
 
 ### Environment variables in production
 
+The server is a **multi-tenant gateway** — one container hosts every sweepstake by code, so there
+is no per-game `SWEEPSTAKE` var.
+
 | Variable | Required | Example | Notes |
 |---|---|---|---|
-| `SWEEPSTAKE` | No | `friends` | Which game to serve. Default: `friends` |
 | `DATA_SOURCE` | No | `live` | `seed` (offline) or `live` (API). Default: `seed` |
-| `FOOTBALL_API_KEY` | If `DATA_SOURCE=live` | `abc123...` | From football-data.org. **Never put in the image** |
+| `FOOTBALL_API_KEY` | If `DATA_SOURCE=live` | `abc123...` | From football-data.org. **Secret — never in the image** |
+| `AZURE_STORAGE_ACCOUNT` | For self-service | `sstkcb76f50e` | Set → Blob tenant store; unset → local dir. Authed by managed identity |
+| `CREATE_TOKEN` | For self-service | `…` | Shared create password (anti-bot). **Secret** |
+| `ADMIN_TOKEN` | For admin panel | `…` | Global admin (edit any + `/a/admin`). **Secret** |
 | `PORT` | No | `8080` | Azure sets this automatically |
-| `RESULTS_CACHE_TTL_SECONDS` | No | `60` | How long to cache API results in memory |
+| `RESULTS_CACHE_TTL_SECONDS` | No | `30` | How long to cache API results in memory |
 | `NODE_ENV` | Set in Dockerfile | `production` | Already set — do not override |
 
-**The API key is always a host-managed secret** — set it in the Azure portal, never in the
-image or in source control.
+**Secrets are always host-managed** — set them as Azure Container App secrets (`secretref:`),
+never in the image or in source control. The tenant store needs no secret: the container's
+**system-assigned managed identity** (granted *Storage Blob Data Contributor* on the account)
+authenticates to Blob.
 
 ---
 
@@ -113,30 +117,31 @@ Docker caches each layer, so only changed layers rebuild.
 ### Run it locally
 
 ```bash
-# Seed mode (no API key, offline data) — the friends game:
+# Seed mode (no API key, offline data):
 docker run --rm -p 8080:8080 sweepstake
 
-# Seed mode — the work game:
-docker run --rm -p 8080:8080 -e SWEEPSTAKE=work sweepstake
-
-# Live mode — friends game with your real API key:
+# Live mode with your real API key:
 docker run --rm -p 8080:8080 \
   -e DATA_SOURCE=live \
   -e FOOTBALL_API_KEY=your_key_here \
   sweepstake
+
+# With self-service enabled (local dir store, create + admin tokens):
+docker run --rm -p 8080:8080 \
+  -e CREATE_TOKEN=test-create -e ADMIN_TOKEN=test-admin sweepstake
 ```
 
-Open http://localhost:8080 — you should see the sweepstake app served from the container.
-The `● seed` / `● live` badge in the header tells you which mode it's running in.
+Open http://localhost:8080 — the landing page (picker / enter-a-code / create). The
+`● seed` / `● live` badge in the header tells you which mode it's running in.
 
 ### What to verify
 
-- [ ] `http://localhost:8080` loads the Players screen
+- [ ] `http://localhost:8080/` loads the landing / picker
 - [ ] `http://localhost:8080/api/health` returns `{"ok":true,...}`
-- [ ] `http://localhost:8080/groups` loads group standings (React Router)
-- [ ] `http://localhost:8080/bracket` loads the bracket
+- [ ] `http://localhost:8080/s/crackers` loads the 6-player game; `/s/aa26` the 24-player one
+- [ ] `http://localhost:8080/s/crackers/groups` and `/bracket` load (React Router)
 - [ ] The header shows `● seed` (or `● live` if you passed a key)
-- [ ] Running with `SWEEPSTAKE=work` shows 24 players instead of 6
+- [ ] `GET /api/a/admin` with `x-admin-token` lists the sweepstakes (if `ADMIN_TOKEN` set)
 
 ---
 
@@ -147,21 +152,38 @@ The `● seed` / `● live` badge in the header tells you which mode it's runnin
 > `rg-personal-n-jordan-rg-jordan-sandbox`, region **uksouth**. The image is hosted on
 > **GitHub Container Registry (GHCR)**, not Azure Container Registry.
 
-### Architecture: one image, two apps
+### Architecture: one image, one app (multi-tenant gateway)
 
-Both sweepstakes run the **same public image**, differing only by the `SWEEPSTAKE` env var:
+A **single** container app hosts every sweepstake by code (consolidated June 2026 — the old
+second app `sweepstake-dev` was deleted; its `friends` data lives on as the `crackers` tenant):
 
 ```
 ghcr.io/jordanrees1/sweepstake:latest   (one public image)
         │
    env: sweepstake-env   (uksouth, in rg-personal-n-jordan-rg-jordan-sandbox)
-        ├── sweepstake-dev    SWEEPSTAKE=friends  → https://crackers.sstake.co.uk
-        └── sweepstake-prod   SWEEPSTAKE=work     → https://aa.sstake.co.uk
+        └── sweepstake-prod   →  https://sstake.co.uk            (apex, canonical)
+                                  ├─ /s/aa26      "Advancing"  (24×2)
+                                  ├─ /s/crackers  "Crackers"   (6×8)
+                                  └─ /s/<code>    self-service tenants
+                                 (old aa./crackers. subdomains 301 → /s/aa26, /s/crackers)
+                              │
+                       Azure Blob (account sstkcb76f50e, container `tenants`)
+                       one JSON per runtime tenant — authed by the app's managed identity
 ```
 
-Each app: **0.25 vCPU / 0.5 GiB**, external ingress on `:8080`, `DATA_SOURCE=live`,
-`RESULTS_CACHE_TTL_SECONDS=30`, the API key as the Azure secret `football-api-key`, and
-**`min-replicas 1 / max-replicas 1`** (always-warm — see the Cost note below).
+The app: **0.25 vCPU / 0.5 GiB**, external ingress on `:8080`, `DATA_SOURCE=live`,
+`RESULTS_CACHE_TTL_SECONDS=30`, **`min-replicas 1 / max-replicas 3`** (always-warm, bursts to 3),
+a **system-assigned managed identity** with *Storage Blob Data Contributor* on `sstkcb76f50e`, and
+these Azure secrets:
+
+| Secret | Env var | Purpose |
+|---|---|---|
+| `football-api-key` | `FOOTBALL_API_KEY` | football-data.org key |
+| `create-token` | `CREATE_TOKEN` | self-service create password |
+| `admin-token` | `ADMIN_TOKEN` | global admin + `/a/admin` |
+
+`AZURE_STORAGE_ACCOUNT=sstkcb76f50e` is a plain env var (not a secret) — it just names the account;
+access is via managed identity.
 
 ### Prerequisites
 
@@ -177,7 +199,7 @@ Each app: **0.25 vCPU / 0.5 GiB**, external ingress on `:8080`, `DATA_SOURCE=liv
 
 ### Routine redeploy (the common case)
 
-After a code change is merged to `main`, rebuild → push → roll both apps:
+After a code change is merged to `main`, rebuild → push → roll the app:
 
 ```powershell
 $rg  = "rg-personal-n-jordan-rg-jordan-sandbox"
@@ -186,42 +208,54 @@ $sub = "94442dd5-4818-4620-8e2d-c557baf52b6b"
 docker build -t ghcr.io/jordanrees1/sweepstake:latest .
 docker push  ghcr.io/jordanrees1/sweepstake:latest
 
-# A unique --revision-suffix forces both apps to re-pull :latest
+# A unique --revision-suffix forces the app to re-pull :latest
 $suffix = (git rev-parse --short HEAD) + "-" + (Get-Date -Format 'MMddHHmm')
-foreach ($app in @('sweepstake-dev','sweepstake-prod')) {
-  az containerapp update -n $app -g $rg --subscription $sub `
-    --image ghcr.io/jordanrees1/sweepstake:latest --revision-suffix $suffix
-}
+az containerapp update -n sweepstake-prod -g $rg --subscription $sub `
+  --image ghcr.io/jordanrees1/sweepstake:latest --revision-suffix $suffix
 ```
 
-Health-check: `https://crackers.sstake.co.uk/api/health` and `https://aa.sstake.co.uk/api/health`
-should each return `{"ok":true,"dataSource":"live"}`.
+Health-check: `https://sstake.co.uk/api/health` returns `{"ok":true,"dataSource":"live"}`, and
+`https://sstake.co.uk/s/aa26` + `/s/crackers` load. (CI already pushed the image, so a routine
+redeploy is just the one `az containerapp update` — no local build needed.)
 
 > First GHCR push from a new machine needs a one-time `docker login ghcr.io` with a GitHub PAT
 > (scope `write:packages`). The image is **public**, so the apps pull it with no registry creds.
 
 ### One-time setup (only if recreating from scratch)
 
-The environment and apps already exist. To rebuild them in a fresh resource group:
+The environment, app, and storage already exist. To rebuild from scratch in a fresh RG
+(`$KEY` = football-data.org key, `$CREATE` / `$ADMIN` = your chosen tokens — never commit them):
 
 ```powershell
 az containerapp env create -n sweepstake-env -g $rg --location uksouth --subscription $sub
 
-# dev = friends, prod = work. $KEY = your football-data.org key (never commit it).
-$apps = [ordered]@{ 'sweepstake-dev'='friends'; 'sweepstake-prod'='work' }
-foreach ($app in $apps.Keys) {
-  az containerapp create -n $app -g $rg --subscription $sub `
-    --environment sweepstake-env `
-    --image ghcr.io/jordanrees1/sweepstake:latest `
-    --target-port 8080 --ingress external `
-    --cpu 0.25 --memory 0.5Gi --min-replicas 1 --max-replicas 1 `
-    --secrets football-api-key=$KEY `
-    --env-vars "SWEEPSTAKE=$($apps[$app])" DATA_SOURCE=live `
-      FOOTBALL_API_KEY=secretref:football-api-key RESULTS_CACHE_TTL_SECONDS=30
-}
+# 1) Storage account for the tenant store (one tiny JSON per runtime sweepstake)
+$STG = "sstkcb76f50e"   # globally-unique, lowercase
+az storage account create -n $STG -g $rg --subscription $sub -l uksouth --sku Standard_LRS
+
+# 2) The gateway app
+az containerapp create -n sweepstake-prod -g $rg --subscription $sub `
+  --environment sweepstake-env `
+  --image ghcr.io/jordanrees1/sweepstake:latest `
+  --target-port 8080 --ingress external `
+  --cpu 0.25 --memory 0.5Gi --min-replicas 1 --max-replicas 3 `
+  --secrets football-api-key=$KEY create-token=$CREATE admin-token=$ADMIN `
+  --env-vars DATA_SOURCE=live RESULTS_CACHE_TTL_SECONDS=30 `
+    AZURE_STORAGE_ACCOUNT=$STG `
+    FOOTBALL_API_KEY=secretref:football-api-key `
+    CREATE_TOKEN=secretref:create-token ADMIN_TOKEN=secretref:admin-token
+
+# 3) Managed identity + Blob access (no secret needed for the store)
+az containerapp identity assign -n sweepstake-prod -g $rg --subscription $sub --system-assigned
+$PRINCIPAL = az containerapp show -n sweepstake-prod -g $rg --subscription $sub `
+  --query identity.principalId -o tsv
+$SCOPE = az storage account show -n $STG -g $rg --subscription $sub --query id -o tsv
+az role assignment create --assignee $PRINCIPAL `
+  --role "Storage Blob Data Contributor" --scope $SCOPE
 ```
 
-Then bind the custom domains (Part 6).
+The `tenants` blob container is auto-created on the first save. Then bind the custom domains
+(Part 6).
 
 ### CI/CD — automated build on push to `main`
 
@@ -231,8 +265,9 @@ Then bind the custom domains (Part 6).
   `ghcr.io/jordanrees1/sweepstake:latest` + `:<sha>` to GHCR using the built-in `GITHUB_TOKEN`
   (no external secrets). Public repo → unlimited Actions minutes; private → 2,000 free min/month,
   ample here.
-- **`deploy`** _(opt-in, off by default)_ — updates both Container Apps to the new image. It only
-  runs when the repo **variable `DEPLOY_ENABLED` = `true`** and the Azure OIDC secrets are present.
+- **`deploy`** _(opt-in, off by default)_ — updates the `sweepstake-prod` Container App to the new
+  image. It only runs when the repo **variable `DEPLOY_ENABLED` = `true`** and the Azure OIDC
+  secrets are present.
 
 **To enable auto-deploy** you need an Azure identity GitHub can assume. This requires creating an
 app registration + federated credential in the **work tenant**, which a corporate sandbox may
@@ -249,89 +284,96 @@ already pushed the image).
 
 ### Cost
 
-With `--min-replicas 0`, each app **scales to zero** when nobody is using it — at zero replicas
-you pay nothing. At your scale (≤50 users, occasional visits) the cost is effectively £0/month,
-comfortably inside the Azure Container Apps free grant: **180,000 vCPU-seconds, 360,000
-GiB-seconds, and 2 million requests per subscription per calendar month**. The grant applies to
-**active usage only** (a replica handling requests). Each app runs at **0.25 vCPU / 0.5 GiB**.
+We run **one** always-warm app at `--min-replicas 1 --max-replicas 3`, **0.25 vCPU / 0.5 GiB**.
+Always-warm was a deliberate choice (instant boot — no scale-from-zero cold start). Idle compute
+from `min-replicas 1` is billed at a reduced idle rate (~$0.000008/vCPU-s, ~$0.000001/GiB-s)
+**from the first second and is NOT covered by the free grant** — ≈ **$0.009/hr ≈ ~£5/month** for
+the single warm replica. `max-replicas 3` only bills extra *during* a burst (rare, brief).
 
-The image is hosted on **GitHub Container Registry (GHCR)** — free for public images — so there's
-no container-registry cost.
+For the ~38-day tournament that's **~£6–12 total**. Blob storage for the tiny tenant JSONs is
+pennies. The image is on **GitHub Container Registry (GHCR)** — free for public images — so no
+registry cost. (To drop the warm-replica charge entirely, set `--min-replicas 0` and accept the
+cold start.)
 
-> ⚠️ **Always-warm (instant boot) costs extra.** Idle compute from `--min-replicas > 0` is billed
-> at a reduced idle rate (~$0.000008/vCPU-s, ~$0.000001/GiB-s) **from the first second and is NOT
-> covered by the free grant**. At 0.25 vCPU / 0.5 GiB that's ≈ **$0.009/hr ≈ $6.5 (~£5) per app
-> per month** for a single always-on replica. Keep `min-replicas 0` unless you specifically need to
-> eliminate the (~1s, post-bundle) cold start.
+> The Azure Container Apps **free grant** — 180,000 vCPU-seconds, 360,000 GiB-seconds, 2M requests
+> per subscription per calendar month — covers **active usage only**, not the `min-replicas 1`
+> idle compute above.
 
 ---
 
 ## Part 5 — Adding a new sweepstake
 
-1. Create the folder and config:
-   ```bash
-   mkdir datasets/sweepstakes/mygame
-   ```
+There are two ways, depending on whether the sweepstake should live in the codebase or be
+created at runtime.
 
-2. Create `datasets/sweepstakes/mygame/sweepstake.json`:
+### A. Runtime (self-service — no redeploy) — the normal case
+
+Created against the live gateway and stored in Blob; appears immediately at `/s/<code>`.
+
+- **Web:** `https://sstake.co.uk/new` — enter the create password, add players + picks. You get a
+  share code and a one-time owner token (manage later at `/s/<code>/manage`).
+- **CLI** (run locally, bypasses the create gate — useful for bulk import from a CSV):
+  ```bash
+  npm run sweepstake:create -- --picks ./player_picks.csv --name "My Game" \
+    --teams-per-player 4 [--code mygame]
+  ```
+  Point it at the prod store by setting `AZURE_STORAGE_ACCOUNT=sstkcb76f50e` (with `az login` /
+  managed-identity access); omit it to write to the local dev store.
+
+Both reject typos and any roster that isn't a clean 48-team partition, surfacing
+"did you mean…?" suggestions.
+
+### B. Baked into the image (committed, read-only)
+
+For the "official" sweepstakes shipped with the app (like `crackers` / `aa26`):
+
+1. `mkdir datasets/sweepstakes/mygame` and add `sweepstake.json`:
    ```json
-   { "name": "My Game", "teamsPerPlayer": 4 }
+   { "name": "My Game", "teamsPerPlayer": 4, "code": "mygame" }
    ```
    (`teamsPerPlayer × numPlayers` must equal 48.)
-
-3. Create `datasets/sweepstakes/mygame/player_picks.csv`:
-   ```csv
-   player,team
-   Alice,Brazil
-   Alice,France
-   Alice,England
-   Alice,Japan
-   Bob,Argentina
-   ...
-   ```
-
-4. Check all picks resolve (catches typos before going live):
-   ```bash
-   SWEEPSTAKE=mygame npm run report:picks -w @sweepstake/server
-   ```
-   Fix any ❓ unmatched entries (add spelling variants to `server/src/data/aliases.ts`
-   if needed) and re-run until all 48 show ✅.
-
-5. Run locally:
-   ```bash
-   SWEEPSTAKE=mygame npm run dev          # macOS/Linux
-   $env:SWEEPSTAKE="mygame"; npm run dev  # PowerShell
-   ```
-
-6. Deploy: rebuild the image and `az containerapp create` with `SWEEPSTAKE=mygame`.
+2. Add `datasets/sweepstakes/mygame/player_picks.csv` (`player,team` rows).
+3. Check picks resolve: `SWEEPSTAKE=mygame npm run report:picks -w @sweepstake/server`. Fix any ❓
+   (add spelling variants to `server/src/data/aliases.ts`) until all 48 show ✅.
+4. Verify locally at `http://localhost:5173/s/mygame`, then commit + redeploy the image (Part 4).
 
 ---
 
 ## Part 6 — Custom domains (live)
 
-The apps are served on **`sstake.co.uk`** (registered at 123-reg), with free auto-renewing Azure
-managed TLS certificates:
+Everything points at the single `sweepstake-prod` app on **`sstake.co.uk`** (123-reg), with free
+auto-renewing Azure managed TLS certificates:
 
-- **https://crackers.sstake.co.uk** → `sweepstake-dev`
-- **https://aa.sstake.co.uk** → `sweepstake-prod`
+- **https://sstake.co.uk** — the **apex is canonical** (landing/picker; tenants at `/s/<code>`).
+- **https://aa.sstake.co.uk** → 301 → `sstake.co.uk/s/aa26`
+- **https://crackers.sstake.co.uk** → 301 → `sstake.co.uk/s/crackers`
 
-The `*.azurecontainerapps.io` URLs keep working alongside them.
+The 301s are server-side middleware (`VANITY_HOSTS` in [`server/src/app.ts`](../server/src/app.ts)),
+so old bookmarks keep working. The `*.azurecontainerapps.io` URL also works.
 
-### To (re)bind a subdomain
+### Apex (`sstake.co.uk`)
 
-1. At the registrar, add two records (the verification ID is per-environment — fetch it with
-   `az containerapp show -n <app> -g $rg --query properties.customDomainVerificationId -o tsv`):
+The apex can't be a CNAME — use an **A record → the environment's static IP** plus the `asuid` TXT.
+Fetch the verification ID with
+`az containerapp show -n sweepstake-prod -g $rg --query properties.customDomainVerificationId -o tsv`:
 
-   | Type | Name | Value |
-   |---|---|---|
-   | `CNAME` | `<sub>` | `<app>.<env-default-domain>` (e.g. `sweepstake-prod.ambitiousisland-9356d105.uksouth.azurecontainerapps.io`) |
-   | `TXT` | `asuid.<sub>` | the verification ID |
+| Type | Name | Value |
+|---|---|---|
+| `A` | `@` | `85.210.22.170` (the `sweepstake-env` static IP) |
+| `TXT` | `asuid` | the verification ID |
 
-2. Once DNS resolves, add the hostname and provision the managed cert:
-   ```powershell
-   az containerapp hostname add  --hostname crackers.sstake.co.uk -n sweepstake-dev -g $rg --subscription $sub
-   az containerapp hostname bind --hostname crackers.sstake.co.uk -n sweepstake-dev -g $rg --subscription $sub `
-     --environment sweepstake-env --validation-method CNAME
-   ```
+### Subdomains (the `aa.` / `crackers.` redirects)
+
+| Type | Name | Value |
+|---|---|---|
+| `CNAME` | `<sub>` | `sweepstake-prod.ambitiousisland-9356d105.uksouth.azurecontainerapps.io` |
+| `TXT` | `asuid.<sub>` | the verification ID |
+
+Once DNS resolves, add + bind the hostname on the one app (a managed cert is provisioned):
+```powershell
+az containerapp hostname add  --hostname sstake.co.uk -n sweepstake-prod -g $rg --subscription $sub
+az containerapp hostname bind --hostname sstake.co.uk -n sweepstake-prod -g $rg --subscription $sub `
+  --environment sweepstake-env --validation-method TXT   # CNAME for subdomains
+```
 
 Azure renews the certificates automatically.

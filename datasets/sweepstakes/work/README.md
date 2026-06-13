@@ -19,11 +19,12 @@ After editing the CSV, generate the mapping report to catch typos / unmatched na
 npm run report:picks:work
 ```
 
-That writes `picks.normalized.json` and `PICKS_MAPPING_REPORT.md` into this folder. Fix any ❓ unmatched picks (add the spelling to `server/src/data/aliases.ts` or correct the CSV) until all 48 resolve, then run the app:
+That writes `picks.normalized.json` and `PICKS_MAPPING_REPORT.md` into this folder. Fix any ❓ unmatched picks (add the spelling to `server/src/data/aliases.ts` or correct the CSV) until all 48 resolve, then run the app and open this sweepstake by its code.
+
+This folder's `sweepstake.json` sets `"code": "aa26"`, so the gateway serves it at **`/s/aa26`**
+(titled "Advancing"):
 
 ```bash
-# Windows PowerShell
-$env:SWEEPSTAKE = "work"; npm run dev
-# macOS / Linux
-SWEEPSTAKE=work npm run dev
+npm run dev   # then open http://localhost:5173/s/aa26
 ```
+

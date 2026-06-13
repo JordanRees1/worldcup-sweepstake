@@ -1,5 +1,12 @@
 # Agent Handoff — World Cup 2026 Sweepstake
 
+> ⚠️ **Historical snapshot (first build session).** The app has since grown into a deployed
+> **multi-tenant gateway** (many sweepstakes by code, self-service creation, Azure hosting). The
+> "local, no deployment, no accounts" framing below is no longer current. For the present state read
+> [`CLAUDE.md`](../CLAUDE.md), [`ARCHITECTURE.md`](./ARCHITECTURE.md),
+> [`MULTI_TENANT_PLAN.md`](./MULTI_TENANT_PLAN.md), and [`DEPLOYMENT.md`](./DEPLOYMENT.md). Kept for
+> the WP0–WP8 engine/UI detail, which is still accurate.
+
 **Written at the end of the first full build session.** This document gives the next agent everything
 it needs to continue without reading the full transcript. Read this, `CLAUDE.md`, and
 `docs/DEVELOPMENT.md` before touching any code.

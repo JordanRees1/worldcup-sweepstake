@@ -1,6 +1,11 @@
 # Implementation Plan
 
-> **Progress:** WP0–WP7 all ✅ · remaining: WP8 polish/QA/README (see §8).
+> **Progress:** WP0–WP8 all ✅ — the MVP shipped. The app then grew beyond this plan into a
+> deployed **multi-tenant gateway** (self-service sweepstakes, hosting on Azure). This document is
+> the original MVP plan, kept for history; for current architecture see
+> [`MULTI_TENANT_PLAN.md`](./MULTI_TENANT_PLAN.md), [`ARCHITECTURE.md`](./ARCHITECTURE.md), and
+> [`DEPLOYMENT.md`](./DEPLOYMENT.md). Note the original "out of scope" list below (logins,
+> editing in-app, deployment) was deliberately revisited later.
 
 ## 1. Goal & MVP scope
 

@@ -1,5 +1,11 @@
 # Production Handoff — Azure Deployment Plan
 
+> ⚠️ **Superseded — historical planning doc.** This described the original containerise/deploy plan
+> (a two-app `SWEEPSTAKE=work`/`friends` setup). The app is now a **single multi-tenant gateway**
+> deployed at **sstake.co.uk**, and the canonical deployment guide is
+> [`DEPLOYMENT.md`](./DEPLOYMENT.md) (with [`MULTI_TENANT_PLAN.md`](./MULTI_TENANT_PLAN.md) for the
+> consolidation). Use those, not this, for anything operational. Kept for history.
+
 **Context:** This is a World Cup 2026 sweepstake web app. WP0–WP7 are complete, all user-testing
 fixes are done, and Phase 1+2 of the multi-instance work is committed. This document is for the
 next agent to design and build Phase 3 (containerise) and Phase 4 (deploy to Azure).

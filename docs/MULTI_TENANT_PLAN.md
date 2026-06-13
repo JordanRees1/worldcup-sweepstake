@@ -126,15 +126,18 @@ source/repo**):
 - **Editing in scope:** with the per-sweep owner token a creator can add/replace players or delete the
   sweep; the global admin token can do this for any sweep.
 
-### Phase 4 — Admin panel (`/a/admin`)
-- Gated by `ADMIN_TOKEN` (entered once → session cookie; **not** a login system).
+### Phase 4 — Admin panel (`/a/admin`) — ✅ SHIPPED
+- Gated by `ADMIN_TOKEN` (entered once → held in **sessionStorage** for the tab; **not** a login).
 - Shows: **# sweepstakes**, each one's **code + name + player count** (priority metrics — accurate from
-  the store), created date; per-sweep edit/delete (global override).
-- **Usage metrics (best-effort, secondary):** a per-tenant **view counter** incremented on load and
-  flushed to the store periodically (approximate under scale-out, acceptable). **"Active now"** =
-  distinct anonymous client-ids (a localStorage UUID sent as a header) seen in the last ~5 min, held
-  in-memory per replica — flagged approximate when `max-replicas > 1`. (Accurate cross-replica metrics,
-  if ever wanted, = the kept Log Analytics workspace or a Table-Storage counter.)
+  the store), created date; per-sweep edit/delete (global override; built-in sweeps are read-only).
+- **Usage metrics (best-effort, secondary):** a per-tenant **view counter** + **"active now"**
+  (distinct anonymous client-ids — a localStorage UUID sent as `x-client-id`, no PII — seen in the
+  last ~5 min). Held **in-memory per replica** (reset on restart, approximate under scale-out);
+  tracked on the tenant `/meta` read. The panel notes they're best-effort. (Accurate cross-replica
+  metrics, if ever wanted, = the kept Log Analytics workspace or a Table-Storage counter.)
+- **As built:** `GET /api/a/admin` (`server/src/routes/index.ts`) + `server/src/services/metrics.ts`;
+  web `web/src/features/admin/AdminScreen.tsx` + `web/src/lib/clientId.ts`. Verified end-to-end
+  (gate → table → live view/active-now → admin-token delete).
 
 ## Cost (target: < £20–40 for the whole WC)
 - Delete `sweepstake-dev` → **one** always-warm app ≈ **£5/mo → ~£6 over the ~38-day tournament**.

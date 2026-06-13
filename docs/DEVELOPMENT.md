@@ -50,9 +50,12 @@ Edit `shared/src/types.ts` or `shared/src/contract.ts`. Both `server` and `web` 
 immediately. Run `npm run build` to typecheck everywhere.
 
 ### Add an API endpoint
-1. Add the response type (and a path in `API_ROUTES`) to `shared/src/contract.ts`.
-2. Implement the route in `server/src/routes/*` and return the typed shape.
-3. Consume it in `web` through a typed hook (WP5's data layer).
+1. Add the response type (and a path in `API_ROUTES`) to `shared/src/contract.ts`. Tenant reads
+   take a `code` (`(code) => '/api/s/${code}/…'`); global routes are plain strings.
+2. Implement the route in `server/src/routes/index.ts`. For a tenant read, wrap the handler in
+   `tenant(...)` (resolves `code` → `AppState`, 404s unknown codes). Guard mutations with the
+   `createAllowed` / `ownerOrAdmin` / `isAdmin` helpers.
+3. Consume it in `web` through a typed, code-aware hook in `lib/api.ts` (`useSweepstakeCode()`).
 
 ### Add a web feature/page
 Create `web/src/features/<name>/`, build small components, and wire it into the shell's tab
@@ -71,6 +74,7 @@ Run the app at a simulated tournament stage without touching any real API calls:
 | `npm run dev:group-stage` | Matchday 1+2 done — matchday 3 to come; partial standings |
 | `npm run dev:quarters` | R32 + R16 done — 8 teams left, QF fixtures set |
 | `npm run dev:final` | SFs + 3rd-place done — 2 finalists, Final tomorrow |
+| `npm run dev:live-demo` | Some matchday-3 games mid-play — exercises the LIVE badge + minute |
 | `npm run dev` | Default — all upcoming (pre-kickoff seed mode) |
 
 The scenario files live in `datasets/scenarios/` and are committed. To regenerate them
@@ -84,23 +88,40 @@ The simulation rule is deterministic: home team always wins 2-1. Best-third R32 
 assignment uses "most constrained first" so groups K and L (which appear in only one slot)
 are placed correctly.
 
-## Multiple sweepstakes
-One codebase + one shared tournament can run several sweepstakes. Each lives in
-`datasets/sweepstakes/<slug>/` with a `player_picks.csv` and a `sweepstake.json`
-(`{ "name", "teamsPerPlayer" }`). The active one is chosen by the `SWEEPSTAKE` env var
-(default `friends`); `resolveSweepstake()` ([server/src/data/sweepstake.ts](../server/src/data/sweepstake.ts))
-is the single resolver, consumed by `normalizePicks` and `validateDataset`.
+## Multiple sweepstakes (the gateway)
+One server hosts **many** sweepstakes, each addressed by a short `code` at `/s/<code>`. The
+tournament structure + results are shared (computed once, cached); each sweepstake overlays only
+its own players + picks. There are two kinds of tenant — see [ARCHITECTURE.md §6a](./ARCHITECTURE.md#6a-multi-tenant-gateway):
+
+**Baked** — committed under `datasets/sweepstakes/<slug>/` (a `player_picks.csv` + a
+`sweepstake.json` `{ "name", "teamsPerPlayer", "code" }`). Resolved by `resolveSweepstakeByCode`
+([server/src/data/sweepstake.ts](../server/src/data/sweepstake.ts)); read-only at runtime. The two
+shipped today: `crackers` (6×8) and `aa26` (24×2). Check picks resolve before committing:
 
 ```bash
-npm run dev          # friends (default)
-npm run dev:work     # work; or SWEEPSTAKE=<slug> npm run dev
-npm run report:picks:work   # regenerate <slug>'s mapping report + normalized.json (for sign-off)
+SWEEPSTAKE=<slug> npm run report:picks -w @sweepstake/server   # regenerates the mapping report
 ```
 
-Validation derives its pick rules from `teamsPerPlayer` (players = 48 / teamsPerPlayer,
-every team owned exactly once); only the tournament cardinalities (48/16/104/…) are fixed.
-The generated `picks.normalized.json` / `PICKS_MAPPING_REPORT.md` are **review artifacts** —
-the server normalises `player_picks.csv` directly at runtime and never reads the JSON.
+**Runtime** — created at runtime and stored in a `TenantStore`
+([server/src/data/tenantStore.ts](../server/src/data/tenantStore.ts)): a local directory in dev
+(`datasets/tenants/*.json`, gitignored), Azure Blob in prod (set `AZURE_STORAGE_ACCOUNT`). Create one:
+
+```bash
+# CLI (bypasses the create gate; run locally):
+npm run sweepstake:create -- --picks ./player_picks.csv --name "Dave's Mates" --teams-per-player 8
+
+# or the web flow: /new (needs CREATE_TOKEN), manage at /s/:code/manage, admin at /a/admin
+```
+
+Validation (shared by CLI + web, in `services/sweepstakeCreate.ts`) derives its rules from
+`teamsPerPlayer` (players = 48 / teamsPerPlayer, every team owned exactly once); only the tournament
+cardinalities (48/16/104/…) are fixed. Messy names resolve via `createTeamResolver` with a
+"did you mean…?" suggester. For baked sweepstakes the generated `picks.normalized.json` /
+`PICKS_MAPPING_REPORT.md` are **review artifacts** — the server normalises `player_picks.csv`
+directly at runtime and never reads the JSON.
+
+To exercise tokens locally, set `CREATE_TOKEN` / `ADMIN_TOKEN` in `server/.env` (unset = creation
+open / admin disabled).
 
 ## Data & environment
 - `DATA_SOURCE=seed` (default): no key; structure comes from `datasets/`, results are empty

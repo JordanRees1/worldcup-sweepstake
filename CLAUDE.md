@@ -1,13 +1,17 @@
 # Sweepstake — World Cup 2026 Sweepstake Monitor
 
-A mobile-first **local** web app to track a FIFA World Cup 2026 sweepstake: who owns
-which national teams, which teams are still alive as the tournament progresses, a
-player leaderboard, and a tournament bracket view.
+A mobile-first web app to track FIFA World Cup 2026 sweepstakes: who owns which national teams,
+which teams are still alive as the tournament progresses, a player leaderboard, and a tournament
+bracket view. One server hosts **many** sweepstakes by short code (`/s/<code>`), with self-service
+creation; it also runs fully locally.
 
-> **Status: WP0–WP7 complete + user-testing fixes (UF1–UF4, UP5).** `npm install && npm run dev` starts the
-> API (`:8787`) and web (`:5173`) together. Use `npm run dev:group-stage / dev:quarters / dev:final`
-> for demo scenarios. Remaining: WP8 polish (README ✅, edge cases, a11y). Plan in
-> `docs/IMPLEMENTATION_PLAN.md`; day-to-day dev in `docs/DEVELOPMENT.md`.
+> **Status: shipped + live.** WP0–WP8 plus a **multi-tenant gateway** (one server hosts many
+> sweepstakes by code at `/s/<code>`; self-service create `/new`, manage `/s/:code/manage`, admin
+> `/a/admin`; Azure Blob tenant store) are complete and deployed to Azure at **sstake.co.uk**.
+> `npm install && npm run dev` starts the gateway (`:8787`) + web (`:5173`); baked sweepstakes are at
+> `/s/crackers` and `/s/aa26`. Demo scenarios: `npm run dev:group-stage / dev:quarters / dev:final /
+> dev:live-demo`. Multi-tenant design in `docs/MULTI_TENANT_PLAN.md`; deploy in `docs/DEPLOYMENT.md`;
+> day-to-day dev in `docs/DEVELOPMENT.md`.
 
 ## Stack (decided)
 - **Frontend:** React + Vite + TypeScript + **Tailwind v4**. Mobile-first, iPhone 12–17 ratios.
@@ -25,18 +29,21 @@ player leaderboard, and a tournament bracket view.
 - `npm run dev:server` / `npm run dev:web` — run one side only
 - `npm run build` · `npm run lint` · `npm run test` — all green as of WP0
 
-## Project structure (post-WP0)
+## Project structure
 - `shared/` — domain types (`src/types.ts`) + REST contract (`src/contract.ts`). **Source of truth.**
-- `server/` — Express API. **Complete: data pipeline (`src/data/`), engine (`src/engine/`),
-  providers (`src/providers/`), services (`src/services/`), and all REST routes (`src/routes/`).**
-  Run live with `DATA_SOURCE=live` in `server/.env`.
-- `web/` — Vite + React + Tailwind app. **Complete: WP5 shell, WP6 player/groups views,
-  WP7 bracket.** Run live against real API; `VITE_MOCKS=on` for offline dev.
-- `datasets/` — shared tournament CSVs (teams, matches, venues, stages, scenarios).
-  Per-sweepstake picks live in `datasets/sweepstakes/<slug>/` (`player_picks.csv` +
-  `sweepstake.json`); the active one is set by the `SWEEPSTAKE` env (default `friends`),
-  resolved in `server/src/data/sweepstake.ts`. Validation derives pick rules from
-  `teamsPerPlayer`; only tournament cardinalities are fixed.
+- `server/` — Express **multi-tenant gateway**: data pipeline (`src/data/`, incl. `tenantStore.ts`),
+  engine (`src/engine/`), providers (`src/providers/`), services (`src/services/`, incl. `appState.ts`
+  `createGateway`, `sweepstakeCreate.ts`, `metrics.ts`), the `sweepstake:create` CLI (`src/scripts/`),
+  and all REST routes (`src/routes/`). Run live with `DATA_SOURCE=live` in `server/.env`.
+- `web/` — Vite + React + Tailwind app: players/groups/bracket/schedule per tenant, plus `/new`
+  (create), `/s/:code/manage` (edit), `/a/admin` (admin). Run live against real API; `VITE_MOCKS=on`
+  for offline dev.
+- `datasets/` — shared tournament CSVs (teams, matches, venues, stages, scenarios). **Baked**
+  sweepstakes live in `datasets/sweepstakes/<slug>/` (`player_picks.csv` + `sweepstake.json` with a
+  `code`), resolved by `resolveSweepstakeByCode` in `server/src/data/sweepstake.ts`. **Runtime**
+  sweepstakes live in the `TenantStore` (Azure Blob in prod; `datasets/tenants/` locally, gitignored).
+  Validation derives pick rules from `teamsPerPlayer`; only tournament cardinalities are fixed. The
+  `SWEEPSTAKE` env is legacy (the gateway hosts all tenants by code).
 
 ## Working in this repo (for agents)
 - **ESM everywhere**, Node 22, TypeScript `strict`. Do not introduce CommonJS.
@@ -49,8 +56,10 @@ player leaderboard, and a tournament bracket view.
   `server/src/engine`.
 - The live API is always behind the `ResultsProvider` interface. The app **must** run with
   `DATA_SOURCE=seed` (no key, before kickoff) and degrade gracefully if the API is down.
-- **Never commit secrets.** The API key lives in `server/.env` (gitignored);
-  `server/.env.example` documents required vars.
+- **Never commit secrets.** `FOOTBALL_API_KEY`, `CREATE_TOKEN`, and `ADMIN_TOKEN` live in
+  `server/.env` (gitignored) locally and as Azure Container App secrets in prod;
+  `server/.env.example` documents required vars. The Blob tenant store needs no secret (managed
+  identity). Per-sweepstake owner tokens are stored only as SHA-256 hashes.
 - Dev note: on a cold `npm run dev`, Vite can be ready a beat before the API, so the first
   proxied `/api` request may 502 for ~1s. Expected — WP5 adds React Query retries.
 
@@ -78,7 +87,9 @@ player leaderboard, and a tournament bracket view.
 3. **Picks mapping report** — generated in WP1 for user sign-off.
 
 ## Docs
-- `docs/IMPLEMENTATION_PLAN.md` — work packages, sequencing, acceptance criteria, how we work
-- `docs/ARCHITECTURE.md` — structure, data flow, ResultsProvider, REST API contract, env/config
+- `docs/MULTI_TENANT_PLAN.md` — the multi-tenant gateway design, phases, and decisions
+- `docs/ARCHITECTURE.md` — structure, data flow, ResultsProvider, gateway, REST API contract, env/config
+- `docs/DEPLOYMENT.md` — local → container → Azure (the live multi-tenant gateway)
 - `docs/DATA_AND_RULES.md` — dataset docs, canonical data model, normalization, 2026 rules
 - `docs/DEVELOPMENT.md` — everyday commands, the resolved stack, and recipes for adding features
+- `docs/IMPLEMENTATION_PLAN.md` — original work packages, sequencing, acceptance criteria
