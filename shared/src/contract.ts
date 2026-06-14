@@ -89,10 +89,14 @@ export interface OverviewResponse {
   currentStage: string;
   /** Players sorted into leaderboard order. */
   leaderboard: PlayerSummary[];
+  /** True when a match is in play — points/GD include provisional live scores. */
+  provisional?: boolean;
 }
 
 export interface PlayersResponse {
   players: PlayerSummary[];
+  /** True when a match is in play — points/GD include provisional live scores. */
+  provisional?: boolean;
 }
 
 export interface PlayerDetailResponse {

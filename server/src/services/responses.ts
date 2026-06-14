@@ -52,17 +52,23 @@ export function buildMeta(state: AppState): MetaResponse {
   };
 }
 
+/** True when a match is in play — the leaderboard/standings include provisional live scores. */
+function hasLiveMatch(state: AppState): boolean {
+  return state.matches.some((m) => m.status === 'live');
+}
+
 export function buildOverview(state: AppState): OverviewResponse {
   return {
     asOf: new Date().toISOString(),
     dataSource: state.dataSource,
     currentStage: currentStage(state),
     leaderboard: state.leaderboard,
+    provisional: hasLiveMatch(state),
   };
 }
 
 export function buildPlayers(state: AppState): PlayersResponse {
-  return { players: state.leaderboard };
+  return { players: state.leaderboard, provisional: hasLiveMatch(state) };
 }
 
 export function buildPlayerDetail(state: AppState, playerId: number): PlayerDetailResponse | null {
@@ -100,7 +106,14 @@ export function buildVenues(state: AppState): VenuesResponse {
 }
 
 export function buildGroups(state: AppState): GroupsResponse {
-  return { groups: state.groupTables };
+  const liveGroups = new Set(
+    state.matches
+      .filter((m) => m.stage === 'Group Stage' && m.status === 'live' && m.group)
+      .map((m) => m.group),
+  );
+  return {
+    groups: state.groupTables.map((t) => (liveGroups.has(t.group) ? { ...t, live: true } : t)),
+  };
 }
 
 export function buildBracket(state: AppState): BracketResponse {

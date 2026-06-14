@@ -73,10 +73,33 @@ describe('computeTeamScores', () => {
     expect(r.get(10)).toMatchObject({ points: -1, won: 1, lost: 1, played: 2 }); // +3 then −4
   });
 
-  it('ignores matches that are not finished (e.g. live or scheduled)', () => {
-    const live = mkMatch({ status: 'live', result: { homeScore: 1, awayScore: 0, winnerTeamId: 10 } });
+  it('counts a live match provisionally from its current scoreline', () => {
+    const live = mkMatch({ status: 'live', result: { homeScore: 1, awayScore: 0, winnerTeamId: null } });
+    const r = computeTeamScores([live], DEFAULT_SCORING);
+    expect(r.get(10)).toMatchObject({ points: 3, won: 1, played: 1 }); // provisionally leading
+    expect(r.get(11)).toMatchObject({ points: -1, lost: 1, played: 1 });
+  });
+
+  it('counts a live group draw as +1 each (provisional)', () => {
+    const live = mkMatch({ status: 'live', result: { homeScore: 0, awayScore: 0, winnerTeamId: null } });
+    const r = computeTeamScores([live], DEFAULT_SCORING);
+    expect(r.get(10)).toMatchObject({ points: 1, drawn: 1, played: 1 });
+    expect(r.get(11)).toMatchObject({ points: 1, drawn: 1, played: 1 });
+  });
+
+  it('skips a level live knockout (no result yet — knockouts cannot draw)', () => {
+    const liveKo = mkMatch({
+      stage: 'Round of 32',
+      group: undefined,
+      status: 'live',
+      result: { homeScore: 1, awayScore: 1, winnerTeamId: null },
+    });
+    expect(computeTeamScores([liveKo], DEFAULT_SCORING).size).toBe(0);
+  });
+
+  it('still ignores scheduled matches', () => {
     const scheduled = mkMatch({ id: 2, status: 'scheduled' });
-    expect(computeTeamScores([live, scheduled], DEFAULT_SCORING).size).toBe(0);
+    expect(computeTeamScores([scheduled], DEFAULT_SCORING).size).toBe(0);
   });
 });
 

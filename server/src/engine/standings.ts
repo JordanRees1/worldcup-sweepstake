@@ -29,13 +29,15 @@ function compareOverall(a: Acc, b: Acc): number {
 }
 
 /**
- * Accumulate finished matches into a stats table for the given teams. Matches involving a team
+ * Accumulate counted matches into a stats table for the given teams. Matches involving a team
  * outside `teamIds` are ignored, which lets the same function build a head-to-head mini-table.
+ * **Live matches count provisionally** from their current scoreline (so the table moves in-play);
+ * scheduled matches are skipped.
  */
 function accumulate(teamIds: number[], matches: Match[]): Map<number, Acc> {
   const accs = new Map<number, Acc>(teamIds.map((id) => [id, emptyAcc(id)]));
   for (const m of matches) {
-    if (m.status !== 'finished' || !m.result) continue;
+    if ((m.status !== 'finished' && m.status !== 'live') || !m.result) continue;
     if (m.homeTeamId === null || m.awayTeamId === null) continue;
     const home = accs.get(m.homeTeamId);
     const away = accs.get(m.awayTeamId);

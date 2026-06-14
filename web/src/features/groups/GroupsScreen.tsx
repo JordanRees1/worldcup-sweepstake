@@ -1,4 +1,5 @@
 import { Crest } from '../../components/Crest';
+import { LiveBadge } from '../../components/LiveBadge';
 import { EmptyState, ErrorState, LoadingState } from '../../components/states';
 import { useGroups, useTeamMap } from '../../lib/api';
 
@@ -22,8 +23,9 @@ export function GroupsScreen() {
             key={group.group}
             className="overflow-hidden rounded-2xl border border-white/10 bg-white/5"
           >
-            <h3 className="border-b border-white/10 px-4 py-2 text-sm font-semibold">
-              Group {group.group}
+            <h3 className="flex items-center justify-between border-b border-white/10 px-4 py-2 text-sm font-semibold">
+              <span>Group {group.group}</span>
+              {group.live && <LiveBadge />}
             </h3>
 
             <div className="p-1.5">

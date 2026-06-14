@@ -24,6 +24,13 @@ export function PlayersScreen() {
         · losses dock points. Tap a player for the full rules.
       </p>
 
+      {data.provisional && (
+        <p className="-mt-1 flex items-center gap-1.5 text-[11px] text-red-400">
+          <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-red-500" aria-hidden />
+          Live — points &amp; GD are provisional while games are in play.
+        </p>
+      )}
+
       <div className="grid gap-3 lg:grid-cols-2 xl:grid-cols-3">
         {data.leaderboard.map((entry) => (
           <Link

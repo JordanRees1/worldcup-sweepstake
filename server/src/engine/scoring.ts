@@ -46,7 +46,7 @@ export const DEFAULT_SCORING: ScoringConfig = {
   woodenSpoonPenalty: -50,
 };
 
-/** Per-team running tally across finished matches. */
+/** Per-team running tally across counted matches (finished + live, the latter provisional). */
 export interface TeamScoreRecord {
   /** Match points: win +pointsPerWin, draw +pointsPerDraw, loss + (negative) goal margin. */
   points: number;
@@ -57,9 +57,13 @@ export interface TeamScoreRecord {
 }
 
 /**
- * Tally every team's record + match points across all **finished** matches (group + knockout).
- * Win → `pointsPerWin`; draw → `pointsPerDraw`; loss → the loser's (negative) goal difference for
- * that match. Live/scheduled matches are skipped, so an in-play scoreline never moves anything.
+ * Tally every team's record + match points across all counted matches (group + knockout).
+ * Win → `pointsPerWin`; draw → `pointsPerDraw` (group stage only); loss → the loser's (negative)
+ * goal difference for that match.
+ *
+ * **Live matches count provisionally** from their current scoreline — so an in-play game moves the
+ * leaderboard. The one exception: a live knockout sitting level has no result yet (knockouts can't
+ * draw), so it contributes nothing until someone leads or it finishes. Scheduled matches are skipped.
  */
 export function computeTeamScores(
   matches: Match[],
@@ -76,14 +80,10 @@ export function computeTeamScores(
   };
 
   for (const m of matches) {
-    if (m.status !== 'finished' || !m.result) continue;
+    if ((m.status !== 'finished' && m.status !== 'live') || !m.result) continue;
     if (m.homeTeamId === null || m.awayTeamId === null) continue;
 
     const { winnerTeamId, homeScore, awayScore } = m.result;
-    const home = rec(m.homeTeamId);
-    const away = rec(m.awayTeamId);
-    home.played++;
-    away.played++;
 
     // Resolve the winner from winnerTeamId when present, else from the scoreline.
     let winnerId: number | null;
@@ -91,6 +91,15 @@ export function computeTeamScores(
     else if (homeScore > awayScore) winnerId = m.homeTeamId;
     else if (awayScore > homeScore) winnerId = m.awayTeamId;
     else winnerId = null;
+
+    // A level scoreline only counts as a draw in the group stage; a level knockout (only possible
+    // while live) hasn't produced a result, so skip it entirely — no provisional points, no "played".
+    if (winnerId === null && m.stage !== 'Group Stage') continue;
+
+    const home = rec(m.homeTeamId);
+    const away = rec(m.awayTeamId);
+    home.played++;
+    away.played++;
 
     if (winnerId === null) {
       home.drawn++;

@@ -3,13 +3,16 @@ import type { QualificationResult } from './qualification';
 
 const FINAL_MATCH_ID = 104;
 
-/** Total goal difference per team across all finished matches (group + knockout). */
+/**
+ * Total goal difference per team across all counted matches (group + knockout). Live matches
+ * count provisionally from their current scoreline; scheduled matches are skipped.
+ */
 export function computeTeamGoalDifferences(matches: Match[]): Map<number, number> {
   const gds = new Map<number, number>();
   const add = (id: number, delta: number): void => { gds.set(id, (gds.get(id) ?? 0) + delta); };
 
   for (const m of matches) {
-    if (m.status !== 'finished' || !m.result) continue;
+    if ((m.status !== 'finished' && m.status !== 'live') || !m.result) continue;
     if (m.homeTeamId === null || m.awayTeamId === null) continue;
     const { homeScore, awayScore } = m.result;
     add(m.homeTeamId, homeScore - awayScore);

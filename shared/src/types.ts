@@ -112,6 +112,8 @@ export interface GroupStandingRow {
 export interface GroupTable {
   group: GroupLetter;
   rows: GroupStandingRow[];
+  /** True while a match in this group is in play — the table reflects provisional live scores. */
+  live?: boolean;
 }
 
 /** Where a team's run currently stands. */
