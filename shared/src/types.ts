@@ -59,6 +59,8 @@ export interface Team {
   isPlaceholder: boolean;
   /** e.g. "Winner UEFA Playoff D" (placeholders only). */
   placeholderLabel?: string;
+  /** FIFA/Coca-Cola World Ranking position (1 = best). Used to seed balanced "tiered" draws. */
+  fifaRank?: number;
   /** Crest image URL, when supplied by the live API. */
   crestUrl?: string;
 }

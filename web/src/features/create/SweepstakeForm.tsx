@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react';
-import type { PickIssue, SweepstakeInput } from '@sweepstake/shared';
+import type { GenerateMode, PickIssue, SweepstakeInput } from '@sweepstake/shared';
 
 /** teams-per-player options that divide the 48-team field evenly (excluding the silly extremes). */
 const DIVISORS = [2, 3, 4, 6, 8, 12, 16, 24];
@@ -21,6 +21,8 @@ interface Props {
   initialPlayers?: PlayerRow[];
   /** Edit mode keeps teams-per-player fixed (changing it would invalidate the roster shape). */
   lockTeamsPerPlayer?: boolean;
+  /** Offer the "draw the teams for me" option (create flow only — not edit). */
+  allowGenerate?: boolean;
   submitLabel: string;
   onSubmit: (input: SweepstakeInput) => Promise<FormResult>;
 }
@@ -39,6 +41,7 @@ export function SweepstakeForm({
   initialTeamsPerPlayer = 8,
   initialPlayers,
   lockTeamsPerPlayer = false,
+  allowGenerate = false,
   submitLabel,
   onSubmit,
 }: Props) {
@@ -47,6 +50,8 @@ export function SweepstakeForm({
   const [players, setPlayers] = useState<PlayerRow[]>(
     initialPlayers ?? resize([], 48 / initialTeamsPerPlayer),
   );
+  const [generate, setGenerate] = useState(false);
+  const [mode, setMode] = useState<GenerateMode>('balanced');
   const [issues, setIssues] = useState<PickIssue[]>([]);
   const [errors, setErrors] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
@@ -63,16 +68,20 @@ export function SweepstakeForm({
     setBusy(true);
     setIssues([]);
     setErrors([]);
+    const drawing = allowGenerate && generate;
     const input: SweepstakeInput = {
       name: name.trim(),
       teamsPerPlayer: tpp,
       players: players.map((r) => ({
         name: r.name.trim(),
-        picks: r.picks
-          .split(/[,\n]/)
-          .map((s) => s.trim())
-          .filter(Boolean),
+        picks: drawing
+          ? []
+          : r.picks
+              .split(/[,\n]/)
+              .map((s) => s.trim())
+              .filter(Boolean),
       })),
+      ...(drawing ? { generate: { mode } } : {}),
     };
     const res = await onSubmit(input);
     if (!res.ok) {
@@ -113,9 +122,58 @@ export function SweepstakeForm({
         </select>
       </label>
 
+      {allowGenerate && (
+        <div className="space-y-2 rounded-xl border border-white/10 bg-white/5 p-3">
+          <label className="flex items-center gap-2.5">
+            <input
+              type="checkbox"
+              checked={generate}
+              onChange={(e) => setGenerate(e.target.checked)}
+              className="h-4 w-4 accent-brand-500"
+            />
+            <span className="text-sm font-medium">Draw the teams for me 🎲</span>
+          </label>
+          {generate && (
+            <fieldset className="grid grid-cols-1 gap-2 pt-1 sm:grid-cols-2">
+              {(
+                [
+                  ['balanced', 'Balanced', 'One team from each ranking tier - fairer spread'],
+                  ['chaos', 'Complete chaos', 'Fully random... anything goes'],
+                ] as const
+              ).map(([value, title, desc]) => (
+                <label
+                  key={value}
+                  className={`cursor-pointer rounded-lg border p-2.5 text-sm ${
+                    mode === value
+                      ? 'border-brand-400 bg-brand-500/10'
+                      : 'border-white/10 bg-white/5'
+                  }`}
+                >
+                  <span className="flex items-center gap-2 font-medium">
+                    <input
+                      type="radio"
+                      name="generate-mode"
+                      value={value}
+                      checked={mode === value}
+                      onChange={() => setMode(value)}
+                      className="accent-brand-500"
+                    />
+                    {title}
+                  </span>
+                  <span className="mt-0.5 block pl-6 text-[11px] text-slate-400">{desc}</span>
+                </label>
+              ))}
+            </fieldset>
+          )}
+        </div>
+      )}
+
       <div className="space-y-2">
         <p className="text-xs font-medium uppercase tracking-wide text-slate-400">
-          Players ({players.length}) — {tpp} team{tpp > 1 ? 's' : ''} each, all 48 between them
+          Players ({players.length}) —{' '}
+          {generate
+            ? 'just the names; we’ll draw their teams'
+            : `${tpp} team${tpp > 1 ? 's' : ''} each, all 48 between them`}
         </p>
         {players.map((r, i) => (
           <div key={i} className="space-y-1.5 rounded-xl border border-white/10 bg-white/5 p-3">
@@ -125,12 +183,14 @@ export function SweepstakeForm({
               onChange={(e) => setRow(i, { name: e.target.value })}
               placeholder={`Player ${i + 1} name`}
             />
-            <input
-              className={inputCls}
-              value={r.picks}
-              onChange={(e) => setRow(i, { picks: e.target.value })}
-              placeholder={`${tpp} teams, comma-separated`}
-            />
+            {!generate && (
+              <input
+                className={inputCls}
+                value={r.picks}
+                onChange={(e) => setRow(i, { picks: e.target.value })}
+                placeholder={`${tpp} teams, comma-separated`}
+              />
+            )}
           </div>
         ))}
       </div>

@@ -40,11 +40,21 @@ export const API_ROUTES = {
   admin: '/api/a/admin',
 } as const;
 
+/**
+ * How a generated draw spreads teams across players:
+ * - `chaos`: fully random.
+ * - `balanced`: split the 48 teams into N FIFA-ranking tiers and give each player one per tier.
+ */
+export type GenerateMode = 'chaos' | 'balanced';
+
 /** Roster submitted to create/edit a sweepstake (picks are team names; the server resolves them). */
 export interface SweepstakeInput {
   name: string;
   teamsPerPlayer: number;
+  /** Player rows. When `generate` is set, only the names are used — `picks` may be empty. */
   players: { name: string; picks: string[] }[];
+  /** Ask the server to draw the teams for you; ignores `players[].picks`. */
+  generate?: { mode: GenerateMode };
 }
 
 /** A pick that didn't resolve, with a "did you mean…?" suggestion when one is close. */
@@ -65,6 +75,8 @@ export interface CreateResponse {
   code: string;
   /** Owner token — shown once; needed to edit/delete this sweepstake later. */
   ownerToken: string;
+  /** The drawn assignment (present only for generated sweepstakes — reveals who got which teams). */
+  roster?: { name: string; teams: string[] }[];
 }
 
 export interface HealthResponse {

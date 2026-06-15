@@ -5,15 +5,27 @@ import { createSweepstake } from '../../lib/api';
 import { saveSweep } from '../../lib/savedSweeps';
 import { SweepstakeForm, type FormResult } from './SweepstakeForm';
 
+interface Created {
+  code: string;
+  ownerToken: string;
+  name: string;
+  roster?: { name: string; teams: string[] }[];
+}
+
 export function CreateScreen() {
   const [createToken, setCreateToken] = useState('');
-  const [created, setCreated] = useState<{ code: string; ownerToken: string; name: string } | null>(null);
+  const [created, setCreated] = useState<Created | null>(null);
 
   const onSubmit = async (input: SweepstakeInput): Promise<FormResult> => {
     const out = await createSweepstake(input, createToken);
     if (out.ok && out.data) {
       saveSweep({ code: out.data.code, name: input.name.trim() });
-      setCreated({ code: out.data.code, ownerToken: out.data.ownerToken, name: input.name.trim() });
+      setCreated({
+        code: out.data.code,
+        ownerToken: out.data.ownerToken,
+        name: input.name.trim(),
+        roster: out.data.roster,
+      });
       return { ok: true };
     }
     if (out.status === 401) {
@@ -49,6 +61,22 @@ export function CreateScreen() {
                 Manage at <span className="text-slate-400">/s/{created.code}/manage</span>
               </p>
             </div>
+
+            {created.roster && (
+              <div className="space-y-2 rounded-xl border border-white/10 bg-white/5 p-4">
+                <p className="text-xs font-medium uppercase tracking-wide text-slate-400">
+                  The draw 🎲
+                </p>
+                <ul className="space-y-1.5 text-sm">
+                  {created.roster.map((p) => (
+                    <li key={p.name}>
+                      <span className="font-semibold">{p.name}</span>
+                      <span className="text-slate-400"> — {p.teams.join(', ')}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
             <Link
               to={`/s/${created.code}`}
               className="block rounded-xl bg-brand-500 px-4 py-2.5 text-center text-sm font-semibold text-white"
@@ -77,7 +105,7 @@ export function CreateScreen() {
                 className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm outline-none focus:border-brand-400"
               />
             </label>
-            <SweepstakeForm submitLabel="Create sweepstake" onSubmit={onSubmit} />
+            <SweepstakeForm allowGenerate submitLabel="Create sweepstake" onSubmit={onSubmit} />
           </section>
         )}
       </main>

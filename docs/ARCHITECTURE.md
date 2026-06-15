@@ -172,7 +172,10 @@ One server, many sweepstakes — addressed by short `code`.
 - **Creation/validation** (`services/sweepstakeCreate.ts`): enforces the 48-team partition
   (`teamsPerPlayer × players = 48`, every team exactly once) and resolves messy pick names with the
   shared `createTeamResolver` + a Levenshtein "did you mean…?" suggester. Same code path for the
-  web `/new` flow and the `sweepstake:create` CLI.
+  web `/new` flow and the `sweepstake:create` CLI. Alternatively `generateRoster` **draws the teams
+  automatically** (`SweepstakeInput.generate`): `chaos` (random deal) or `balanced` (sort by
+  `fifaRank`, split into N tiers, one per tier per player). Both yield a valid partition; the create
+  response returns the drawn `roster` so `/new` can reveal it.
 - **Permissions — three tokens, no accounts** (all host-managed secrets, never in source):
   - **`CREATE_TOKEN`** — shared anti-bot gate on `POST /api/sweepstakes`. Unset = creation open (dev).
   - **owner token** — random per-sweepstake, returned once at creation, stored only as a SHA-256

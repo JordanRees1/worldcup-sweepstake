@@ -9,12 +9,14 @@ type TeamRow = {
   fifa_code: string;
   group_letter: string;
   is_placeholder: string;
+  fifa_rank?: string;
 };
 
 export function loadTeams(): Team[] {
   const rows = readCsv<TeamRow>(join(DATASETS_DIR, 'teams.csv'));
   return rows.map((r): Team => {
     const isPlaceholder = r.is_placeholder.toLowerCase() === 'true';
+    const rank = Number(r.fifa_rank);
     return {
       id: Number(r.id),
       name: r.team_name,
@@ -22,6 +24,7 @@ export function loadTeams(): Team[] {
       group: (r.group_letter || null) as GroupLetter | null,
       isPlaceholder,
       ...(isPlaceholder ? { placeholderLabel: r.team_name } : {}),
+      ...(Number.isFinite(rank) && rank > 0 ? { fifaRank: rank } : {}),
     };
   });
 }

@@ -19,9 +19,11 @@ Results come from **football-data.org** (live) or pre-built scenario files (demo
 - **Open one:** `sstake.co.uk/s/<code>` — e.g. `/s/crackers` or `/s/aa26`. Bookmark it, add it
   to your home screen, or drop the link in the group chat. The code is never re-typed; the
   device remembers the sweepstakes you've opened.
-- **Create one:** `sstake.co.uk/new` — add your players and the teams they drew. You'll need the
-  **create password** (ask the organiser). On success you get a share link plus a one-time
-  **owner token** to manage it later.
+- **Create one:** `sstake.co.uk/new` — add your players and the teams they drew, **or tick "Draw
+  the teams for me"** to have them assigned randomly: *Balanced* (one team from each FIFA-ranking
+  tier, so everyone gets a fair spread of strong/weak sides) or *Complete chaos* (fully random).
+  You'll need the **create password** (ask the organiser). On success you get a share link plus a
+  one-time **owner token** to manage it later.
 - **Manage one:** `sstake.co.uk/s/<code>/manage` — rename, edit the roster, or delete it, using
   the owner token you saved at creation (or the global admin token).
 

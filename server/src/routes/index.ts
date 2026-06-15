@@ -19,7 +19,7 @@ import {
   buildTeams,
   buildVenues,
 } from '../services/responses';
-import { buildTenant, type RosterInput } from '../services/sweepstakeCreate';
+import { buildTenant, generateRoster, type RosterInput } from '../services/sweepstakeCreate';
 
 function asyncRoute(handler: (req: Request, res: Response) => Promise<void>) {
   return (req: Request, res: Response): void => {
@@ -130,7 +130,10 @@ export function createApiRouter(gateway: Gateway, store: TenantStore, config: Se
         return;
       }
       const input = req.body as RosterInput;
-      const result = buildTenant(teams, input);
+      // Either draw the teams for them (generate) or resolve the roster they typed.
+      const result = input.generate
+        ? generateRoster(teams, { ...input, generate: input.generate })
+        : buildTenant(teams, input);
       if (!result.ok || !result.players || !result.picks) {
         res.status(422).json({
           error: { code: 'validation', message: 'Could not create sweepstake' },
@@ -151,7 +154,18 @@ export function createApiRouter(gateway: Gateway, store: TenantStore, config: Se
         ownerTokenHash: sha256(ownerToken),
       };
       await store.save(record);
-      res.status(201).json({ code, ownerToken });
+
+      // For a generated draw, reveal who got which teams on the success screen.
+      let roster: { name: string; teams: string[] }[] | undefined;
+      if (input.generate) {
+        const teamName = new Map(teams.map((t) => [t.id, t.name]));
+        const byPlayer = new Map<number, string[]>(result.players.map((p) => [p.id, []]));
+        for (const pk of result.picks) {
+          byPlayer.get(pk.playerId)?.push(teamName.get(pk.teamId) ?? `#${pk.teamId}`);
+        }
+        roster = result.players.map((p) => ({ name: p.name, teams: byPlayer.get(p.id) ?? [] }));
+      }
+      res.status(201).json({ code, ownerToken, ...(roster ? { roster } : {}) });
     }),
   );
 
