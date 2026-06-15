@@ -5,6 +5,7 @@ import {
   type AdminResponse,
   type BracketResponse,
   type CreateResponse,
+  type CreationPasswordResponse,
   type GroupsResponse,
   type HealthResponse,
   type PickIssue,
@@ -261,3 +262,14 @@ export const useAdmin = (token: string) =>
     retry: false,
     refetchInterval: 30_000,
   });
+
+/** Rotate the one-time creation password; returns the new value (or null on failure). */
+export async function rotateCreationPassword(token: string): Promise<string | null> {
+  const res = await fetch(API_ROUTES.adminCreationPassword, {
+    method: 'POST',
+    headers: { 'x-admin-token': token },
+  });
+  if (!res.ok) return null;
+  const body = (await res.json()) as CreationPasswordResponse;
+  return body.creationPassword ?? null;
+}

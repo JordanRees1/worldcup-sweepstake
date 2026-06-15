@@ -4,8 +4,10 @@ import { generateRoster, type RosterInput } from './sweepstakeCreate';
 
 const teams = loadTeams();
 
+type Mode = 'chaos' | 'pots' | 'halves';
+
 /** A roster of N blank-named players (the generator only needs the names). */
-const roster = (n: number, mode: 'chaos' | 'balanced', tpp: number): RosterInput & { generate: { mode: 'chaos' | 'balanced' } } => ({
+const roster = (n: number, mode: Mode, tpp: number): RosterInput & { generate: { mode: Mode } } => ({
   name: 'Test',
   teamsPerPlayer: tpp,
   players: Array.from({ length: n }, (_, i) => ({ name: `P${i + 1}`, picks: [] })),
@@ -27,10 +29,10 @@ describe('generateRoster', () => {
     }
   });
 
-  it('balanced: every player gets exactly one team from each ranking tier', () => {
+  it('pots: every player gets exactly one team from each ranking tier', () => {
     const tpp = 8;
     const players = 48 / tpp; // 6 → 6 teams per tier
-    const r = generateRoster(teams, roster(players, 'balanced', tpp), fixedRng);
+    const r = generateRoster(teams, roster(players, 'pots', tpp), fixedRng);
     expect(r.ok).toBe(true);
 
     // Tier of a team = its index (0-based) in the rank-sorted list, divided by tier size.
@@ -45,10 +47,39 @@ describe('generateRoster', () => {
     }
   });
 
-  it('works for an odd teams-per-player (tiers, not halves)', () => {
-    const r = generateRoster(teams, roster(16, 'balanced', 3), fixedRng);
+  it('pots works for an odd teams-per-player', () => {
+    const r = generateRoster(teams, roster(16, 'pots', 3), fixedRng);
     expect(r.ok).toBe(true);
     expect(r.picks).toHaveLength(48);
+  });
+
+  it('halves (even tpp): each player gets exactly half from the top 24, half from the bottom 24', () => {
+    const tpp = 8;
+    const r = generateRoster(teams, roster(48 / tpp, 'halves', tpp), fixedRng);
+    expect(r.ok).toBe(true);
+
+    const ranked = [...teams].sort((a, b) => (a.fifaRank ?? 0) - (b.fifaRank ?? 0));
+    const topHalf = new Set(ranked.slice(0, 24).map((t) => t.id));
+    for (const player of r.players!) {
+      const mine = r.picks!.filter((p) => p.playerId === player.id);
+      expect(mine.filter((p) => topHalf.has(p.teamId))).toHaveLength(tpp / 2);
+    }
+  });
+
+  it('halves (odd tpp): top-half teams split as evenly as possible, all 24 used', () => {
+    const tpp = 3; // 16 players, base 1 from each half + 1 extra to half the players
+    const r = generateRoster(teams, roster(48 / tpp, 'halves', tpp), fixedRng);
+    expect(r.ok).toBe(true);
+
+    const ranked = [...teams].sort((a, b) => (a.fifaRank ?? 0) - (b.fifaRank ?? 0));
+    const topHalf = new Set(ranked.slice(0, 24).map((t) => t.id));
+    let topUsed = 0;
+    for (const player of r.players!) {
+      const top = r.picks!.filter((p) => p.playerId === player.id && topHalf.has(p.teamId)).length;
+      expect(top === 1 || top === 2).toBe(true); // 1 or 2 strong sides — never lopsided
+      topUsed += top;
+    }
+    expect(topUsed).toBe(24); // the whole top half is dealt exactly once
   });
 
   it('rejects a wrong player count', () => {

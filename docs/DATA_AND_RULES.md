@@ -6,7 +6,7 @@ This is the domain reference for the data pipeline (WP1) and the engine (WP2).
 
 | File                    | Rows | Columns                                                                      | Notes |
 |-------------------------|------|------------------------------------------------------------------------------|-------|
-| `teams.csv`             | 48   | `id, team_name, fifa_code, group_letter, is_placeholder, fifa_rank`          | 12 groups A–L, 4 each. `fifa_rank` = FIFA/Coca-Cola World Ranking (snapshot **11 Jun 2026**), used to seed the balanced "generate" draw. |
+| `teams.csv`             | 48   | `id, team_name, fifa_code, group_letter, is_placeholder, fifa_rank`          | 12 groups A–L, 4 each. `fifa_rank` = FIFA/Coca-Cola World Ranking (snapshot **11 Jun 2026**), used to seed the ranked "generate" draws (pots / 50-50). |
 | `matches.csv`           | 104  | `id, match_number, home_team_id, away_team_id, city_id, stage_id, kickoff_at, match_label` | Group games have team IDs; knockouts have empty team IDs + a `match_label` encoding. |
 | `tournament_stages.csv` | 7    | `id, stage_name, stage_order`                                                | Group Stage→Round of 32→Round of 16→Quarterfinals→Semifinals→Third Place Playoff→Final. |
 | `host_cities.csv`       | 16   | `id, city_name, country, venue_name, region_cluster, airport_code`           | Venues across USA/Canada/Mexico; `region_cluster` ∈ East/Central/West. |

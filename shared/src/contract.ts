@@ -38,14 +38,16 @@ export const API_ROUTES = {
   sweepstake: (code: string) => `/api/s/${code}`,
   // Admin (global ADMIN_TOKEN gated).
   admin: '/api/a/admin',
+  adminCreationPassword: '/api/a/admin/creation-password',
 } as const;
 
 /**
- * How a generated draw spreads teams across players:
+ * How a generated draw spreads teams across players (by FIFA ranking):
  * - `chaos`: fully random.
- * - `balanced`: split the 48 teams into N FIFA-ranking tiers and give each player one per tier.
+ * - `pots`: split the 48 teams into N ranking tiers and give each player one team per tier.
+ * - `halves`: split into the top 24 and bottom 24, giving each player as even a mix as possible.
  */
-export type GenerateMode = 'chaos' | 'balanced';
+export type GenerateMode = 'chaos' | 'pots' | 'halves';
 
 /** Roster submitted to create/edit a sweepstake (picks are team names; the server resolves them). */
 export interface SweepstakeInput {
@@ -170,6 +172,16 @@ export interface AdminResponse {
   /** Human note on metric accuracy (per-replica / reset on restart). */
   metricsNote: string;
   sweepstakes: AdminSweepstake[];
+  /** True when creation needs no password (dev / no CREATE_TOKEN configured). */
+  creationOpen: boolean;
+  /** The current one-time creation password — present only when creation is gated. */
+  creationPassword?: string;
+}
+
+/** Response from rotating the creation password (admin only). */
+export interface CreationPasswordResponse {
+  creationPassword?: string;
+  creationOpen?: boolean;
 }
 
 /** Uniform error envelope returned by every endpoint on failure. */

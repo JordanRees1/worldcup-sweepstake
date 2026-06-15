@@ -104,6 +104,10 @@ export function CreateScreen() {
                 placeholder="ask the organiser"
                 className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm outline-none focus:border-brand-400"
               />
+              <span className="block text-[11px] text-amber-300/90">
+                ⚠️ One-time only — the password expires the moment you create the sweepstake, so your
+                draw is final. You won’t be able to re-roll. Ask the organiser for a fresh one if needed.
+              </span>
             </label>
             <SweepstakeForm allowGenerate submitLabel="Create sweepstake" onSubmit={onSubmit} />
           </section>

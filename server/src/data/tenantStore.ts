@@ -31,11 +31,22 @@ export interface TenantRecord {
   ownerTokenHash?: string;
 }
 
+/** Server-managed settings (not a tenant). Stored alongside tenants under a reserved key. */
+export interface AppConfig {
+  /** The current one-time creation password (rotated after each create; seen only via admin). */
+  creationPassword?: string;
+}
+
+/** Reserved blob/file name for {@link AppConfig} — underscore-prefixed so it never lists as a tenant. */
+const CONFIG_KEY = '_config';
+
 export interface TenantStore {
   resolve(code: string): Promise<TenantRecord | null>;
   list(): Promise<TenantRecord[]>;
   save(record: TenantRecord): Promise<void>;
   remove(code: string): Promise<boolean>;
+  readConfig(): Promise<AppConfig | null>;
+  writeConfig(config: AppConfig): Promise<void>;
 }
 
 /** File-backed store (dev + the CLI). One JSON per tenant under `dir`. */
@@ -54,7 +65,7 @@ export function createLocalTenantStore(dir: string): TenantStore {
     async list() {
       if (!existsSync(dir)) return [];
       return readdirSync(dir)
-        .filter((f) => f.endsWith('.json'))
+        .filter((f) => f.endsWith('.json') && !f.startsWith('_'))
         .flatMap((f) => {
           try {
             return [JSON.parse(readFileSync(join(dir, f), 'utf8')) as TenantRecord];
@@ -72,6 +83,19 @@ export function createLocalTenantStore(dir: string): TenantStore {
       if (!existsSync(p)) return false;
       unlinkSync(p);
       return true;
+    },
+    async readConfig() {
+      const p = file(CONFIG_KEY);
+      if (!existsSync(p)) return null;
+      try {
+        return JSON.parse(readFileSync(p, 'utf8')) as AppConfig;
+      } catch {
+        return null;
+      }
+    },
+    async writeConfig(config) {
+      mkdirSync(dir, { recursive: true });
+      writeFileSync(file(CONFIG_KEY), `${JSON.stringify(config, null, 2)}\n`, 'utf8');
     },
   };
 }
@@ -102,7 +126,7 @@ export function createBlobTenantStore(account: string, containerName = 'tenants'
       const out: TenantRecord[] = [];
       try {
         for await (const item of container.listBlobsFlat()) {
-          if (!item.name.endsWith('.json')) continue;
+          if (!item.name.endsWith('.json') || item.name.startsWith('_')) continue;
           try {
             const buf = await container.getBlockBlobClient(item.name).downloadToBuffer();
             out.push(JSON.parse(buf.toString('utf8')) as TenantRecord);
@@ -125,6 +149,22 @@ export function createBlobTenantStore(account: string, containerName = 'tenants'
     async remove(code) {
       const r = await blob(code).deleteIfExists();
       return r.succeeded;
+    },
+    async readConfig() {
+      try {
+        const buf = await blob(CONFIG_KEY).downloadToBuffer();
+        return JSON.parse(buf.toString('utf8')) as AppConfig;
+      } catch (e) {
+        if ((e as { statusCode?: number }).statusCode === 404) return null;
+        throw e;
+      }
+    },
+    async writeConfig(config) {
+      await container.createIfNotExists();
+      const data = JSON.stringify(config, null, 2);
+      await blob(CONFIG_KEY).upload(data, Buffer.byteLength(data), {
+        blobHTTPHeaders: { blobContentType: 'application/json' },
+      });
     },
   };
 }

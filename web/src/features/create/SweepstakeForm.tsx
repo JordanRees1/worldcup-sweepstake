@@ -51,7 +51,7 @@ export function SweepstakeForm({
     initialPlayers ?? resize([], 48 / initialTeamsPerPlayer),
   );
   const [generate, setGenerate] = useState(false);
-  const [mode, setMode] = useState<GenerateMode>('balanced');
+  const [mode, setMode] = useState<GenerateMode>('halves');
   const [issues, setIssues] = useState<PickIssue[]>([]);
   const [errors, setErrors] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
@@ -134,11 +134,12 @@ export function SweepstakeForm({
             <span className="text-sm font-medium">Draw the teams for me 🎲</span>
           </label>
           {generate && (
-            <fieldset className="grid grid-cols-1 gap-2 pt-1 sm:grid-cols-2">
+            <fieldset className="grid grid-cols-1 gap-2 pt-1 sm:grid-cols-3">
               {(
                 [
-                  ['balanced', 'Balanced', 'One team from each ranking tier - fairer spread'],
                   ['chaos', 'Complete chaos', 'Fully random... anything goes'],
+                  ['halves', '50 / 50', 'Even split of strong & weak sides (top 24 / bottom 24)'],
+                  ['pots', 'Pots', 'One team from each ranking tier'],
                 ] as const
               ).map(([value, title, desc]) => (
                 <label

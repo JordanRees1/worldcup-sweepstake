@@ -173,11 +173,16 @@ One server, many sweepstakes — addressed by short `code`.
   (`teamsPerPlayer × players = 48`, every team exactly once) and resolves messy pick names with the
   shared `createTeamResolver` + a Levenshtein "did you mean…?" suggester. Same code path for the
   web `/new` flow and the `sweepstake:create` CLI. Alternatively `generateRoster` **draws the teams
-  automatically** (`SweepstakeInput.generate`): `chaos` (random deal) or `balanced` (sort by
-  `fifaRank`, split into N tiers, one per tier per player). Both yield a valid partition; the create
-  response returns the drawn `roster` so `/new` can reveal it.
+  automatically** (`SweepstakeInput.generate`), seeded by `fifaRank`: `chaos` (random deal), `pots`
+  (split into N ranking tiers, one per tier per player), or `halves` (split into the top 24 / bottom
+  24, each player as even a mix as possible). All yield a valid partition; the create response
+  returns the drawn `roster` so `/new` can reveal it.
 - **Permissions — three tokens, no accounts** (all host-managed secrets, never in source):
-  - **`CREATE_TOKEN`** — shared anti-bot gate on `POST /api/sweepstakes`. Unset = creation open (dev).
+  - **Creation password** — gates `POST /api/sweepstakes`. **One-time + rotating:** the current
+    password lives in the tenant store (`AppConfig`, seeded once from the `CREATE_TOKEN` env), is
+    checked on create, then **immediately rotated** so it can't be reused or shared — keeping a
+    generated draw final/fair. The current value and a manual "Regenerate" are on `/a/admin`. With
+    no `CREATE_TOKEN` configured (dev), creation is open.
   - **owner token** — random per-sweepstake, returned once at creation, stored only as a SHA-256
     hash; lets that creator edit/delete their own sweepstake.
   - **`ADMIN_TOKEN`** — global: edit/delete any sweepstake + the `/a/admin` panel.

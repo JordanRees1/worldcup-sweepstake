@@ -87,7 +87,7 @@ is no per-game `SWEEPSTAKE` var.
 | `DATA_SOURCE` | No | `live` | `seed` (offline) or `live` (API). Default: `seed` |
 | `FOOTBALL_API_KEY` | If `DATA_SOURCE=live` | `abc123...` | From football-data.org. **Secret — never in the image** |
 | `AZURE_STORAGE_ACCOUNT` | For self-service | `sstkcb76f50e` | Set → Blob tenant store; unset → local dir. Authed by managed identity |
-| `CREATE_TOKEN` | For self-service | `…` | Shared create password (anti-bot). **Secret** |
+| `CREATE_TOKEN` | For self-service | `…` | **Seeds** the one-time create password (then it rotates in the store after each create; current value on `/a/admin`). **Secret** |
 | `ADMIN_TOKEN` | For admin panel | `…` | Global admin (edit any + `/a/admin`). **Secret** |
 | `PORT` | No | `8080` | Azure sets this automatically |
 | `RESULTS_CACHE_TTL_SECONDS` | No | `30` | How long to cache API results in memory |

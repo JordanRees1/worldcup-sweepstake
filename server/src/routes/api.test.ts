@@ -39,11 +39,16 @@ describe('API routes (in-process HTTP, seed mode, multi-tenant gateway)', () => 
         .map((p) => ({ playerId: p.playerId, teamId: p.teamId as number })),
       createdAt: '2026-06-01T00:00:00Z',
     };
+    let config: { creationPassword?: string } | null = null;
     const store: TenantStore = {
       resolve: async (c) => (c === 'storey' ? storeRecord : null),
       list: async () => [storeRecord],
       save: async () => {},
       remove: async () => false,
+      readConfig: async () => config,
+      writeConfig: async (c) => {
+        config = c;
+      },
     };
     const gateway = createGateway(loadStructural(), createSeedProvider(), 1000, store);
     const app = createApp(gateway, store, { port: 0, dataSource: 'seed', cacheTtlMs: 1000, version: 'test' });

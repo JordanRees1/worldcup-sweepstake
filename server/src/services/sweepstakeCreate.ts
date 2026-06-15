@@ -131,9 +131,11 @@ function shuffle<T>(arr: T[], rng: () => number): T[] {
  * Draw the 48 teams across players automatically (the /new "generate" option). Returns the same
  * {@link BuildResult} shape as {@link buildTenant} — on success always a clean 48-team partition.
  *  - **chaos**: a fully random deal.
- *  - **balanced**: sort teams by FIFA rank, split into `teamsPerPlayer` equal tiers, and give every
- *    player exactly one team from each tier — so everyone ends up with a comparable spread of
- *    strong and weak sides.
+ *  - **pots**: sort teams by FIFA rank, split into `teamsPerPlayer` equal tiers, and give every
+ *    player exactly one team from each tier — so everyone gets a comparable spread of sides.
+ *  - **halves**: split into the top 24 and bottom 24 by rank, and give each player as even a mix
+ *    as possible. For odd `teamsPerPlayer`, half the players get one extra strong side and half one
+ *    extra weak side (the player count is always even for odd divisors of 48, so this is exact).
  */
 export function generateRoster(
   teams: Team[],
@@ -147,6 +149,7 @@ export function generateRoster(
   const expectedPlayers = 48 / tpp;
   const names = input.players.map((p) => p.name.trim()).filter(Boolean);
   const realTeams = teams.filter((t) => !t.isPlaceholder);
+  const mode = input.generate.mode;
 
   const errors: string[] = [];
   if (names.length !== expectedPlayers) {
@@ -156,29 +159,52 @@ export function generateRoster(
     errors.push('player names must be unique');
   }
   if (realTeams.length !== 48) errors.push(`expected 48 teams, found ${realTeams.length}`);
-  if (input.generate.mode === 'balanced' && realTeams.some((t) => t.fifaRank == null)) {
-    errors.push('balanced draw needs FIFA rankings for every team');
+  if (mode !== 'chaos' && realTeams.some((t) => t.fifaRank == null)) {
+    errors.push('a ranked draw needs FIFA rankings for every team');
   }
   if (errors.length) return { ok: false, errors };
 
   const players: Player[] = names.map((name, i) => ({ id: i + 1, name }));
   const picks: { playerId: number; teamId: number }[] = [];
+  const give = (playerId: number, teamId: number): void => void picks.push({ playerId, teamId });
+  const byRank = (): Team[] => [...realTeams].sort((a, b) => (a.fifaRank ?? 0) - (b.fifaRank ?? 0));
 
-  if (input.generate.mode === 'chaos') {
+  if (mode === 'chaos') {
     const ids = shuffle(
       realTeams.map((t) => t.id),
       rng,
     );
     players.forEach((p, i) => {
-      for (let k = 0; k < tpp; k++) picks.push({ playerId: p.id, teamId: ids[i * tpp + k] });
+      for (let k = 0; k < tpp; k++) give(p.id, ids[i * tpp + k]);
     });
-  } else {
-    // balanced: rank ascending → `tpp` tiers of `expectedPlayers` teams; one per tier per player.
-    const ranked = [...realTeams].sort((a, b) => (a.fifaRank ?? 0) - (b.fifaRank ?? 0));
+  } else if (mode === 'pots') {
+    // `tpp` tiers of `expectedPlayers` teams each; one team per tier per player.
+    const ranked = byRank();
     for (let tier = 0; tier < tpp; tier++) {
       const slice = shuffle(ranked.slice(tier * expectedPlayers, (tier + 1) * expectedPlayers), rng);
-      slice.forEach((team, j) => picks.push({ playerId: players[j].id, teamId: team.id }));
+      slice.forEach((team, j) => give(players[j].id, team.id));
     }
+  } else {
+    // halves: top 24 vs bottom 24. Each player gets `base` from each half; for odd tpp, exactly
+    // half the players get one extra top team (the rest one extra bottom team).
+    const ranked = byRank();
+    const topPool = shuffle(ranked.slice(0, 24).map((t) => t.id), rng);
+    const botPool = shuffle(ranked.slice(24).map((t) => t.id), rng);
+    const base = Math.floor(tpp / 2);
+    const topCounts = players.map(() => base);
+    if (tpp % 2 === 1) {
+      const order = shuffle(
+        players.map((_, i) => i),
+        rng,
+      );
+      for (let k = 0; k < Math.floor(players.length / 2); k++) topCounts[order[k]] = base + 1;
+    }
+    let tp = 0;
+    let bp = 0;
+    players.forEach((p, i) => {
+      for (let k = 0; k < topCounts[i]; k++) give(p.id, topPool[tp++]);
+      for (let k = 0; k < tpp - topCounts[i]; k++) give(p.id, botPool[bp++]);
+    });
   }
   return { ok: true, players, picks };
 }

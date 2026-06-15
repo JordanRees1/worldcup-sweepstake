@@ -20,9 +20,10 @@ Results come from **football-data.org** (live) or pre-built scenario files (demo
   to your home screen, or drop the link in the group chat. The code is never re-typed; the
   device remembers the sweepstakes you've opened.
 - **Create one:** `sstake.co.uk/new` — add your players and the teams they drew, **or tick "Draw
-  the teams for me"** to have them assigned randomly: *Balanced* (one team from each FIFA-ranking
-  tier, so everyone gets a fair spread of strong/weak sides) or *Complete chaos* (fully random).
-  You'll need the **create password** (ask the organiser). On success you get a share link plus a
+  the teams for me"** to have them assigned: *50/50* (an even split of strong & weak sides — top 24
+  / bottom 24), *Pots* (one team from each FIFA-ranking tier), or *Complete chaos* (fully random).
+  You'll need the **create password** (ask the organiser). It's **one-time** — it expires the moment
+  you create, so a draw is final and can't be re-rolled. On success you get a share link plus a
   one-time **owner token** to manage it later.
 - **Manage one:** `sstake.co.uk/s/<code>/manage` — rename, edit the roster, or delete it, using
   the owner token you saved at creation (or the global admin token).
@@ -95,7 +96,9 @@ Two kinds of sweepstake coexist:
 
 ### Permissions (no logins, three tokens)
 
-- **Create password** (`CREATE_TOKEN`) — a shared anti-bot gate required to create a sweepstake.
+- **Create password** — required to create a sweepstake. **One-time + rotating:** it expires on each
+  create and a fresh one is generated server-side (visible only on `/a/admin` as "Current creation
+  password"), so the code can't be shared and draws stay final. Seeded once from `CREATE_TOKEN`.
 - **Owner token** — generated per sweepstake, shown once at creation; lets that creator
   edit/delete **only their** sweepstake.
 - **Admin token** (`ADMIN_TOKEN`) — global: edit/delete any sweepstake and open the admin panel

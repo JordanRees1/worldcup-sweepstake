@@ -40,10 +40,32 @@ export function createApiRouter(gateway: Gateway, store: TenantStore, config: Se
   const metrics = createMetrics(); // best-effort, in-memory usage signals
 
   const header = (req: Request, name: string): string => (req.header(name) ?? '').trim();
-  const createAllowed = (req: Request): boolean =>
-    !config.createToken || header(req, 'x-create-token') === config.createToken;
   const isAdmin = (req: Request): boolean =>
     !!config.adminToken && header(req, 'x-admin-token') === config.adminToken;
+
+  // ── One-time creation password ──────────────────────────────────────────────────
+  // When CREATE_TOKEN is configured (prod), creation is gated by a *single-use* password held in
+  // the tenant store: it's checked on create, then immediately rotated so the same password can't
+  // be reused or shared. The current one is visible only on the admin page. With no CREATE_TOKEN
+  // (dev), creation is open. The env value just seeds the first password.
+  const passwordGated = !!config.createToken;
+  // Readable, unambiguous codes (no 0/O/1/I) — the admin reads these out to the next creator.
+  const genPassword = (): string => {
+    const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    return Array.from(randomBytes(6), (b) => alphabet[b % alphabet.length]).join('');
+  };
+  const currentPassword = async (): Promise<string> => {
+    const cfg = await store.readConfig();
+    if (cfg?.creationPassword) return cfg.creationPassword;
+    const seed = config.createToken ?? genPassword();
+    await store.writeConfig({ creationPassword: seed });
+    return seed;
+  };
+  const rotatePassword = async (): Promise<string> => {
+    const next = genPassword();
+    await store.writeConfig({ creationPassword: next });
+    return next;
+  };
   const ownerOrAdmin = (req: Request, record: TenantRecord): boolean => {
     if (isAdmin(req)) return true;
     const tok = header(req, 'x-owner-token');
@@ -109,7 +131,25 @@ export function createApiRouter(gateway: Gateway, store: TenantStore, config: Se
         },
         metricsNote: 'Views/active-now are best-effort, per-replica, and reset on restart.',
         sweepstakes,
+        creationOpen: !passwordGated,
+        ...(passwordGated ? { creationPassword: await currentPassword() } : {}),
       });
+    }),
+  );
+
+  // Manually rotate the one-time creation password (e.g. to invalidate a shared one).
+  router.post(
+    '/a/admin/creation-password',
+    asyncRoute(async (req, res) => {
+      if (!isAdmin(req)) {
+        res.status(401).json({ error: { code: 'unauthorized', message: 'Invalid or missing admin token' } });
+        return;
+      }
+      if (!passwordGated) {
+        res.json({ creationOpen: true });
+        return;
+      }
+      res.json({ creationPassword: await rotatePassword() });
     }),
   );
 
@@ -125,8 +165,10 @@ export function createApiRouter(gateway: Gateway, store: TenantStore, config: Se
   router.post(
     '/sweepstakes',
     asyncRoute(async (req, res) => {
-      if (!createAllowed(req)) {
-        res.status(401).json({ error: { code: 'unauthorized', message: 'Invalid or missing create token' } });
+      if (passwordGated && header(req, 'x-create-token') !== (await currentPassword())) {
+        res.status(401).json({
+          error: { code: 'unauthorized', message: 'Invalid or expired create password' },
+        });
         return;
       }
       const input = req.body as RosterInput;
@@ -154,6 +196,8 @@ export function createApiRouter(gateway: Gateway, store: TenantStore, config: Se
         ownerTokenHash: sha256(ownerToken),
       };
       await store.save(record);
+      // One-time password: expire it now so it can't be reused/shared (admin sees the new one).
+      if (passwordGated) await rotatePassword();
 
       // For a generated draw, reveal who got which teams on the success screen.
       let roster: { name: string; teams: string[] }[] | undefined;

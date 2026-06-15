@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import type { AdminSweepstake } from '@sweepstake/shared';
-import { deleteSweepstake, queryClient, useAdmin } from '../../lib/api';
+import type { AdminResponse } from '@sweepstake/shared';
+import { deleteSweepstake, queryClient, rotateCreationPassword, useAdmin } from '../../lib/api';
 import { getAdminToken, setAdminToken } from '../../lib/clientId';
 import { removeSweep } from '../../lib/savedSweeps';
 
@@ -69,12 +69,14 @@ function AdminTable({
   token,
   onSignOut,
 }: {
-  data: { totals: { sweepstakes: number; players: number }; metricsNote: string; sweepstakes: AdminSweepstake[] };
+  data: AdminResponse;
   token: string;
   onSignOut: () => void;
 }) {
   const [busy, setBusy] = useState('');
   const [confirm, setConfirm] = useState('');
+  const [password, setPassword] = useState(data.creationPassword);
+  const [rotating, setRotating] = useState(false);
 
   const onDelete = async (code: string) => {
     setBusy(code);
@@ -84,6 +86,16 @@ function AdminTable({
     }
     setBusy('');
     setConfirm('');
+  };
+
+  const onRotate = async () => {
+    setRotating(true);
+    const next = await rotateCreationPassword(token);
+    if (next) {
+      setPassword(next);
+      await queryClient.invalidateQueries({ queryKey: ['admin'] });
+    }
+    setRotating(false);
   };
 
   return (
@@ -97,6 +109,29 @@ function AdminTable({
           Sign out
         </button>
       </div>
+
+      {!data.creationOpen && (
+        <div className="flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-white/5 p-3">
+          <div className="min-w-0">
+            <p className="text-[11px] uppercase tracking-wide text-slate-400">
+              Current creation password
+            </p>
+            <code className="break-all text-base font-semibold text-amber-300">
+              {password ?? '—'}
+            </code>
+            <p className="text-[11px] text-slate-500">
+              One-time — expires automatically after each sweepstake is created.
+            </p>
+          </div>
+          <button
+            onClick={onRotate}
+            disabled={rotating}
+            className="shrink-0 rounded-lg bg-white/10 px-3 py-2 text-xs font-medium text-slate-200 active:bg-white/20 disabled:opacity-50"
+          >
+            {rotating ? '…' : 'Regenerate'}
+          </button>
+        </div>
+      )}
 
       <div className="overflow-hidden rounded-xl border border-white/10">
         <table className="w-full text-left text-sm">

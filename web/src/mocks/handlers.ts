@@ -30,6 +30,8 @@ export const handlers = [
     HttpResponse.json({
       totals: { sweepstakes: 1, players: playersFixture.players.length },
       metricsNote: 'Views/active-now are best-effort, per-replica, and reset on restart.',
+      creationOpen: false,
+      creationPassword: 'DEMO42',
       sweepstakes: [
         {
           code: 'demo',

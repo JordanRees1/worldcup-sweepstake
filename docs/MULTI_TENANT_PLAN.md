@@ -77,9 +77,11 @@ matching runs once, not per request).
 ## Permissions & abuse (no-logins model)
 **Three tokens, no accounts** (the two shared ones are Azure secrets — set out-of-band, **never in
 source/repo**):
-- **`CREATE_TOKEN`** — a shared "create password" required to create a sweep (the anti-bot gate). You
-  hand it to people you trust to create sweeps. Checked by the `/new` flow / create API. *(Value chosen
-  by the user; configured as an Azure Container App secret at deploy, like `FOOTBALL_API_KEY`.)*
+- **Creation password** — required to create a sweep. **One-time + rotating** (added 2026-06-13): the
+  live password is held in the tenant store, checked on create, then rotated immediately so it can't be
+  reused/shared and a generated draw stays final. The current value + a "Regenerate" button live on
+  `/a/admin` ("Current creation password"). `CREATE_TOKEN` (Azure secret) only **seeds** the first one;
+  unset = creation open (dev). The `/new` page warns that the password is one-time.
 - **Per-sweep owner token** (32-char, generated at creation, shown once): lets *that sweep's creator*
   edit/delete **only their own** sweep — this is how creators self-manage. They must save the
   "owner link" when they create it.
