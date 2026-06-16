@@ -1,5 +1,6 @@
 /**
- * Live results provider: football-data.org v4 API.
+ * Live results provider: football-data.org v4 API (with the `X-API-Version: v4.1` header, which
+ * opts into the live `minute` + `injuryTime` fields on the match response).
  *
  * Reconciliation strategy:
  *   Primary — team-pair TLA lookup: (homeTeam.tla, awayTeam.tla) → our matchId.
@@ -178,7 +179,8 @@ export function createFootballApiProvider(
   async function fetchWithRetry(url: string, attempt = 0): Promise<ApiMatchesResponse> {
     try {
       const res = await fetch(url, {
-        headers: { 'X-Auth-Token': apiKey },
+        // X-API-Version v4.1 opts into the live `minute` + `injuryTime` fields on the match response.
+        headers: { 'X-Auth-Token': apiKey, 'X-API-Version': 'v4.1' },
         signal: AbortSignal.timeout(15_000),
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
