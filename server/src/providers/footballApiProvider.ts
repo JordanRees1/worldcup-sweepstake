@@ -40,6 +40,8 @@ interface ApiMatch {
   status: string;
   /** Live match clock (minutes), present on livescore-enabled tiers while a match is IN_PLAY/PAUSED. */
   minute?: number | string | null;
+  /** Stoppage/injury time (minutes added on), added in API v4.1. Present while IN_PLAY/PAUSED. */
+  injuryTime?: number | string | null;
   stage: string;
   group: string | null;
   homeTeam: ApiTeamRef;
@@ -140,9 +142,13 @@ export function createFootballApiProvider(
     const status = mapStatus(m.status);
     const { fullTime, penalties } = m.score;
 
-    // Live clock — only meaningful while in play, and only on livescore-enabled tiers.
-    const minuteNum = m.minute != null ? Number(m.minute) : NaN;
-    const minute = status === 'live' && Number.isFinite(minuteNum) ? minuteNum : null;
+    // Live clock + stoppage time (v4.1) — only meaningful while in play, on livescore-enabled tiers.
+    const liveNum = (v: number | string | null | undefined): number | null => {
+      const n = v != null ? Number(v) : NaN;
+      return status === 'live' && Number.isFinite(n) ? n : null;
+    };
+    const minute = liveNum(m.minute);
+    const injuryTime = liveNum(m.injuryTime);
 
     const result: MatchResultDTO = {
       matchId: ourMatchId,
@@ -152,6 +158,7 @@ export function createFootballApiProvider(
       homePenalties: penalties?.home ?? null,
       awayPenalties: penalties?.away ?? null,
       minute,
+      injuryTime,
       winnerTeamId:
         m.score.winner === 'HOME_TEAM' ? (fifaCodeToTeamId.get(normalizeTla(m.homeTeam.tla ?? '')) ?? null)
         : m.score.winner === 'AWAY_TEAM' ? (fifaCodeToTeamId.get(normalizeTla(m.awayTeam.tla ?? '')) ?? null)

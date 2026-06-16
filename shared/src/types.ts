@@ -95,6 +95,8 @@ export interface Match {
   result?: MatchResult;
   /** Live match clock in minutes — present only while `status === 'live'` (when the API provides it). */
   minute?: number;
+  /** Stoppage/injury time in minutes to add to `minute` (e.g. 45 + `injuryTime` 2 → "45+2'"). Live only. */
+  injuryTime?: number;
 }
 
 export interface GroupStandingRow {

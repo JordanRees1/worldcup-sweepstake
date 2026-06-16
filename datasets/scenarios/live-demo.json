@@ -550,7 +550,8 @@
       "matchId": 51,
       "homeScore": 0,
       "awayScore": 1,
-      "minute": 88
+      "minute": 90,
+      "injuryTime": 3
     }
   ]
 }

@@ -12,6 +12,8 @@ export interface MatchResultDTO {
   winnerTeamId: number | null;
   /** Live match clock in minutes — set only while `status === 'live'` (when the API provides it). */
   minute?: number | null;
+  /** Stoppage/injury time in minutes (v4.1) — set only while `status === 'live'` when provided. */
+  injuryTime?: number | null;
 }
 
 /**

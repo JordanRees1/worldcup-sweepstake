@@ -77,14 +77,15 @@ describe('live in-play mapping (fetch mocked)', () => {
 
   afterEach(() => vi.unstubAllGlobals());
 
-  it('maps an IN_PLAY match to status "live" with running score + minute', async () => {
+  it('maps an IN_PLAY match to status "live" with running score + minute + injuryTime', async () => {
     const apiResponse = {
       matches: [
         {
           id: 9999,
           utcDate: '2026-06-12T19:00:00Z',
           status: 'IN_PLAY',
-          minute: 67,
+          minute: 45,
+          injuryTime: 2,
           stage: 'GROUP_STAGE',
           group: 'GROUP_A',
           homeTeam: { id: 1, name: homeTla, shortName: homeTla, tla: homeTla, crest: null },
@@ -104,7 +105,8 @@ describe('live in-play mapping (fetch mocked)', () => {
 
     expect(live).toBeDefined();
     expect(live?.status).toBe('live');
-    expect(live?.minute).toBe(67);
+    expect(live?.minute).toBe(45);
+    expect(live?.injuryTime).toBe(2);
     expect(live?.homeScore).toBe(1);
     expect(live?.awayScore).toBe(0);
     expect(live?.winnerTeamId).toBeNull();

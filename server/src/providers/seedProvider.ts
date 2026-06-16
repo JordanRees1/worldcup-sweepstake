@@ -24,6 +24,8 @@ interface ScenarioLive {
   homeScore: number;
   awayScore: number;
   minute: number;
+  /** Optional stoppage time, mirrors the live API's v4.1 injuryTime field. */
+  injuryTime?: number;
 }
 
 interface ScenarioFile {
@@ -74,6 +76,7 @@ function loadScenario(scenario: string): { results: MatchResultDTO[]; slots: Res
       awayPenalties: null,
       winnerTeamId: null,
       minute: l.minute,
+      ...(l.injuryTime != null ? { injuryTime: l.injuryTime } : {}),
     }),
   );
 

@@ -65,7 +65,7 @@ export function FixtureRow({
           >
             {center}
           </span>
-          {isLive && <LiveBadge minute={match.minute} />}
+          {isLive && <LiveBadge minute={match.minute} injuryTime={match.injuryTime} />}
         </div>
         <div className="min-w-0 flex-1">
           <span

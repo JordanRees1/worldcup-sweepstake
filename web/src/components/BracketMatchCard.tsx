@@ -142,7 +142,7 @@ export function BracketMatchCard({
             <span className="text-xs tabular-nums text-slate-400">{timeStr}</span>
           )}
           {isLive ? (
-            <LiveBadge minute={match?.minute} />
+            <LiveBadge minute={match?.minute} injuryTime={match?.injuryTime} />
           ) : !score && dateStr ? (
             <span className="text-[10px] text-slate-500">{dateStr}</span>
           ) : null}
