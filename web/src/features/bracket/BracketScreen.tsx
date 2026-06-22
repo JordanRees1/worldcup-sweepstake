@@ -193,6 +193,13 @@ export function BracketScreen() {
             <span className="text-[11px] text-slate-500">{currentRound.nodes.length} matches</span>
           </div>
 
+          {currentRound.nodes.some((n) => n.homeProvisional || n.awayProvisional) && (
+            <p className="mb-2 text-[11px] text-slate-500">
+              <span className="italic text-slate-400">Italic</span> = projected from current
+              standings (as it stands) — not yet confirmed.
+            </p>
+          )}
+
           <div className="divide-y divide-white/5 overflow-hidden rounded-2xl border border-white/10 bg-white/5 lg:grid lg:grid-cols-2 lg:gap-3 lg:divide-y-0 lg:overflow-visible lg:rounded-none lg:border-0 lg:bg-transparent">
             {currentRound.nodes.length === 0 ? (
               <div className="py-10 text-center text-sm text-slate-400 lg:col-span-2">

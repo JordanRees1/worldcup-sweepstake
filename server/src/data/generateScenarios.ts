@@ -13,11 +13,14 @@
 
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import type { GroupLetter, GroupTable, Match } from '@sweepstake/shared';
+import type { GroupTable, Match } from '@sweepstake/shared';
 import {
+  assignBestThirds,
   computeAllGroupStandings,
   computeDecidedGroups,
   computeQualification,
+  parseSource,
+  resolveSource,
   type RankedThird,
 } from '../engine';
 import { loadDataset } from './dataset';
@@ -51,96 +54,6 @@ interface ScenarioFile {
   results: SimResult[];
   slots: SimSlot[];
   live?: SimLive[];
-}
-
-// ── Best-third slot assignment ────────────────────────────────────────────────
-
-// Each R32 best-third slot accepts thirds from a specific set of groups.
-const R32_BEST_THIRD_SLOTS: ReadonlyArray<{ matchId: number; groups: GroupLetter[] }> = [
-  { matchId: 75, groups: ['A', 'B', 'C', 'D', 'F'] },
-  { matchId: 78, groups: ['C', 'D', 'F', 'G', 'H'] },
-  { matchId: 79, groups: ['C', 'E', 'F', 'H', 'I'] },
-  { matchId: 80, groups: ['E', 'H', 'I', 'J', 'K'] },
-  { matchId: 81, groups: ['A', 'E', 'H', 'I', 'J'] },
-  { matchId: 82, groups: ['B', 'E', 'F', 'I', 'J'] },
-  { matchId: 85, groups: ['E', 'F', 'G', 'I', 'J'] },
-  { matchId: 88, groups: ['D', 'E', 'I', 'J', 'L'] },
-];
-
-/**
- * Assign 8 qualifying thirds to R32 best-third slots.
- * "Most constrained first" — groups K (only 1 slot) and L (only 1 slot) are assigned
- * before groups that have many options, preventing impossible states.
- */
-function assignBestThirds(qualifyingThirds: RankedThird[]): Map<number, number> {
-  const assignments = new Map<number, number>(); // matchId → teamId
-  const usedGroups = new Set<GroupLetter>();
-
-  const ranked = qualifyingThirds.map((t) => ({
-    third: t,
-    eligible: R32_BEST_THIRD_SLOTS.filter((s) => s.groups.includes(t.group)),
-  }));
-  // Fewest eligible slots first = most constrained first.
-  ranked.sort((a, b) => a.eligible.length - b.eligible.length);
-
-  for (const { third, eligible } of ranked) {
-    if (usedGroups.has(third.group)) continue;
-    const remaining = ranked.filter(({ third: t }) => !usedGroups.has(t.group) && t !== third);
-    const available = eligible.filter((s) => !assignments.has(s.matchId));
-
-    // Among available slots, prefer the one with fewest remaining options (keep constrained slots free).
-    available.sort((a, b) => {
-      const aOpts = remaining.filter(({ third: t }) => a.groups.includes(t.group)).length;
-      const bOpts = remaining.filter(({ third: t }) => b.groups.includes(t.group)).length;
-      return aOpts - bOpts;
-    });
-
-    const slot = available[0];
-    if (slot) {
-      assignments.set(slot.matchId, third.row.teamId);
-      usedGroups.add(third.group);
-    }
-  }
-
-  return assignments;
-}
-
-// ── Label parsing ─────────────────────────────────────────────────────────────
-
-type SlotSource =
-  | { kind: 'rank'; rank: 1 | 2; group: GroupLetter }
-  | { kind: 'best-third'; matchId: number }
-  | { kind: 'winner'; matchId: number }
-  | { kind: 'loser'; matchId: number };
-
-function parseSource(frag: string, r32MatchId?: number): SlotSource {
-  const rankM = frag.match(/^([12])([A-L])$/);
-  if (rankM) return { kind: 'rank', rank: Number(rankM[1]) as 1 | 2, group: rankM[2] as GroupLetter };
-  if (frag.match(/^3[A-L]+$/) && r32MatchId !== undefined) return { kind: 'best-third', matchId: r32MatchId };
-  const winM = frag.match(/^W(\d+)$/);
-  if (winM) return { kind: 'winner', matchId: Number(winM[1]) };
-  const loserM = frag.match(/^RU(\d+)$/);
-  if (loserM) return { kind: 'loser', matchId: Number(loserM[1]) };
-  throw new Error(`Unrecognised slot source: "${frag}"`);
-}
-
-function resolveSource(
-  source: SlotSource,
-  tables: GroupTable[],
-  bestThirds: Map<number, number>,
-  winners: Map<number, number>,
-  losers: Map<number, number>,
-): number | null {
-  switch (source.kind) {
-    case 'rank':
-      return tables.find((t) => t.group === source.group)?.rows.find((r) => r.rank === source.rank)?.teamId ?? null;
-    case 'best-third':
-      return bestThirds.get(source.matchId) ?? null;
-    case 'winner':
-      return winners.get(source.matchId) ?? null;
-    case 'loser':
-      return losers.get(source.matchId) ?? null;
-  }
 }
 
 // ── Simulation state ──────────────────────────────────────────────────────────

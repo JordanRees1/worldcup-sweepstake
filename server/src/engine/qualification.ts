@@ -32,7 +32,7 @@ export function computeDecidedGroups(matches: Match[]): Set<GroupLetter> {
  * FIFA ranking criteria for best third-placed teams:
  * points → GD → GF → wins → teamId (stable tiebreak — stand-in for drawing of lots).
  */
-function compareThirds(a: RankedThird, b: RankedThird): number {
+export function compareThirds(a: RankedThird, b: RankedThird): number {
   return (
     b.row.points - a.row.points ||
     b.row.goalDifference - a.row.goalDifference ||

@@ -6,6 +6,7 @@
 
 import type {
   DataSource,
+  GroupLetter,
   GroupTable,
   Match,
   PlayerSummary,
@@ -126,8 +127,24 @@ export interface VenuesResponse {
   venues: Venue[];
 }
 
+/** One row of the "best third-placed teams" ranking shown under the group tables. */
+export interface ThirdPlaceRow {
+  teamId: number;
+  group: GroupLetter;
+  /** 1–12 across all groups' current 3rd-placed teams. */
+  rank: number;
+  /** Currently inside the top 8 (would qualify for the Round of 32). */
+  qualifying: boolean;
+  played: number;
+  points: number;
+  goalDifference: number;
+  goalsFor: number;
+}
+
 export interface GroupsResponse {
   groups: GroupTable[];
+  /** All 12 groups' 3rd-placed teams ranked; the top 8 qualify. Omitted before any group game. */
+  thirdPlace?: ThirdPlaceRow[];
 }
 
 export interface BracketNode {
@@ -137,6 +154,9 @@ export interface BracketNode {
   homeTeamId: number | null;
   awayTeamId: number | null;
   winnerTeamId: number | null;
+  /** The home team is an "as it stands" R32 projection, not yet a confirmed participant. */
+  homeProvisional?: boolean;
+  awayProvisional?: boolean;
 }
 
 export interface BracketResponse {

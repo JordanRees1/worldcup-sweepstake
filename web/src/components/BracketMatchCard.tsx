@@ -26,6 +26,8 @@ interface TeamSideProps {
   align: 'left' | 'right';
   /** Owning player's name — shown in brackets under the team name. */
   owner?: string;
+  /** An "as it stands" projection — render italic to flag it isn't confirmed yet. */
+  provisional?: boolean;
 }
 
 function TeamSide({
@@ -37,10 +39,11 @@ function TeamSide({
   isHighlighted,
   align,
   owner,
+  provisional,
 }: TeamSideProps) {
   const team = teamId !== null ? teamMap.get(teamId) : undefined;
   const displayName = team?.name ?? labelFrag;
-  const cls = sideClass(isWinner, isLoser, isHighlighted);
+  const cls = `${sideClass(isWinner, isLoser, isHighlighted)}${provisional ? ' italic' : ''}`;
   // The owner turns green alongside the team name when its player is selected.
   const ownerCls = isHighlighted ? 'text-emerald-400' : 'text-slate-500';
 
@@ -126,6 +129,7 @@ export function BracketMatchCard({
           isHighlighted={homeHi}
           align="right"
           owner={homeOwner}
+          provisional={node.homeProvisional}
         />
 
         {/* Centre: score (live or final) or kickoff time */}
@@ -157,6 +161,7 @@ export function BracketMatchCard({
           isHighlighted={awayHi}
           align="left"
           owner={awayOwner}
+          provisional={node.awayProvisional}
         />
       </div>
       {venue && (

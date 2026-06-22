@@ -15,6 +15,7 @@ import {
   type TeamsResponse,
   type VenuesResponse,
 } from '@sweepstake/shared';
+import { computeDecidedGroups, projectRound32, rankAllThirds } from '../engine';
 import type { AppState } from './appState';
 
 export function buildHealth(state: AppState, version: string): HealthResponse {
@@ -105,29 +106,73 @@ export function buildVenues(state: AppState): VenuesResponse {
   return { venues: state.venues };
 }
 
+/** True once any group match has kicked off — before that, "as it stands" projections are noise. */
+function groupStageStarted(state: AppState): boolean {
+  return state.matches.some(
+    (m) => m.stage === 'Group Stage' && (m.status === 'finished' || m.status === 'live'),
+  );
+}
+
 export function buildGroups(state: AppState): GroupsResponse {
   const liveGroups = new Set(
     state.matches
       .filter((m) => m.stage === 'Group Stage' && m.status === 'live' && m.group)
       .map((m) => m.group),
   );
-  return {
-    groups: state.groupTables.map((t) => (liveGroups.has(t.group) ? { ...t, live: true } : t)),
-  };
+  const groups = state.groupTables.map((t) => (liveGroups.has(t.group) ? { ...t, live: true } : t));
+
+  if (!groupStageStarted(state)) return { groups };
+
+  const thirdPlace = rankAllThirds(state.groupTables).map((t, i) => ({
+    teamId: t.row.teamId,
+    group: t.group,
+    rank: i + 1,
+    qualifying: i < 8,
+    played: t.row.played,
+    points: t.row.points,
+    goalDifference: t.row.goalDifference,
+    goalsFor: t.row.goalsFor,
+  }));
+  return { groups, thirdPlace };
 }
 
 export function buildBracket(state: AppState): BracketResponse {
   const byStage = new Map<StageName, BracketNode[]>();
 
+  // Project the Round of 32 "as it stands" from current standings (only once a group game has begun).
+  const projection = groupStageStarted(state)
+    ? projectRound32(state.matches, state.groupTables, computeDecidedGroups(state.matches))
+    : null;
+
   for (const m of state.matches) {
     if (m.stage === 'Group Stage') continue;
+    let homeTeamId = m.homeTeamId;
+    let awayTeamId = m.awayTeamId;
+    let homeProvisional = false;
+    let awayProvisional = false;
+
+    // Fill empty R32 slots with the projection so the bracket shows the current picture.
+    const proj = m.stage === 'Round of 32' ? projection?.get(m.id) : undefined;
+    if (proj) {
+      if (homeTeamId === null && proj.home.teamId !== null) {
+        homeTeamId = proj.home.teamId;
+        homeProvisional = proj.home.provisional;
+      }
+      if (awayTeamId === null && proj.away.teamId !== null) {
+        awayTeamId = proj.away.teamId;
+        awayProvisional = proj.away.provisional;
+      }
+    }
+
     const node: BracketNode = {
       matchId: m.id,
       stage: m.stage,
       label: m.label,
-      homeTeamId: m.homeTeamId,
-      awayTeamId: m.awayTeamId,
+      homeTeamId,
+      awayTeamId,
       winnerTeamId: m.result?.winnerTeamId ?? null,
+      ...(homeProvisional ? { homeProvisional: true } : {}),
+      ...(awayProvisional ? { awayProvisional: true } : {}),
     };
     byStage.set(m.stage, [...(byStage.get(m.stage) ?? []), node]);
   }
