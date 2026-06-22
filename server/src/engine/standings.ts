@@ -64,8 +64,12 @@ function accumulate(teamIds: number[], matches: Match[]): Map<number, Acc> {
   return accs;
 }
 
-/** Resolve a set of tied teams by head-to-head (points, GD, GF), then team id as a stable fallback. */
-function headToHead(tied: Acc[], matches: Match[]): Acc[] {
+/**
+ * Resolve a set of tied teams by head-to-head (points, GD, GF). When still dead-level (e.g. they
+ * drew each other), fall back to team name alphabetically — a deterministic stand-in for FIFA's
+ * fair-play/drawing-of-lots tiebreak that matches how public tables (BBC, FIFA.com) display ties.
+ */
+function headToHead(tied: Acc[], matches: Match[], nameById: Map<number, string>): Acc[] {
   const mini = accumulate(
     tied.map((a) => a.teamId),
     matches,
@@ -73,11 +77,14 @@ function headToHead(tied: Acc[], matches: Match[]): Acc[] {
   return [...tied].sort((x, y) => {
     const mx = mini.get(x.teamId) ?? emptyAcc(x.teamId);
     const my = mini.get(y.teamId) ?? emptyAcc(y.teamId);
-    return compareOverall(mx, my) || x.teamId - y.teamId;
+    return (
+      compareOverall(mx, my) ||
+      (nameById.get(x.teamId) ?? '').localeCompare(nameById.get(y.teamId) ?? '')
+    );
   });
 }
 
-function rankTeams(accs: Acc[], matches: Match[]): Acc[] {
+function rankTeams(accs: Acc[], matches: Match[], nameById: Map<number, string>): Acc[] {
   const byOverall = [...accs].sort(compareOverall);
   const ranked: Acc[] = [];
   let i = 0;
@@ -85,14 +92,15 @@ function rankTeams(accs: Acc[], matches: Match[]): Acc[] {
     let j = i + 1;
     while (j < byOverall.length && compareOverall(byOverall[i], byOverall[j]) === 0) j++;
     const tied = byOverall.slice(i, j);
-    ranked.push(...(tied.length === 1 ? tied : headToHead(tied, matches)));
+    ranked.push(...(tied.length === 1 ? tied : headToHead(tied, matches, nameById)));
     i = j;
   }
   return ranked;
 }
 
-const toRow = (a: Acc, index: number): GroupStandingRow => ({
+const toRow = (a: Acc, index: number, name: string): GroupStandingRow => ({
   teamId: a.teamId,
+  name,
   played: a.played,
   won: a.won,
   drawn: a.drawn,
@@ -110,11 +118,12 @@ export function computeGroupStandings(
   teams: Team[],
   matches: Match[],
 ): GroupTable {
+  const nameById = new Map(teams.map((t) => [t.id, t.name]));
   const groupTeamIds = teams.filter((t) => t.group === group).map((t) => t.id);
   const groupMatches = matches.filter((m) => m.stage === 'Group Stage' && m.group === group);
   const accs = accumulate(groupTeamIds, groupMatches);
-  const ranked = rankTeams([...accs.values()], groupMatches);
-  return { group, rows: ranked.map(toRow) };
+  const ranked = rankTeams([...accs.values()], groupMatches, nameById);
+  return { group, rows: ranked.map((a, i) => toRow(a, i, nameById.get(a.teamId) ?? '')) };
 }
 
 /** Standings for all 12 groups (A–L). */

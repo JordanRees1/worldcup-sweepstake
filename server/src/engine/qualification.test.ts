@@ -97,9 +97,9 @@ describe('computeQualification', () => {
 
   it('ranks thirds by points → GD → GF → wins (stable tiebreak)', () => {
     // Synthesise three third-place rows to test sort order directly.
-    const thirdA = { row: { teamId: 100, played: 3, won: 1, drawn: 0, lost: 2, goalsFor: 3, goalsAgainst: 5, goalDifference: -2, points: 3, rank: 3 }, group: 'A' as const };
-    const thirdB = { row: { teamId: 200, played: 3, won: 1, drawn: 0, lost: 2, goalsFor: 5, goalsAgainst: 4, goalDifference: 1, points: 3, rank: 3 }, group: 'B' as const };
-    const thirdC = { row: { teamId: 300, played: 3, won: 1, drawn: 0, lost: 2, goalsFor: 4, goalsAgainst: 4, goalDifference: 0, points: 3, rank: 3 }, group: 'C' as const };
+    const thirdA = { row: { teamId: 100, name: 'Team A', played: 3, won: 1, drawn: 0, lost: 2, goalsFor: 3, goalsAgainst: 5, goalDifference: -2, points: 3, rank: 3 }, group: 'A' as const };
+    const thirdB = { row: { teamId: 200, name: 'Team B', played: 3, won: 1, drawn: 0, lost: 2, goalsFor: 5, goalsAgainst: 4, goalDifference: 1, points: 3, rank: 3 }, group: 'B' as const };
+    const thirdC = { row: { teamId: 300, name: 'Team C', played: 3, won: 1, drawn: 0, lost: 2, goalsFor: 4, goalsAgainst: 4, goalDifference: 0, points: 3, rank: 3 }, group: 'C' as const };
 
     // All 3 pts, sort by GD: B(+1) > C(0) > A(-2)
     const sorted = [thirdA, thirdB, thirdC].sort((a, b) =>

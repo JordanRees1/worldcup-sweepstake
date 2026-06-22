@@ -101,6 +101,8 @@ export interface Match {
 
 export interface GroupStandingRow {
   teamId: number;
+  /** Team name — carried on the row so ranking can break dead-level ties alphabetically. */
+  name: string;
   played: number;
   won: number;
   drawn: number;

@@ -50,6 +50,27 @@ describe('computeGroupStandings', () => {
     expect(first?.teamId).toBe(1); // tie resolved by head-to-head
   });
 
+  it('breaks a dead-level tie (drew head-to-head) alphabetically by name, not by teamId', () => {
+    // Mirrors the real Group K case: Portugal (id 1) and DR Congo (id 2) level on everything and
+    // drew 1-1. Alphabetically "DR Congo" < "Portugal", so DR Congo must rank above — even though
+    // its teamId is higher. (Previously the teamId fallback wrongly put Portugal first.)
+    const grpK: Team[] = [
+      { id: 1, name: 'Portugal', fifaCode: 'POR', group: 'A', isPlaceholder: false },
+      { id: 2, name: 'DR Congo', fifaCode: 'COD', group: 'A', isPlaceholder: false },
+      { id: 3, name: 'Colombia', fifaCode: 'COL', group: 'A', isPlaceholder: false },
+      { id: 4, name: 'Uzbekistan', fifaCode: 'UZB', group: 'A', isPlaceholder: false },
+    ];
+    const matches: Match[] = [
+      gm(1, 1, 2, 1, 1), // Portugal 1-1 DR Congo
+      gm(2, 3, 4, 3, 1), // Colombia 3-1 Uzbekistan
+    ];
+    const table = computeGroupStandings('A', grpK, matches);
+    const [, second, third] = table.rows;
+    expect(second?.teamId).toBe(2); // DR Congo
+    expect(third?.teamId).toBe(1); // Portugal
+    expect(second?.points).toBe(third?.points);
+  });
+
   it('returns a stable, zeroed table before any results', () => {
     const table = computeGroupStandings('A', teams, []);
     expect(table.rows).toHaveLength(4);
