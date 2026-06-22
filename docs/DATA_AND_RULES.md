@@ -104,11 +104,13 @@ user signs off.
 - **"As it stands" R32 + thirds table:** mid-group-stage we project the R32 from current standings
   (`server/src/engine/knockout.ts` `projectRound32`) and show all 12 thirds ranked on the groups page
   (top-8 `qualifying`). Projected teams render *italic* (unconfirmed); qualifying thirds show
-  green+italic in their group table. **Caveat:** `assignBestThirds` is a "most-constrained-first"
-  heuristic — it yields *a valid* third→slot assignment, not necessarily FIFA’s official one for that
-  exact combination, so the precise third-vs-group-winner pairing may differ until the API resolves
-  the real slots (the set of 32 teams is always correct). Implement the full FIFA table only if exact
-  provisional pairings matter.
+  green+italic in their group table. The third→slot assignment uses the **official FIFA Annexe C
+  table** (all 495 combinations, transcribed into `server/src/engine/r32ThirdAllocation.ts`), keyed
+  by the sorted set of the 8 qualifying third-place groups → the third assigned to each group-winner
+  slot. So provisional pairings match FIFA/BBC exactly for any given set of 8. A most-constrained-first
+  heuristic remains only as a fallback for partial sets (fewer than 8 thirds known). Note our dataset
+  numbers the R32 fixtures differently from FIFA, so the table is applied by *(group-winner + eligible
+  groups)*, not match number.
 - **Knockouts:** single elimination; if level after 90′, extra time then penalties → there is
   always a winner. Resolve the tree by following the label encodings (W## / RU##).
 - **Champion:** winner of match #104.

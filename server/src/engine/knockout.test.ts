@@ -4,8 +4,9 @@ import { describe, expect, it } from 'vitest';
 import type { Match } from '@sweepstake/shared';
 import { loadDataset } from '../data/dataset';
 import { DATASETS_DIR } from '../data/paths';
-import { computeAllGroupStandings, computeDecidedGroups } from './index';
-import { projectRound32, rankAllThirds } from './knockout';
+import type { GroupLetter } from '@sweepstake/shared';
+import { computeAllGroupStandings, computeDecidedGroups, type RankedThird } from './index';
+import { assignBestThirds, projectRound32, rankAllThirds } from './knockout';
 
 // Drive the projection from the committed "group-stage" scenario (matchdays 1+2 complete).
 const ds = loadDataset();
@@ -26,6 +27,54 @@ const hydrated: Match[] = ds.matches.map((m) => {
 });
 const tables = computeAllGroupStandings(ds.teams, hydrated);
 const decided = computeDecidedGroups(hydrated);
+
+describe('assignBestThirds (official Annexe C)', () => {
+  // Build the 8 qualifying thirds for a known combination, with teamId = group letter's position.
+  const third = (group: GroupLetter, teamId: number): RankedThird => ({
+    row: {
+      teamId,
+      name: `Third ${group}`,
+      played: 3,
+      won: 1,
+      drawn: 0,
+      lost: 2,
+      goalsFor: 1,
+      goalsAgainst: 2,
+      goalDifference: -1,
+      points: 3,
+      rank: 3,
+    },
+    group,
+  });
+
+  it('matches Annexe C row 1 (groups E,F,G,H,I,J,K,L)', () => {
+    // Annexe C row 1 → winner order [A,B,D,E,G,I,K,L] = thirds E,J,I,F,H,G,L,K.
+    // Winner→match: A=79 B=85 D=82 E=75 G=81 I=78 K=88 L=80.
+    const id: Record<string, number> = { E: 5, F: 6, G: 7, H: 8, I: 9, J: 10, K: 11, L: 12 };
+    const thirds = (['E', 'F', 'G', 'H', 'I', 'J', 'K', 'L'] as GroupLetter[]).map((g) =>
+      third(g, id[g]),
+    );
+    const a = assignBestThirds(thirds);
+    expect(a.get(79)).toBe(id.E); // winner A vs 3E
+    expect(a.get(85)).toBe(id.J); // winner B vs 3J
+    expect(a.get(82)).toBe(id.I); // winner D vs 3I
+    expect(a.get(75)).toBe(id.F); // winner E vs 3F
+    expect(a.get(81)).toBe(id.H); // winner G vs 3H
+    expect(a.get(78)).toBe(id.G); // winner I vs 3G
+    expect(a.get(88)).toBe(id.L); // winner K vs 3L
+    expect(a.get(80)).toBe(id.K); // winner L vs 3K
+  });
+
+  it('places exactly the 8 given thirds, one per slot', () => {
+    const thirds = (['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'] as GroupLetter[]).map((g, i) =>
+      third(g, 100 + i),
+    );
+    const a = assignBestThirds(thirds);
+    expect(a.size).toBe(8);
+    expect(new Set(a.values()).size).toBe(8);
+    expect(new Set(a.values())).toEqual(new Set(thirds.map((t) => t.row.teamId)));
+  });
+});
 
 describe('rankAllThirds', () => {
   it('ranks all 12 groups’ current third-placed teams', () => {

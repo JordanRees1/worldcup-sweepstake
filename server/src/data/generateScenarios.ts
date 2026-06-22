@@ -46,6 +46,7 @@ interface SimLive {
   homeScore: number;
   awayScore: number;
   minute: number;
+  injuryTime?: number;
 }
 
 interface ScenarioFile {
@@ -254,16 +255,17 @@ function main(): void {
       .filter((m) => m.stage === 'Group Stage')
       .sort((a, b) => a.id - b.id)
       .slice(48, 51);
-    const liveScores = [
+    const liveScores: { home: number; away: number; minute: number; injuryTime?: number }[] = [
       { home: 1, away: 0, minute: 23 },
       { home: 2, away: 2, minute: 67 },
-      { home: 0, away: 1, minute: 88 },
+      { home: 0, away: 1, minute: 90, injuryTime: 3 }, // exercises stoppage-time display (90+3')
     ];
     const live: SimLive[] = md3.map((m, i) => ({
       matchId: m.id,
       homeScore: liveScores[i].home,
       awayScore: liveScores[i].away,
       minute: liveScores[i].minute,
+      ...(liveScores[i].injuryTime != null ? { injuryTime: liveScores[i].injuryTime } : {}),
     }));
     write(outDir, 'live-demo.json', {
       name: 'Live Demo — Matchday 3 In Progress',

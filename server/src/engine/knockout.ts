@@ -1,5 +1,6 @@
 import type { GroupLetter, GroupTable, Match } from '@sweepstake/shared';
 import { compareThirds, type RankedThird } from './qualification';
+import { R32_THIRD_ALLOCATION, R32_THIRD_WINNER_ORDER } from './r32ThirdAllocation';
 
 /**
  * Resolving knockout fixtures from group standings. The R32 fixtures in `matches.csv` use label
@@ -22,11 +23,42 @@ export const R32_BEST_THIRD_SLOTS: ReadonlyArray<{ matchId: number; groups: Grou
   { matchId: 88, groups: ['D', 'E', 'I', 'J', 'L'] },
 ];
 
+/** Which R32 match each group-WINNER best-third slot is, keyed by the winner's group letter. */
+const WINNER_TO_MATCH: Record<string, number> = { A: 79, B: 85, D: 82, E: 75, G: 81, I: 78, K: 88, L: 80 };
+
 /**
- * Assign (up to) 8 qualifying thirds to R32 best-third slots, "most constrained first" — groups with
- * the fewest eligible slots (e.g. K, L) are placed before flexible ones, preventing impossible states.
+ * The official allocation (FIFA regulations Annexe C): for the exact set of 8 qualifying thirds,
+ * look up which group's third fills each winner slot. Returns null when fewer than 8 thirds are
+ * known or the combination isn't in the table, so the caller can fall back to the heuristic.
+ */
+function officialBestThirds(qualifyingThirds: RankedThird[]): Map<number, number> | null {
+  if (qualifyingThirds.length !== 8) return null;
+  const teamByGroup = new Map<GroupLetter, number>(
+    qualifyingThirds.map((t) => [t.group, t.row.teamId]),
+  );
+  const key = [...teamByGroup.keys()].sort().join('');
+  const row = R32_THIRD_ALLOCATION[key];
+  if (!row || row.length !== R32_THIRD_WINNER_ORDER.length) return null;
+
+  const assignments = new Map<number, number>();
+  R32_THIRD_WINNER_ORDER.forEach((winner, i) => {
+    const thirdGroup = row[i] as GroupLetter;
+    const teamId = teamByGroup.get(thirdGroup);
+    const matchId = WINNER_TO_MATCH[winner];
+    if (teamId !== undefined && matchId !== undefined) assignments.set(matchId, teamId);
+  });
+  return assignments.size === 8 ? assignments : null;
+}
+
+/**
+ * Assign 8 qualifying thirds to R32 best-third slots. Uses the **official Annexe C** allocation when
+ * the full set of 8 is known; otherwise falls back to a "most constrained first" heuristic (groups
+ * with the fewest eligible slots, e.g. K/L, placed first) — used for partial "as it stands" sets.
  */
 export function assignBestThirds(qualifyingThirds: RankedThird[]): Map<number, number> {
+  const official = officialBestThirds(qualifyingThirds);
+  if (official) return official;
+
   const assignments = new Map<number, number>(); // matchId → teamId
   const usedGroups = new Set<GroupLetter>();
 

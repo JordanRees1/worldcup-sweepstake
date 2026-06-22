@@ -995,7 +995,7 @@
     {
       "matchId": 75,
       "homeTeamId": 20,
-      "awayTeamId": 10
+      "awayTeamId": 22
     },
     {
       "matchId": 76,
@@ -1010,22 +1010,22 @@
     {
       "matchId": 78,
       "homeTeamId": 36,
-      "awayTeamId": 30
+      "awayTeamId": 26
     },
     {
       "matchId": 79,
       "homeTeamId": 4,
-      "awayTeamId": 22
+      "awayTeamId": 18
     },
     {
       "matchId": 80,
       "homeTeamId": 48,
-      "awayTeamId": 18
+      "awayTeamId": 42
     },
     {
       "matchId": 81,
       "homeTeamId": 28,
-      "awayTeamId": 2
+      "awayTeamId": 30
     },
     {
       "matchId": 82,
@@ -1045,7 +1045,7 @@
     {
       "matchId": 85,
       "homeTeamId": 8,
-      "awayTeamId": 26
+      "awayTeamId": 38
     },
     {
       "matchId": 86,
@@ -1060,7 +1060,7 @@
     {
       "matchId": 88,
       "homeTeamId": 44,
-      "awayTeamId": 14
+      "awayTeamId": 46
     },
     {
       "matchId": 89,
