@@ -28,6 +28,8 @@ interface TeamSideProps {
   owner?: string;
   /** An "as it stands" projection — render italic to flag it isn't confirmed yet. */
   provisional?: boolean;
+  /** Unresolved knockout slot: the teams that could fill it, e.g. "Germany / Paraguay" (italic). */
+  candidates?: string;
 }
 
 function TeamSide({
@@ -40,10 +42,12 @@ function TeamSide({
   align,
   owner,
   provisional,
+  candidates,
 }: TeamSideProps) {
   const team = teamId !== null ? teamMap.get(teamId) : undefined;
-  const displayName = team?.name ?? labelFrag;
-  const cls = `${sideClass(isWinner, isLoser, isHighlighted)}${provisional ? ' italic' : ''}`;
+  const isCandidate = teamId === null && !!candidates;
+  const displayName = team?.name ?? (isCandidate ? candidates : labelFrag);
+  const cls = `${sideClass(isWinner, isLoser, isHighlighted)}${provisional || isCandidate ? ' italic' : ''}`;
   // The owner turns green alongside the team name when its player is selected.
   const ownerCls = isHighlighted ? 'text-emerald-400' : 'text-slate-500';
 
@@ -104,6 +108,12 @@ export function BracketMatchCard({
   const homeOwner = homeId !== null ? ownerByTeam?.get(homeId) : undefined;
   const awayOwner = awayId !== null ? ownerByTeam?.get(awayId) : undefined;
 
+  // For an unresolved slot, the teams that could fill it (the feeding match's two sides).
+  const candNames = (ids?: number[]): string | undefined =>
+    ids?.map((id) => teamMap.get(id)?.name ?? `#${id}`).join(' / ');
+  const homeCandidates = homeId === null ? candNames(match?.homeCandidates) : undefined;
+  const awayCandidates = awayId === null ? candNames(match?.awayCandidates) : undefined;
+
   const homeWins = winnerId !== null && winnerId === homeId;
   const awayWins = winnerId !== null && winnerId === awayId;
   const homeHi = homeId !== null && highlightIds.has(homeId);
@@ -130,6 +140,7 @@ export function BracketMatchCard({
           align="right"
           owner={homeOwner}
           provisional={node.homeProvisional}
+          candidates={homeCandidates}
         />
 
         {/* Centre: score (live or final) or kickoff time */}
@@ -162,6 +173,7 @@ export function BracketMatchCard({
           align="left"
           owner={awayOwner}
           provisional={node.awayProvisional}
+          candidates={awayCandidates}
         />
       </div>
       {venue && (

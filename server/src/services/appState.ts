@@ -13,6 +13,7 @@ import { loadTenantDataset, type Dataset, type StructuralData } from '../data/da
 import { resolveSweepstakeByCode } from '../data/sweepstake';
 import { datasetFromRecord, type TenantStore } from '../data/tenantStore';
 import {
+  attachKnockoutCandidates,
   buildLeaderboard,
   computeAllGroupStandings,
   computeDecidedGroups,
@@ -46,7 +47,8 @@ export async function computeAppState(
   provider: ResultsProvider,
 ): Promise<AppState> {
   const [results, slots] = await Promise.all([provider.getResults(), provider.getResolvedSlots()]);
-  const matches = applyResults(dataset.matches, results, slots);
+  // Hydrate with results/slots, then annotate unresolved knockout slots with their possible teams.
+  const matches = attachKnockoutCandidates(applyResults(dataset.matches, results, slots));
 
   const groupTables = computeAllGroupStandings(dataset.teams, matches);
   const decidedGroups = computeDecidedGroups(matches);

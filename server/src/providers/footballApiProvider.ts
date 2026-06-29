@@ -232,9 +232,11 @@ export function createFootballApiProvider(
       if (!hf || !af) continue;
       const homeId = resolveSource(parseSource(hf, m.id), tables, bestThirds, winners, losers);
       const awayId = resolveSource(parseSource(af, m.id), tables, bestThirds, winners, losers);
-      if (homeId === null || awayId === null) continue; // a feeding round isn't finished yet
+      if (homeId === null && awayId === null) continue; // neither feeding round is decided yet
 
+      // Emit a (possibly partial) slot so a confirmed side shows even before its opponent is known.
       slots.push({ matchId: m.id, homeTeamId: homeId, awayTeamId: awayId });
+      if (homeId === null || awayId === null) continue; // can't have a result until both teams are set
 
       const ko = koByPair.get(pairKey(homeId, awayId));
       if (!ko) continue;

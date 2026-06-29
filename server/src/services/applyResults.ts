@@ -20,10 +20,11 @@ export function applyResults(
 
     const next: Match = { ...m };
 
-    // Knockout slot resolution: fill the two team IDs once the API knows them.
+    // Knockout slot resolution: fill whichever team IDs are known (a side may resolve before its
+    // opponent — e.g. one feeding match finished while the other hasn't).
     if (slot) {
-      next.homeTeamId = slot.homeTeamId;
-      next.awayTeamId = slot.awayTeamId;
+      if (slot.homeTeamId !== null) next.homeTeamId = slot.homeTeamId;
+      if (slot.awayTeamId !== null) next.awayTeamId = slot.awayTeamId;
     }
 
     if (dto) {

@@ -6,7 +6,7 @@ import { loadDataset } from '../data/dataset';
 import { DATASETS_DIR } from '../data/paths';
 import type { GroupLetter } from '@sweepstake/shared';
 import { computeAllGroupStandings, computeDecidedGroups, type RankedThird } from './index';
-import { assignBestThirds, projectRound32, rankAllThirds } from './knockout';
+import { attachKnockoutCandidates, assignBestThirds, projectRound32, rankAllThirds } from './knockout';
 
 // Drive the projection from the committed "group-stage" scenario (matchdays 1+2 complete).
 const ds = loadDataset();
@@ -73,6 +73,40 @@ describe('assignBestThirds (official Annexe C)', () => {
     expect(a.size).toBe(8);
     expect(new Set(a.values()).size).toBe(8);
     expect(new Set(a.values())).toEqual(new Set(thirds.map((t) => t.row.teamId)));
+  });
+});
+
+describe('attachKnockoutCandidates', () => {
+  const mk = (over: Partial<Match> & { id: number }): Match => ({
+    matchNumber: over.id,
+    stage: 'Round of 32',
+    stageOrder: 2,
+    label: '',
+    kickoffAt: '2026-06-29T18:00:00Z',
+    venueId: 1,
+    homeTeamId: null,
+    awayTeamId: null,
+    status: 'scheduled',
+    ...over,
+  });
+
+  it('lists the feeding match’s two teams for an unresolved slot, but not for a resolved one', () => {
+    const matches = [
+      mk({ id: 75, label: '1E vs 3ABCDF', homeTeamId: 17, awayTeamId: 14 }), // R32 teams known, not played
+      mk({ id: 89, stage: 'Round of 16', stageOrder: 3, label: 'W73 vs W75', homeTeamId: 5, awayTeamId: null }),
+    ];
+    const m89 = attachKnockoutCandidates(matches).find((m) => m.id === 89)!;
+    expect(m89.homeCandidates).toBeUndefined(); // W73 already resolved to a team
+    expect(m89.awayCandidates).toEqual([17, 14]); // W75 → the two teams in match 75
+  });
+
+  it('gives no candidates when the feeding match isn’t fully set', () => {
+    const matches = [
+      mk({ id: 75, label: '1E vs 3ABCDF', homeTeamId: 17, awayTeamId: null }), // match 75 half-known
+      mk({ id: 89, stage: 'Round of 16', stageOrder: 3, label: 'W73 vs W75', homeTeamId: 5, awayTeamId: null }),
+    ];
+    const m89 = attachKnockoutCandidates(matches).find((m) => m.id === 89)!;
+    expect(m89.awayCandidates).toBeUndefined();
   });
 });
 

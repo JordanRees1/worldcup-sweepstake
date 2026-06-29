@@ -2,12 +2,21 @@ import type { Match, Team, Venue } from '@sweepstake/shared';
 import { formatDay, formatTime } from '../lib/format';
 import { LiveBadge } from './LiveBadge';
 
-function sideLabel(match: Match, side: 'home' | 'away', teamMap: Map<number, Team>): string {
+/** A resolved team name, or — for an unresolved knockout slot — its candidate teams (italic). */
+function sideLabel(
+  match: Match,
+  side: 'home' | 'away',
+  teamMap: Map<number, Team>,
+): { text: string; candidate: boolean } {
   const id = side === 'home' ? match.homeTeamId : match.awayTeamId;
-  if (id !== null) return teamMap.get(id)?.name ?? `#${id}`;
-  // Knockout slot not yet resolved — fall back to the label's two halves.
+  if (id !== null) return { text: teamMap.get(id)?.name ?? `#${id}`, candidate: false };
+  const cands = side === 'home' ? match.homeCandidates : match.awayCandidates;
+  if (cands?.length) {
+    return { text: cands.map((c) => teamMap.get(c)?.name ?? `#${c}`).join(' / '), candidate: true };
+  }
+  // Still no candidates — fall back to the label's two halves.
   const parts = match.label.split(' vs ');
-  return (side === 'home' ? parts[0] : parts[1]) ?? 'TBD';
+  return { text: (side === 'home' ? parts[0] : parts[1]) ?? 'TBD', candidate: false };
 }
 
 export function FixtureRow({
@@ -27,8 +36,8 @@ export function FixtureRow({
   /** When provided, shows the stadium + city/country under the fixture. */
   venue?: Venue;
 }) {
-  const home = sideLabel(match, 'home', teamMap);
-  const away = sideLabel(match, 'away', teamMap);
+  const homeSide = sideLabel(match, 'home', teamMap);
+  const awaySide = sideLabel(match, 'away', teamMap);
   const homeHi = match.homeTeamId !== null && highlightIds?.has(match.homeTeamId);
   const awayHi = match.awayTeamId !== null && highlightIds?.has(match.awayTeamId);
   const homeOwner = match.homeTeamId !== null ? ownerByTeam?.get(match.homeTeamId) : undefined;
@@ -45,9 +54,15 @@ export function FixtureRow({
       <div className="flex items-center gap-2 text-sm">
         <div className="min-w-0 flex-1 text-right">
           <span
-            className={`block truncate ${homeHi ? 'font-semibold text-slate-100' : 'text-slate-300'}`}
+            className={`block truncate ${
+              homeSide.candidate
+                ? 'text-[12px] italic text-slate-400'
+                : homeHi
+                  ? 'font-semibold text-slate-100'
+                  : 'text-slate-300'
+            }`}
           >
-            {home}
+            {homeSide.text}
           </span>
           {homeOwner && (
             <span className="block truncate text-[10px] text-slate-400/60">({homeOwner})</span>
@@ -69,9 +84,15 @@ export function FixtureRow({
         </div>
         <div className="min-w-0 flex-1">
           <span
-            className={`block truncate ${awayHi ? 'font-semibold text-slate-100' : 'text-slate-300'}`}
+            className={`block truncate ${
+              awaySide.candidate
+                ? 'text-[12px] italic text-slate-400'
+                : awayHi
+                  ? 'font-semibold text-slate-100'
+                  : 'text-slate-300'
+            }`}
           >
-            {away}
+            {awaySide.text}
           </span>
           {awayOwner && (
             <span className="block truncate text-[10px] text-slate-400/60">({awayOwner})</span>

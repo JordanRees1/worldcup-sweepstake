@@ -140,6 +140,36 @@ export function rankAllThirds(tables: GroupTable[]): RankedThird[] {
   return thirds.sort(compareThirds);
 }
 
+/**
+ * For each knockout fixture whose sides aren't yet decided, work out the teams that *could* fill them:
+ * a `W##`/`RU##` slot is fed by match `##`, so its candidates are that match's two participants —
+ * but only once both of those are themselves known (the frontier of the bracket). Returns a new array
+ * with `homeCandidates`/`awayCandidates` attached where applicable (display-only; e.g. "Germany / Paraguay").
+ */
+export function attachKnockoutCandidates(matches: Match[]): Match[] {
+  const byId = new Map(matches.map((m) => [m.id, m]));
+  const candidatesFor = (frag: string): number[] | undefined => {
+    const ref = frag.match(/^(?:W|RU)(\d+)$/); // winner OR runner-up — both feed from match ##
+    if (!ref) return undefined;
+    const feed = byId.get(Number(ref[1]));
+    return feed && feed.homeTeamId !== null && feed.awayTeamId !== null
+      ? [feed.homeTeamId, feed.awayTeamId]
+      : undefined;
+  };
+  return matches.map((m) => {
+    if (m.stage === 'Group Stage') return m;
+    const [hf, af] = m.label.split(' vs ').map((s) => s.trim());
+    const homeCandidates = m.homeTeamId === null && hf ? candidatesFor(hf) : undefined;
+    const awayCandidates = m.awayTeamId === null && af ? candidatesFor(af) : undefined;
+    if (!homeCandidates && !awayCandidates) return m;
+    return {
+      ...m,
+      ...(homeCandidates ? { homeCandidates } : {}),
+      ...(awayCandidates ? { awayCandidates } : {}),
+    };
+  });
+}
+
 /** One side of a projected R32 fixture. `provisional` = the place isn't yet locked (group undecided). */
 export interface ProjectedSide {
   teamId: number | null;

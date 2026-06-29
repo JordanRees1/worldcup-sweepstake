@@ -97,6 +97,9 @@ export interface Match {
   minute?: number;
   /** Stoppage/injury time in minutes to add to `minute` (e.g. 45 + `injuryTime` 2 → "45+2'"). Live only. */
   injuryTime?: number;
+  /** For an unresolved knockout home slot: the teams that could fill it (the feeding match's two sides). */
+  homeCandidates?: number[];
+  awayCandidates?: number[];
 }
 
 export interface GroupStandingRow {

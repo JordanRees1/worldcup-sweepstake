@@ -25,8 +25,9 @@ export interface MatchResultDTO {
 export interface ResolvedSlotDTO {
   /** Our canonical match id. */
   matchId: number;
-  homeTeamId: number;
-  awayTeamId: number;
+  /** A side may be null when only one participant is known so far (e.g. one feeding match finished). */
+  homeTeamId: number | null;
+  awayTeamId: number | null;
 }
 
 export interface ProviderMeta {
