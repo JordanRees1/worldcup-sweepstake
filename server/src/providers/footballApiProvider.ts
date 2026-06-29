@@ -16,6 +16,14 @@
  * configured TTL (default 60s) to stay well within the limit.
  */
 import type { Match, Team } from '@sweepstake/shared';
+import {
+  assignBestThirds,
+  computeAllGroupStandings,
+  computeDecidedGroups,
+  parseSource,
+  rankAllThirds,
+  resolveSource,
+} from '../engine';
 import type { MatchResultDTO, ProviderMeta, ResolvedSlotDTO, ResultsProvider } from './types';
 
 // ── football-data.org API types ───────────────────────────────────────────────
@@ -136,44 +144,119 @@ export function createFootballApiProvider(
     return teamPairToMatchId.get(`${homeId}:${awayId}`) ?? null;
   }
 
-  function mapApiMatch(m: ApiMatch): { result: MatchResultDTO | null; slot: ResolvedSlotDTO | null } {
-    const ourMatchId = resolveMatchId(m.homeTeam.tla, m.awayTeam.tla);
-    if (!ourMatchId) return { result: null, slot: null };
+  const teamId = (tla: string | null): number | null =>
+    tla ? (fifaCodeToTeamId.get(normalizeTla(tla)) ?? null) : null;
+  const pairKey = (a: number, b: number): string => [a, b].sort((x, y) => x - y).join(':');
+  // Live clock + stoppage time (v4.1) — only meaningful while a match is in play.
+  const liveNum = (status: string, v: number | string | null | undefined): number | null => {
+    const n = v != null ? Number(v) : NaN;
+    return status === 'live' && Number.isFinite(n) ? n : null;
+  };
 
+  /** API knockout match keyed by its (resolved) team pair — mapped to our fixtures in resolveKnockouts. */
+  interface KoMatch {
+    homeId: number;
+    awayId: number;
+    status: MatchStatus;
+    homeScore: number | null;
+    awayScore: number | null;
+    homePenalties: number | null;
+    awayPenalties: number | null;
+    winnerTeamId: number | null;
+    minute: number | null;
+    injuryTime: number | null;
+  }
+
+  /** Group-stage result (knockouts are resolved separately — see resolveKnockouts). */
+  function mapGroupResult(m: ApiMatch): MatchResultDTO | null {
+    const ourMatchId = resolveMatchId(m.homeTeam.tla, m.awayTeam.tla);
+    if (!ourMatchId) return null;
     const status = mapStatus(m.status);
     const { fullTime, penalties } = m.score;
-
-    // Live clock + stoppage time (v4.1) — only meaningful while in play, on livescore-enabled tiers.
-    const liveNum = (v: number | string | null | undefined): number | null => {
-      const n = v != null ? Number(v) : NaN;
-      return status === 'live' && Number.isFinite(n) ? n : null;
-    };
-    const minute = liveNum(m.minute);
-    const injuryTime = liveNum(m.injuryTime);
-
-    const result: MatchResultDTO = {
+    return {
       matchId: ourMatchId,
       status,
       homeScore: fullTime.home,
       awayScore: fullTime.away,
       homePenalties: penalties?.home ?? null,
       awayPenalties: penalties?.away ?? null,
-      minute,
-      injuryTime,
+      minute: liveNum(status, m.minute),
+      injuryTime: liveNum(status, m.injuryTime),
       winnerTeamId:
-        m.score.winner === 'HOME_TEAM' ? (fifaCodeToTeamId.get(normalizeTla(m.homeTeam.tla ?? '')) ?? null)
-        : m.score.winner === 'AWAY_TEAM' ? (fifaCodeToTeamId.get(normalizeTla(m.awayTeam.tla ?? '')) ?? null)
+        m.score.winner === 'HOME_TEAM' ? teamId(m.homeTeam.tla)
+        : m.score.winner === 'AWAY_TEAM' ? teamId(m.awayTeam.tla)
         : null,
     };
+  }
 
-    // Resolved slot: knockout match where both teams are now known
-    const isKnockout = m.stage !== 'GROUP_STAGE';
-    const homeId = m.homeTeam.tla ? fifaCodeToTeamId.get(normalizeTla(m.homeTeam.tla)) : null;
-    const awayId = m.awayTeam.tla ? fifaCodeToTeamId.get(normalizeTla(m.awayTeam.tla)) : null;
-    const slot: ResolvedSlotDTO | null =
-      isKnockout && homeId && awayId ? { matchId: ourMatchId, homeTeamId: homeId, awayTeamId: awayId } : null;
+  /**
+   * Resolve the knockout bracket from group standings + the API's knockout matches. Our dataset's
+   * knockout fixtures use label encodings (`2A vs 2B`, `1E vs 3ABCDF`, `W73 vs W75`) with no team ids,
+   * so we can't map them by team-pair up front. Instead: once all 12 groups are decided, resolve R32
+   * from standings (top-2 + the official Annexe C thirds), then walk the rounds — for each fixture whose
+   * two teams are known, emit a slot and, if the API has that match (matched by team pair), its result;
+   * a finished result feeds the next round's winners/losers.
+   */
+  function resolveKnockouts(
+    groupResults: MatchResultDTO[],
+    koByPair: Map<string, KoMatch>,
+  ): { slots: ResolvedSlotDTO[]; results: MatchResultDTO[] } {
+    const slots: ResolvedSlotDTO[] = [];
+    const results: MatchResultDTO[] = [];
 
-    return { result, slot };
+    const resById = new Map(groupResults.map((r) => [r.matchId, r]));
+    const hydratedGroups = ourMatches
+      .filter((m) => m.stage === 'Group Stage')
+      .map((m): Match => {
+        const r = resById.get(m.id);
+        if (!r || r.homeScore === null || r.awayScore === null) return m;
+        return {
+          ...m,
+          status: 'finished',
+          result: { homeScore: r.homeScore, awayScore: r.awayScore, winnerTeamId: r.winnerTeamId },
+        };
+      });
+
+    const tables = computeAllGroupStandings(teams, hydratedGroups);
+    if (computeDecidedGroups(hydratedGroups).size !== 12) return { slots, results }; // R32 not set yet
+    const bestThirds = assignBestThirds(rankAllThirds(tables).slice(0, 8));
+
+    const winners = new Map<number, number>();
+    const losers = new Map<number, number>();
+    const knockouts = ourMatches
+      .filter((m) => m.stage !== 'Group Stage')
+      .sort((a, b) => a.stageOrder - b.stageOrder || a.id - b.id);
+
+    for (const m of knockouts) {
+      const [hf, af] = m.label.split(' vs ').map((s) => s.trim());
+      if (!hf || !af) continue;
+      const homeId = resolveSource(parseSource(hf, m.id), tables, bestThirds, winners, losers);
+      const awayId = resolveSource(parseSource(af, m.id), tables, bestThirds, winners, losers);
+      if (homeId === null || awayId === null) continue; // a feeding round isn't finished yet
+
+      slots.push({ matchId: m.id, homeTeamId: homeId, awayTeamId: awayId });
+
+      const ko = koByPair.get(pairKey(homeId, awayId));
+      if (!ko) continue;
+      // Orient the API scores to OUR home/away (the API may list the pair the other way round).
+      const apiHomeIsOurHome = ko.homeId === homeId;
+      results.push({
+        matchId: m.id,
+        status: ko.status,
+        homeScore: apiHomeIsOurHome ? ko.homeScore : ko.awayScore,
+        awayScore: apiHomeIsOurHome ? ko.awayScore : ko.homeScore,
+        homePenalties: apiHomeIsOurHome ? ko.homePenalties : ko.awayPenalties,
+        awayPenalties: apiHomeIsOurHome ? ko.awayPenalties : ko.homePenalties,
+        winnerTeamId: ko.winnerTeamId,
+        minute: ko.minute,
+        injuryTime: ko.injuryTime,
+      });
+      if (ko.status === 'finished' && ko.winnerTeamId !== null) {
+        winners.set(m.id, ko.winnerTeamId);
+        losers.set(m.id, ko.winnerTeamId === homeId ? awayId : homeId);
+      }
+    }
+    return { slots, results };
   }
 
   async function fetchWithRetry(url: string, attempt = 0): Promise<ApiMatchesResponse> {
@@ -202,15 +285,38 @@ export function createFootballApiProvider(
     );
 
     const results: MatchResultDTO[] = [];
-    const slots: ResolvedSlotDTO[] = [];
+    const koByPair = new Map<string, KoMatch>();
 
     for (const m of data.matches) {
-      const { result, slot } = mapApiMatch(m);
-      if (result) results.push(result);
-      if (slot) slots.push(slot);
+      if (m.stage === 'GROUP_STAGE') {
+        const result = mapGroupResult(m);
+        if (result) results.push(result);
+        continue;
+      }
+      // Knockout match: collect it by team pair once both teams are known (resolved by the API).
+      const homeId = teamId(m.homeTeam.tla);
+      const awayId = teamId(m.awayTeam.tla);
+      if (homeId === null || awayId === null) continue;
+      const status = mapStatus(m.status);
+      koByPair.set(pairKey(homeId, awayId), {
+        homeId,
+        awayId,
+        status,
+        homeScore: m.score.fullTime.home,
+        awayScore: m.score.fullTime.away,
+        homePenalties: m.score.penalties?.home ?? null,
+        awayPenalties: m.score.penalties?.away ?? null,
+        winnerTeamId:
+          m.score.winner === 'HOME_TEAM' ? homeId : m.score.winner === 'AWAY_TEAM' ? awayId : null,
+        minute: liveNum(status, m.minute),
+        injuryTime: liveNum(status, m.injuryTime),
+      });
     }
 
-    const entry: CacheEntry = { results, slots, fetchedAt: Date.now() };
+    const knockout = resolveKnockouts(results, koByPair);
+    results.push(...knockout.results);
+
+    const entry: CacheEntry = { results, slots: knockout.slots, fetchedAt: Date.now() };
     return entry;
   }
 
