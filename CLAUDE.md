@@ -72,7 +72,9 @@ creation; it also runs fully locally.
 - `player_picks.csv` is **messy** and must be normalized: typos (`Sengal`, `Uzbekisan`),
   name variants (`Ivory Coast` → `Côte d'Ivoire`), and playoff-contingent picks
   (`Wales`, `Sweden`, `Turkiye`, `Czechia`, `Bosnia`, `Iraq`, `DR Congo`).
-- **Known data bug:** match #100 label `W95 vs W100` should be `W95 vs W96`.
+- **Knockout bracket** wiring (which winners meet) follows FIFA regs §12.6–12.9. The R16 `W##`
+  labels + match #100 (`W95 vs W96`) were corrected 2026-07 to match the official bracket after
+  the R16 pairings came out wrong vs reality; R32 fixtures/Annexe C were already correct.
 
 ## Conventions
 - Reference files as `path:line`. Keep components small and mobile-legible.

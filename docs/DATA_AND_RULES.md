@@ -30,8 +30,10 @@ This is the domain reference for the data pipeline (WP1) and the engine (WP2).
   `W101 vs W102` (the Final).
 - `kickoff_at` carries a per-venue UTC offset (e.g. `-06`, `-04`, `-07`). Parse as timezone-aware.
 
-> **Known bug:** match **#100** label is `W95 vs W100` (self-referential). It should be
-> `W95 vs W96`. Fix this in the loader/normalization step and add a regression test.
+The R16→Final `W##` wiring follows the official FIFA bracket (regulations §12.6–12.9). It was
+corrected in 2026-07: the R16 pairings (matches 89–96) had wired the wrong R32 winners together
+(so winners could meet the wrong half of the draw), and match **#100** was self-referential
+(`W95 vs W100` → now `W95 vs W96`). The R32 fixtures + Annexe C thirds were already correct.
 
 ## 2. Canonical data model
 The authoritative TypeScript types live in `shared/src/types.ts`. Core entities:
