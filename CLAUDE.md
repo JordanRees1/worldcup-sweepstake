@@ -83,9 +83,10 @@ creation; it also runs fully locally.
 ## Open decisions / pending input
 1. **API key** — provider chosen (**football-data.org**); user creates a free account + key
    when ready. App runs in `seed` mode until then.
-2. **Scoring** — ✅ **pure game points**: win +3, group draw +1, loss −goal-margin, and a −50
-   🥄 wooden spoon for losing every game. Sort: points → GD → alive → stage. Config in
-   `server/src/engine/scoring.ts` (`DEFAULT_SCORING`). See DATA_AND_RULES §5.
+2. **Scoring** — ✅ **pure game points**: win +3, group draw +1, loss −goal-margin, a −50
+   🥄 wooden spoon for losing every game, and a +100 🏆 champion bonus for owning the World Cup
+   winner (guarantees that player wins the sweepstake outright). Sort: points → GD → alive →
+   stage. Config in `server/src/engine/scoring.ts` (`DEFAULT_SCORING`). See DATA_AND_RULES §5.
 3. **Picks mapping report** — generated in WP1 for user sign-off.
 
 ## Docs

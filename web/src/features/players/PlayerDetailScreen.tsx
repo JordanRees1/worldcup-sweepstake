@@ -78,6 +78,10 @@ export function PlayerDetailScreen() {
               <span className="font-semibold text-slate-200">🥄 Wooden spoon</span> — lose every one
               of your games and it&apos;s −50
             </p>
+            <p>
+              <span className="font-semibold text-slate-200">🏆 Champion bonus</span> — own the
+              World Cup winner and it&apos;s +100, so you always win the sweepstake outright
+            </p>
             <p className="pt-1 text-slate-500">
               Ranked by points, then goal difference, then teams still alive.
             </p>

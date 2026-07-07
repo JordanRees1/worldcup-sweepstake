@@ -30,6 +30,12 @@ export interface ScoringConfig {
   pointsPerDraw: number;
   /** Penalty for a player whose teams have played ≥1 game and lost every single one. */
   woodenSpoonPenalty: number;
+  /**
+   * Bonus for the player owning the World Cup winner. Large enough to guarantee the champion's
+   * owner tops the leaderboard outright, regardless of how many match points other players
+   * banked earlier in the tournament.
+   */
+  championBonus: number;
 }
 
 /**
@@ -37,6 +43,8 @@ export interface ScoringConfig {
  *   Win +3 (group or knockout, incl. penalty-shootout wins) · Group draw +1 each.
  *   Loss → minus the goal-difference margin of that match (lose 1–3 → −2; level score lost on pens → 0).
  *   🥄 Wooden spoon → −50 to any player whose teams have played at least one game and lost them all.
+ *   🏆 Champion bonus → +100 to whoever owns the World Cup winner, so the champion's owner always
+ *   wins the sweepstake outright rather than just banking match points along the way.
  * Reaching later stages is rewarded implicitly — deeper teams play and win more games.
  * Goal difference is also tracked separately as a tiebreaker.
  */
@@ -44,6 +52,7 @@ export const DEFAULT_SCORING: ScoringConfig = {
   pointsPerWin: 3,
   pointsPerDraw: 1,
   woodenSpoonPenalty: -50,
+  championBonus: 100,
 };
 
 /** Per-team running tally across counted matches (finished + live, the latter provisional). */
@@ -175,7 +184,11 @@ export function buildLeaderboard(
     }
     // Wooden spoon: played at least one game and didn't manage a single win or draw.
     const woodenSpoon = played > 0 && wins === 0 && draws === 0 ? config.woodenSpoonPenalty : 0;
-    const points = basePoints + woodenSpoon;
+    // Champion bonus: owning the World Cup winner tops the leaderboard outright.
+    const championBonus = playerTeams.some((pt) => pt.status.outcome === 'champion')
+      ? config.championBonus
+      : 0;
+    const points = basePoints + woodenSpoon + championBonus;
 
     const goalDifference = computePlayerGoalDifference(
       playerTeams.map((pt) => pt.team.id),

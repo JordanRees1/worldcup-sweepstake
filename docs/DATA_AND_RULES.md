@@ -136,6 +136,9 @@ finished game (group + knockout):
 - **Loss** — minus that match's goal margin (lose 1–3 → −2; a level score lost on pens → 0)
 - **🥄 Wooden spoon** — −50 to any player whose teams have played ≥1 game and lost every one
   (no wins, no draws); clears the instant they manage a win or draw
+- **🏆 Champion bonus** — +100 to whoever owns the World Cup winner. Large enough to guarantee
+  that player tops the leaderboard outright, regardless of match points other players banked
+  earlier in the tournament — the sweepstake should always be won by whoever has the champion.
 
 Reaching later stages is rewarded implicitly — deeper teams simply play and win more games, so
 there is no separate stage-milestone table any more.
@@ -145,4 +148,4 @@ Total goal difference (sum of each team's GDs) is surfaced as `PlayerSummary.goa
 is now the primary tiebreaker.
 
 The rule is a small config (`DEFAULT_SCORING` in `server/src/engine/scoring.ts`:
-`pointsPerWin`, `pointsPerDraw`, `woodenSpoonPenalty`) so it's trivial to change.
+`pointsPerWin`, `pointsPerDraw`, `woodenSpoonPenalty`, `championBonus`) so it's trivial to change.

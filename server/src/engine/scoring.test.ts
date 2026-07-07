@@ -184,6 +184,31 @@ describe('buildLeaderboard', () => {
     expect(lb[0].points).toBe(0);
   });
 
+  it('adds a +100 champion bonus to whoever owns the World Cup winner', () => {
+    const championStatuses = new Map([
+      [10, mkStatus(10, { outcome: 'champion', alive: true })],
+      [11, mkStatus(11, { outcome: 'eliminated', alive: false })],
+    ]);
+    const scores = new Map([[10, rec(15, { won: 5 })], [11, rec(3, { won: 1 })]]);
+    const lb = buildLeaderboard(players, picks, teams, championStatuses, new Map(), scores);
+    const alice = lb.find((e) => e.player.name === 'Alice')!;
+    expect(alice.points).toBe(115); // 15 base + 100 champion bonus
+    expect(lb[0].player.name).toBe('Alice');
+  });
+
+  it('the champion bonus outweighs any lead another player built up earlier', () => {
+    const championStatuses = new Map([
+      [10, mkStatus(10, { outcome: 'champion', alive: true })],
+      [11, mkStatus(11, { outcome: 'eliminated', alive: false })],
+    ]);
+    // Bob raced ahead in the group stage and early knockouts...
+    const scores = new Map([[10, rec(5, { won: 1 })], [11, rec(50, { won: 16 })]]);
+    const lb = buildLeaderboard(players, picks, teams, championStatuses, new Map(), scores);
+    // ...but Alice's team lifting the trophy still wins the whole sweepstake.
+    expect(lb[0].player.name).toBe('Alice');
+    expect(lb[0].points).toBe(105);
+  });
+
   it('includes all 6 sweepstake players from the real dataset (seed mode = all 0)', () => {
     const ds = loadDataset();
     const tables = computeAllGroupStandings(ds.teams, ds.matches);
